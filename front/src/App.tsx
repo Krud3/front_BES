@@ -11,22 +11,25 @@ import { Node, Links } from '@/lib/types';
 const App: React.FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Links[]>([]);
-  const [labelButton, setLabelButton] = useState<string>('id');
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Router>
-        <Navbar setNodes={setNodes} setLinks={setLinks} />
-        <Routes>
-          <Route
-            path="/cosmograph"
-            element={
-              <CosmographProvider nodes={nodes} links={links}>
-                <Display labelButton={labelButton} />
-              </CosmographProvider>
-            }
-          />
-        </Routes>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+          <Navbar setNodes={setNodes} setLinks={setLinks} />
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <Routes>
+              <Route
+                path="/cosmograph"
+                element={
+                  <CosmographProvider nodes={nodes} links={links}>
+                    <Display />
+                  </CosmographProvider>
+                }
+              />
+            </Routes>
+          </div>
+        </div>
       </Router>
     </ThemeProvider>
   );

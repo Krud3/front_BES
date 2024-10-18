@@ -34,6 +34,7 @@ type NavbarProps = {
 const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const navigate = useNavigate();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -104,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
     });
   };
 
-  const handleProceed = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleProceed = async (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     event.preventDefault();
     if (selectedFile) {
       try {
@@ -118,6 +119,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
     } else {
       alert('Please select a CSV file before proceeding.');
     }
+    setIsDialogOpen(false);
   };
 
   return (
@@ -142,14 +144,8 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
         >
           Create Simulation
         </Link>
-        <Link
-          to="/cosmograph"
-          className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
-        >
-          Upload Simulation
-        </Link>
-        <Dialog>
-            <DialogTrigger className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap" >
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap" onClick={() => setIsDialogOpen(true)}>
                 Upload Simulation
             </DialogTrigger>
             <DialogContent>
@@ -157,14 +153,14 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
                     <DialogTitle>Please upload CSV file from your computer</DialogTitle>
                     <DialogDescription>
                         <div className="flex items-center w-full max-w-sm gap-4">
-                        <Input id="input_csv" type="file" accept=".csv" onChange={handleFileSelect} />
-                        <a
-                        href="/cosmograph"
-                        onClick={handleProceed}
-                        className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
-                        >
-                        Proceed
-                        </a>
+                            <Input id="input_csv" type="file" accept=".csv" onChange={handleFileSelect} />
+                            <a
+                                href="/cosmograph"
+                                onClick={handleProceed}
+                                className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
+                            >
+                                Proceed
+                            </a>
                         </div>
                     </DialogDescription>
                 </DialogHeader>
@@ -207,6 +203,30 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
             >
               Create Simulation
             </Link>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <div className="text-left">
+                <DialogTrigger className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap" onClick={() => setIsDialogOpen(true)}>
+                  Upload Simulation
+                </DialogTrigger>
+              </div>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Please upload CSV file from your computer</DialogTitle>
+                  <DialogDescription>
+                    <div className="flex items-center w-full max-w-sm gap-4">
+                      <Input id="input_csv" type="file" accept=".csv" onChange={handleFileSelect} />
+                      <a
+                        href="/cosmograph"
+                        onClick={handleProceed}
+                        className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
+                      >
+                        Proceed
+                      </a>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
             <Link
               to="/products"
               className="text-muted-foreground hover:text-foreground"
