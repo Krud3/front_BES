@@ -125,7 +125,7 @@ const Display: React.FC<DisplayProps> = ({ labelButton }) => {
         nodeLabelAccessor={nodeLabelFunction}
         linkWidth={(l: Link) => l.influenceValue || 0.1}
         linkColor={() => colors[Math.floor(Math.random() * 3)]}
-        spaceSize={1024}
+        spaceSize={540}
       />
       <input type="file" onChange={handleFileUpload} accept=".csv" />
     </div>

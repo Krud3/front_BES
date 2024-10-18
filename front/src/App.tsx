@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from '@/pages/Navbar.tsx';
-import Display from '@/pages/Display.tsx';
+import Display from '@/pages/testing.tsx';
 import { Button } from './components/ui/button';
 import { useState } from 'react';
 
@@ -23,14 +23,14 @@ function App() {
             path="/cosmograph"
             element={
               <>
-                {/* Pass handleClick correctly, onClick needs a function */}
+                {/*
                 <Button onClick={() => handleClick('belief')}>Set to Belief</Button>
                 <Button onClick={() => handleClick('publicBelief')}>Set to Public Belief</Button>
                 <Button onClick={() => handleClick('isSpeaking')}>Set to Is Speaking</Button>
-                <Button onClick={() => handleClick('id')}>Set to ID</Button>
+                <Button onClick={() => handleClick('id')}>Set to ID</Button>*/}
 
                 {/* Pass the labelButton state and setLabelButton function to Display */}
-                <Display labelButton={labelButton} />
+                <Display labelButton="id" />
               </>
             }
           />
