@@ -1,12 +1,16 @@
+import { ThemeProvider } from "@/components/theme-provider"
 
-import { Button } from "@/components/ui/button"
-function App() {
+import { ReactNode } from 'react';
 
+interface AppProps {
+  children: ReactNode;
+}
 
+function App({ children }: AppProps) {
   return (
-    <>
-      <Button>Click me</Button>
-    </>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      {children}
+    </ThemeProvider>
   )
 }
 
