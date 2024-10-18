@@ -9,6 +9,8 @@ import {
     NavigationMenuViewport,
   } from "@/components/ui/navigation-menu"
 
+import { ModeToggle } from "@/components/mode-toggle"
+
 function Navbar() {
     return (
     <NavigationMenu>
@@ -18,6 +20,10 @@ function Navbar() {
                 <NavigationMenuContent>
                     <NavigationMenuLink>Link</NavigationMenuLink>
                 </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+            <ModeToggle/>
         </NavigationMenuItem>
     </NavigationMenuList>
     </NavigationMenu>
