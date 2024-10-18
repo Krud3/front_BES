@@ -14,23 +14,25 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Router>
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-          <Navbar setNodes={setNodes} setLinks={setLinks} />
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <Routes>
-              <Route
-                path="/cosmograph"
-                element={
-                  <CosmographProvider nodes={nodes} links={links}>
-                    <Display />
-                  </CosmographProvider>
-                }
-              />
-            </Routes>
+      <CosmographProvider nodes={nodes} links={links}>
+        <Router>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+            <Navbar setNodes={setNodes} setLinks={setLinks} />
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <Routes>
+                <Route
+                  path="/cosmograph"
+                  element={
+                    
+                      <Display />
+                    
+                  }
+                />
+              </Routes>
+            </div>
           </div>
-        </div>
-      </Router>
+        </Router>
+      </CosmographProvider>
     </ThemeProvider>
   );
 };
