@@ -1,5 +1,5 @@
 import { Cosmograph } from '@cosmograph/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 
@@ -18,6 +18,10 @@ type Link = {
   source: string;
   target: string;
   influenceValue?: number;
+};
+
+type DisplayProps = {
+  labelButton: string; // Current label value from App component
 };
 
 // Function to parse CSV and generate nodes and links
@@ -42,6 +46,8 @@ const parseCSVToNodes = (csvFile: File): Promise<{ nodes: Node[]; links: Link[] 
               id: agentId,
               color: '#FF0000', // You can customize the color as needed
               belief,
+              publicBelief,
+              isSpeaking,
               x: Math.random() * 1024, // Random x position
               y: Math.random() * 768, // Random y position
             });
@@ -70,7 +76,7 @@ const parseCSVToNodes = (csvFile: File): Promise<{ nodes: Node[]; links: Link[] 
   });
 };
 
-const Display = () => {
+const Display: React.FC<DisplayProps> = ({ labelButton }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
   const cosmographRef = useCallback((ref: any) => {
@@ -88,47 +94,37 @@ const Display = () => {
     }
   };
 
-  const colors:string[] = ['#88C6FF', '#FF99D2', '#2748A4'];
+  const colors: string[] = ['#88C6FF', '#FF99D2', '#2748A4'];
 
-  const [lable, setLable] = useState<string>('');
-
-  const handleButtonClick = () => {
-    setLable('Hello World');
-  }
-
-
-const nodeLabelFunction = (d:Node) => {
-  switch(lable) {
-    case 'belief':
-      return d.belief?.toFixed(2) || '';
-    case 'publicBelief':
-      return d.publicBelief?.toFixed(2) || '';
-    case 'isSpeaking':
-      return d.isSpeaking?.toString() || '';
-    case 'id':
-      return d.id || '';
-    default:
-      return d.id || '';
-  }
-}
+  // Use labelButton passed from App to determine what to display
+  const nodeLabelFunction = (d: Node) => {
+    switch (labelButton) {
+      case 'belief':
+        return d.belief?.toFixed(2) || '';
+      case 'publicBelief':
+        return d.publicBelief?.toFixed(2) || '';
+      case 'isSpeaking':
+        return d.isSpeaking?.toString() || '';
+      case 'id':
+        return d.id || '';
+      default:
+        return d.id || '';
+    }
+  };
 
   return (
     <div>
-      <Button onClick={handleButtonClick}>Click me</Button>
       <Cosmograph
         ref={cosmographRef}
         nodes={nodes}
         links={links}
-        // nodeColor={(d: Node) => d.color || '#b3b3b3'}
         nodeColor={() => colors[Math.floor(Math.random() * 3)]}
         nodeSize={20}
         hoveredNodeRingColor={'red'}
         focusedNodeRingColor={'white'}
-        // nodeLabelAccessor={(d: Node) => d.belief?.toFixed(2) || ''}
         nodeLabelAccessor={nodeLabelFunction}
-        // linkWidth={() => 1 + 2 * Math.random()}
-        linkWidth={(l:Link) => l.influenceValue || 0.1}
-        linkColor={() => ['#88C6FF', '#FF99D2', '#2748A4'][Math.floor(Math.random() * 3)]}
+        linkWidth={(l: Link) => l.influenceValue || 0.1}
+        linkColor={() => colors[Math.floor(Math.random() * 3)]}
         spaceSize={1024}
       />
       <input type="file" onChange={handleFileUpload} accept=".csv" />
