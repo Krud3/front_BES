@@ -10,6 +10,7 @@ import {
   } from "@/components/ui/navigation-menu"
 
 import { ModeToggle } from "@/components/mode-toggle"
+import { Link } from 'react-router-dom'
 
 function Navbar() {
     return (
@@ -18,7 +19,11 @@ function Navbar() {
         <NavigationMenuItem>
             <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
                 <NavigationMenuContent>
-                    <NavigationMenuLink>Link</NavigationMenuLink>
+                    <NavigationMenuLink>
+                    <Link to="/cosmograph" aria-label="Cosmograph">
+                        Link
+                    </Link>
+                    </NavigationMenuLink>
                 </NavigationMenuContent>
         </NavigationMenuItem>
 

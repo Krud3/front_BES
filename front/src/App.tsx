@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './pages/Navbar.tsx'
-import { Button } from "./components/ui/button.tsx";
+import Navbar from '@/pages/Navbar.tsx'
+import Display from '@/pages/Display.tsx'
 
 
 function App() {
@@ -10,9 +10,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Navbar />}/>
-        </Routes>
-        <Routes>
-          <Route path="/asdf" element={<Button>xD</Button>}/>
+          <Route path="/cosmograph" element={<Display/>}/>
         </Routes>
     </Router>
     </ThemeProvider>
