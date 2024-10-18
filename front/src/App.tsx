@@ -1,16 +1,22 @@
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/theme-provider";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './pages/Navbar.tsx'
+import { Button } from "./components/ui/button.tsx";
 
-import { ReactNode } from 'react';
 
-interface AppProps {
-  children: ReactNode;
-}
-
-function App({ children }: AppProps) {
+function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      {children}
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navbar />}/>
+        </Routes>
+        <Routes>
+          <Route path="/asdf" element={<Button>xD</Button>}/>
+        </Routes>
+    </Router>
     </ThemeProvider>
+
   )
 }
 
