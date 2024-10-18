@@ -1,43 +1,35 @@
-import { ThemeProvider } from "@/components/theme-provider";
+// App.tsx
+
+import React, { useState } from 'react';
+import { ThemeProvider } from '@/components/theme-provider';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from '@/pages/Navbar.tsx';
-import Display from '@/pages/Display.tsx';
-import { Button } from './components/ui/button';
-import { useState } from 'react';
+import Navbar from '@/pages/Navbar';
+import Display from '@/pages/Display';
+import { CosmographProvider } from '@cosmograph/react';
+import { Node, Links } from '@/lib/types';
 
-function App() {
-  const [labelButton, setLabelButton] = useState('Click me');
-
-  // Fix handleClick function: It's supposed to take a string (label) and set it to state
-  const handleClick = (label: string) => {
-    setLabelButton(label);
-  };
+const App: React.FC = () => {
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [links, setLinks] = useState<Links[]>([]);
+  const [labelButton, setLabelButton] = useState<string>('id');
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Router>
-        <Navbar /> {/* Navbar component remains outside of Routes */}
-
+        <Navbar setNodes={setNodes} setLinks={setLinks} />
         <Routes>
           <Route
             path="/cosmograph"
             element={
-              <>
-                {/* Pass handleClick correctly, onClick needs a function */}
-                <Button onClick={() => handleClick('belief')}>Set to Belief</Button>
-                <Button onClick={() => handleClick('publicBelief')}>Set to Public Belief</Button>
-                <Button onClick={() => handleClick('isSpeaking')}>Set to Is Speaking</Button>
-                <Button onClick={() => handleClick('id')}>Set to ID</Button>
-
-                {/* Pass the labelButton state and setLabelButton function to Display */}
+              <CosmographProvider nodes={nodes} links={links}>
                 <Display labelButton={labelButton} />
-              </>
+              </CosmographProvider>
             }
           />
         </Routes>
       </Router>
     </ThemeProvider>
   );
-}
+};
 
 export default App;
