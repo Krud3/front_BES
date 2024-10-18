@@ -97,17 +97,24 @@ const Display = () => {
   }
 
 
-  const funct = (d:Node) => {
-    if(lable === 'Hello World') {
-        return d.belief?.toFixed(2) || '';
-    } else {
-        return d.id || '';
-    }
-  }   
+const nodeLabelFunction = (d:Node) => {
+  switch(lable) {
+    case 'belief':
+      return d.belief?.toFixed(2) || '';
+    case 'publicBelief':
+      return d.publicBelief?.toFixed(2) || '';
+    case 'isSpeaking':
+      return d.isSpeaking?.toString() || '';
+    case 'id':
+      return d.id || '';
+    default:
+      return d.id || '';
+  }
+}
 
   return (
     <div>
-        <Button onClick={handleButtonClick}>Click me</Button>
+      <Button onClick={handleButtonClick}>Click me</Button>
       <Cosmograph
         ref={cosmographRef}
         nodes={nodes}
@@ -118,7 +125,7 @@ const Display = () => {
         hoveredNodeRingColor={'red'}
         focusedNodeRingColor={'white'}
         // nodeLabelAccessor={(d: Node) => d.belief?.toFixed(2) || ''}
-        nodeLabelAccessor={funct}
+        nodeLabelAccessor={nodeLabelFunction}
         // linkWidth={() => 1 + 2 * Math.random()}
         linkWidth={(l:Link) => l.influenceValue || 0.1}
         linkColor={() => ['#88C6FF', '#FF99D2', '#2748A4'][Math.floor(Math.random() * 3)]}
