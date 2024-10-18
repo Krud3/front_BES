@@ -18,6 +18,17 @@ import {
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ModeToggle } from "@/components/mode-toggle"
+import { Label } from "@/components/ui/label"
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
+
 
 function Navbar() {
   return (
@@ -32,19 +43,47 @@ function Navbar() {
         </Link>
         <Link
           to="/dashboard"
-          className="text-foreground transition-colors hover:text-foreground"
+          className="text-foreground transition-colors hover:text-foreground whitespace-nowrap"
         >
           Previous Results
         </Link>
         <Link
           to="/orders"
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
         >
           Create Simulation
         </Link>
         <Link
+          to="/cosmograph"
+          className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
+        >
+          Upload Simulation
+        </Link>
+        <Dialog>
+            <DialogTrigger className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap" >
+                Upload Simulation
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Please upload CSV file from your computer</DialogTitle>
+                    <DialogDescription>
+                        <div className="flex items-center w-full max-w-sm gap-4">
+                        <Input id="input_csv" type="file" accept=".csv" />
+                        <Link
+                            to="/cosmograph"
+                            className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
+                        >
+                            Proceed
+                        </Link>
+                        </div>
+                    </DialogDescription>
+                </DialogHeader>
+            </DialogContent>
+        </Dialog>
+
+        <Link
           to="/products"
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
         >
           User's Management
         </Link>
