@@ -105,7 +105,7 @@ const Display: React.FC<DisplayProps> = () => {
             linkWidth={(link: Links) => link.influenceValue || 0.1}
             linkColor={'#666666'}
             spaceSize={1024}
-            // Asegúrate de tener una referencia al Cosmograph si es necesario
+            
           />
         </ContextMenuTrigger>
         <ContextMenuContent>
