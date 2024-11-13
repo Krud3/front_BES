@@ -22,6 +22,7 @@ interface CsvRow {
   source_id?: string;
   target_id?: string;
   influence_value?: string;
+  created_at: string;
 }
 
 const UploadSheet: React.FC<UploadSheetProps> = ({ setNodes, setLinks }) => {
@@ -34,6 +35,61 @@ const UploadSheet: React.FC<UploadSheetProps> = ({ setNodes, setLinks }) => {
     setSelectedFile(file);
   };
 
+  // const parseCSVToNodes = (csvFile: File): Promise<{ nodes: Node[]; links: Links[] }> => {
+  //   return new Promise((resolve, reject) => {
+  //     Papa.parse(csvFile, {
+  //       header: true,
+  //       skipEmptyLines: true,
+  //       complete: function (results) {
+  //         const data = results.data as CsvRow[];
+  //         const nodesMap = new Map<string, Node>();
+  //         const links: Links[] = [];
+
+  //         data.forEach((row) => {
+  //           const agentId = row.agent_id;
+  //           const belief = parseFloat(row.belief);
+  //           const publicBelief = parseFloat(row.public_belief);
+  //           const isSpeaking = row.is_speaking === 'True';
+  //           const roundDate = new Date(row.created_at);
+
+  //           const x = Math.random() * 1024;
+  //           const y = Math.random() * 768;
+
+  //           if (!nodesMap.has(agentId)) {
+  //             nodesMap.set(agentId, {
+  //               id: agentId,
+  //               x,
+  //               y,
+  //               color: '#88C6FF',
+  //               belief,
+  //               publicBelief,
+  //               isSpeaking,
+  //               roundDate,
+  //             });
+  //           }
+
+  //           const source = row.source_id;
+  //           const target = row.target_id;
+  //           const influenceValue = parseFloat(row.influence_value || '0');
+
+  //           if (source && target) {
+  //             links.push({
+  //               source,
+  //               target,
+  //               influenceValue,
+  //             });
+  //           }
+  //         });
+
+  //         resolve({ nodes: Array.from(nodesMap.values()), links });
+  //       },
+  //       error: function (err) {
+  //         reject(err);
+  //       },
+  //     });
+  //   });
+  // };
+
   const parseCSVToNodes = (csvFile: File): Promise<{ nodes: Node[]; links: Links[] }> => {
     return new Promise((resolve, reject) => {
       Papa.parse(csvFile, {
@@ -43,41 +99,54 @@ const UploadSheet: React.FC<UploadSheetProps> = ({ setNodes, setLinks }) => {
           const data = results.data as CsvRow[];
           const nodesMap = new Map<string, Node>();
           const links: Links[] = [];
-
+  
           data.forEach((row) => {
             const agentId = row.agent_id;
             const belief = parseFloat(row.belief);
             const publicBelief = parseFloat(row.public_belief);
             const isSpeaking = row.is_speaking === 'True';
-
+            const roundDate = new Date(row.created_at);
+  
             const x = Math.random() * 1024;
             const y = Math.random() * 768;
-
+  
+            // Add or update the node in the nodesMap if not already present
             if (!nodesMap.has(agentId)) {
               nodesMap.set(agentId, {
                 id: agentId,
                 x,
                 y,
-                color: '#88C6FF',
-                belief,
+                color: isSpeaking? '#88C6FF' : '#FFD700',
+                belief, // Set initial belief
                 publicBelief,
                 isSpeaking,
+                beliefsOverTime: [{ date: roundDate, value: belief }],
+                publicBeliefsOverTime: [{ date: roundDate, value: publicBelief }],
+                isSpeakingOverTime: [{ date: roundDate, value: isSpeaking }],
               });
+            } else {
+              // Update historical data if the node already exists
+              const existingNode = nodesMap.get(agentId)!;
+              existingNode.beliefsOverTime!.push({ date: roundDate, value: belief });
+              existingNode.publicBeliefsOverTime!.push({ date: roundDate, value: publicBelief });
+              existingNode.isSpeakingOverTime!.push({ date: roundDate, value: isSpeaking });
             }
-
+  
             const source = row.source_id;
             const target = row.target_id;
             const influenceValue = parseFloat(row.influence_value || '0');
-
+  
+            // Create a link with the roundDate as the temporal attribute
             if (source && target) {
               links.push({
                 source,
                 target,
                 influenceValue,
+                date: roundDate, // Temporal information for the link
               });
             }
           });
-
+  
           resolve({ nodes: Array.from(nodesMap.values()), links });
         },
         error: function (err) {

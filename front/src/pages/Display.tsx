@@ -1,7 +1,7 @@
 // Display.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Cosmograph, CosmographSearch, useCosmograph } from '@cosmograph/react';
+import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 
 import {
@@ -12,13 +12,69 @@ import {
   ContextMenuShortcut,
 } from '@/components/ui/context-menu';
 
-type DisplayProps = {};
+interface DisplayProps {
+  nodes: Node[];
+  links: Links[];
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+}
 
-const Display: React.FC<DisplayProps> = () => {
+const Display: React.FC<DisplayProps> = ({ nodes, links, setNodes }) => {
   const cosmographContext = useCosmograph();
   const cosmograph = cosmographContext?.cosmograph;
-  const nodes = cosmographContext?.nodes || [];
-  const links = cosmographContext?.links || [];
+  const timelineRef = useRef<any>(null);
+  // const [previousSelection, setPreviousSelection] = useState<[Date, Date] | undefined>(undefined);
+
+  // const updateBeliefsBasedOnTimeline = (selection: [Date, Date]) => {
+  //   if (selection && nodes.length > 0) {
+  //     const [startDate, endDate] = selection;
+  
+  //     const updatedNodes = nodes.map((node) => {
+  //       const customNode = node as Node; // Cast to your custom type
+      
+  //       // Find the closest historical value within the selection range
+  //       const beliefEntry = customNode.beliefsOverTime?.find(
+  //         (entry: { date: Date; value: number }) => entry.date >= startDate && entry.date <= endDate
+  //       );
+  //       const publicBeliefEntry = customNode.publicBeliefsOverTime?.find(
+  //         (entry: { date: Date; value: number }) => entry.date >= startDate && entry.date <= endDate
+  //       );
+  //       const isSpeakingEntry = customNode.isSpeakingOverTime?.find(
+  //         (entry: { date: Date; value: boolean }) => entry.date >= startDate && entry.date <= endDate
+  //       );
+      
+  //       return {
+  //         ...customNode,
+  //         belief: beliefEntry ? beliefEntry.value : customNode.belief,
+  //         publicBelief: publicBeliefEntry ? publicBeliefEntry.value : customNode.publicBelief,
+  //         isSpeaking: isSpeakingEntry ? isSpeakingEntry.value : customNode.isSpeaking,
+  //       };
+  //     });
+  
+  //     setNodes(updatedNodes);
+  //   } else {
+  //     // Reset nodes to original state if no selection is made
+  //     setNodes(nodes);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (timelineRef.current) {
+  //       const currentSelection = timelineRef.current.getCurrentSelection();
+
+  //       // Only update if the selection has changed
+  //       if (currentSelection && currentSelection !== previousSelection) {
+  //         setPreviousSelection(currentSelection);
+  //         updateBeliefsBasedOnTimeline(currentSelection);
+  //       }
+  //     }
+  //   }, 500); // Check every 500 milliseconds
+
+  //   // Cleanup the interval on component unmount
+  //   return () => {
+  //     clearInterval(interval);
+  //   };
+  // }, [nodes, links, previousSelection]);
 
   const [labelButton, setLabelButton] = useState<string>('id');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,11 +147,18 @@ const Display: React.FC<DisplayProps> = () => {
       style={{ outline: 'none', position: 'relative', width: '100%', height: '100%' }}
     >
       <ContextMenu>
+      <CosmographTimeline
+            ref={timelineRef}
+            accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
+            animationSpeed={25}
+            showAnimationControls
+            onAnimationPlay={() => console.log('Animation started')}
+          />
         <ContextMenuTrigger>
           <Cosmograph
             nodes={nodes}
             links={links}
-            disableSimulation={false}
+            disableSimulation={true}
             nodeColor={(node: Node) => node.color || '#b3b3b3'}
             nodeSize={20}
             nodeGreyoutOpacity={0.1}
@@ -104,7 +167,7 @@ const Display: React.FC<DisplayProps> = () => {
             nodeLabelAccessor={nodeLabelFunction}
             linkWidth={(link: Links) => link.influenceValue || 0.1}
             linkColor={'#666666'}
-            spaceSize={1024}
+            spaceSize={8192}
             
           />
         </ContextMenuTrigger>
