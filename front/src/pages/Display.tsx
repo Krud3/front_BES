@@ -95,7 +95,7 @@ const Display: React.FC<DisplayProps> = () => {
           <Cosmograph
             nodes={nodes}
             links={links}
-            disableSimulation={true}
+            disableSimulation={false}
             nodeColor={(node: Node) => node.color || '#b3b3b3'}
             nodeSize={20}
             nodeGreyoutOpacity={0.1}
