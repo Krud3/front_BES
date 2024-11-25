@@ -1,7 +1,7 @@
 // Display.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef } from '@cosmograph/react';
+import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 
 import {
@@ -141,7 +141,7 @@ const Display: React.FC<DisplayProps> = () => {
       style={{ outline: 'none', position: 'relative', width: '100%', height: '100%' }}
     >
       <ContextMenu>
-      <CosmographTimeline
+        <CosmographTimeline
             ref={timelineRef}
             accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
             animationSpeed={25}
@@ -156,6 +156,11 @@ const Display: React.FC<DisplayProps> = () => {
             //   updateBeliefsBasedOnTimeline();
             // }}
           />
+        <CosmographHistogram 
+          accessor={(d: Node) => d.belief || 0}
+          allowSelection
+          barCount={50}
+        />    
         <ContextMenuTrigger>
           <Cosmograph
             nodes={nodes}
