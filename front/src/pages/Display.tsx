@@ -1,7 +1,7 @@
 // Display.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline } from '@cosmograph/react';
+import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 
 import {
@@ -13,68 +13,62 @@ import {
 } from '@/components/ui/context-menu';
 
 interface DisplayProps {
-  nodes: Node[];
-  links: Links[];
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
 }
 
-const Display: React.FC<DisplayProps> = ({ nodes, links, setNodes }) => {
-  const cosmographContext = useCosmograph();
-  const cosmograph = cosmographContext?.cosmograph;
-  const timelineRef = useRef<any>(null);
-  // const [previousSelection, setPreviousSelection] = useState<[Date, Date] | undefined>(undefined);
+const setColor = (value: boolean) => {
+  if (value) {
+    return '#88C6FF';
+  } else {
+    return '#FFD700';
+  }
+}
 
-  // const updateBeliefsBasedOnTimeline = (selection: [Date, Date]) => {
-  //   if (selection && nodes.length > 0) {
-  //     const [startDate, endDate] = selection;
-  
-  //     const updatedNodes = nodes.map((node) => {
-  //       const customNode = node as Node; // Cast to your custom type
-      
-  //       // Find the closest historical value within the selection range
-  //       const beliefEntry = customNode.beliefsOverTime?.find(
-  //         (entry: { date: Date; value: number }) => entry.date >= startDate && entry.date <= endDate
-  //       );
-  //       const publicBeliefEntry = customNode.publicBeliefsOverTime?.find(
-  //         (entry: { date: Date; value: number }) => entry.date >= startDate && entry.date <= endDate
-  //       );
-  //       const isSpeakingEntry = customNode.isSpeakingOverTime?.find(
-  //         (entry: { date: Date; value: boolean }) => entry.date >= startDate && entry.date <= endDate
-  //       );
-      
-  //       return {
-  //         ...customNode,
-  //         belief: beliefEntry ? beliefEntry.value : customNode.belief,
-  //         publicBelief: publicBeliefEntry ? publicBeliefEntry.value : customNode.publicBelief,
-  //         isSpeaking: isSpeakingEntry ? isSpeakingEntry.value : customNode.isSpeaking,
-  //       };
-  //     });
-  
-  //     setNodes(updatedNodes);
-  //   } else {
-  //     // Reset nodes to original state if no selection is made
-  //     setNodes(nodes);
-  //   }
-  // };
+const Display: React.FC<DisplayProps> = () => {
+  const timelineRef = useRef<CosmographTimelineRef<any>>(null);
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (timelineRef.current) {
-  //       const currentSelection = timelineRef.current.getCurrentSelection();
+  const { cosmograph, nodes, links } = useCosmograph() || {};
 
-  //       // Only update if the selection has changed
-  //       if (currentSelection && currentSelection !== previousSelection) {
-  //         setPreviousSelection(currentSelection);
-  //         updateBeliefsBasedOnTimeline(currentSelection);
-  //       }
-  //     }
-  //   }, 500); // Check every 500 milliseconds
+  const updateBeliefsBasedOnTimeline = () => {
+    const timeline = timelineRef.current;
+    if (!timeline || !cosmograph || !nodes ) return;
 
-  //   // Cleanup the interval on component unmount
-  //   return () => {
-  //     clearInterval(interval);
-  //   };
-  // }, [nodes, links, previousSelection]);
+    const selection = timeline.getCurrentSelection() as [Date, Date] | undefined;
+    if (selection) {
+      const [startDate, endDate] = selection;
+
+      const updatedNodes = nodes.map((node) => {
+        const customNode = node as Node;
+
+        const beliefEntry = customNode.beliefsOverTime?.find(
+          (entry) => entry.date >= startDate && entry.date <= endDate
+        );
+        const publicBeliefEntry = customNode.publicBeliefsOverTime?.find(
+          (entry) => entry.date >= startDate && entry.date <= endDate
+        );
+        const isSpeakingEntry = customNode.isSpeakingOverTime?.find(
+          (entry) => entry.date >= startDate && entry.date <= endDate
+        );
+
+        console.log('beliefEntry', beliefEntry);
+
+        return {
+          ...customNode,
+          belief: beliefEntry ? beliefEntry.value : customNode.belief,
+          publicBelief: publicBeliefEntry ? publicBeliefEntry.value : customNode.publicBelief,
+          isSpeaking: isSpeakingEntry ? isSpeakingEntry.value : customNode.isSpeaking,
+          color: isSpeakingEntry ? setColor(isSpeakingEntry.value) : customNode.color,
+        };
+      });
+
+      // Use setData to update nodes
+      cosmograph.setData(updatedNodes, links || [], false );
+    } else {
+      // Reset nodes to original state if no selection is made
+      cosmograph.setData(nodes || [], links || [], false );
+    }
+
+    timeline.setSelection(selection);
+  };
 
   const [labelButton, setLabelButton] = useState<string>('id');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -108,7 +102,7 @@ const Display: React.FC<DisplayProps> = ({ nodes, links, setNodes }) => {
       cosmograph?.fitView(400);
       // Deseleccionar todos los nodos
       cosmograph?.unselectNodes();
-      cosmograph?.selectNodes(nodes);
+      cosmograph?.selectNodes(nodes || []);
       cosmograph?.setConfig();
     }
   };
@@ -153,6 +147,14 @@ const Display: React.FC<DisplayProps> = ({ nodes, links, setNodes }) => {
             animationSpeed={25}
             showAnimationControls
             onAnimationPlay={() => console.log('Animation started')}
+            // onAnimationPause={() => {
+            //   const timeline = timelineRef.current;
+            //   if (!timeline) return;
+            //   if (timeline.getIsAnimationRunning()) {
+            //     timeline.stopAnimation();
+            //   } 
+            //   updateBeliefsBasedOnTimeline();
+            // }}
           />
         <ContextMenuTrigger>
           <Cosmograph
@@ -201,6 +203,24 @@ const Display: React.FC<DisplayProps> = ({ nodes, links, setNodes }) => {
             alignItems: 'center',
           }}
         >
+          <button
+            onClick={() => {
+              const timeline = timelineRef.current;
+              if (!timeline) return;
+              if (timeline.getIsAnimationRunning()) {
+                timeline.stopAnimation();
+              } 
+              updateBeliefsBasedOnTimeline();
+              // timeline.setConfig();
+            }}
+            style={{
+              marginLeft: '5px',
+              padding: '5px',
+              cursor: 'pointer',
+            }}
+          >
+            Actualizar
+          </button>
           <CosmographSearch
             ref={cosmographSearchRef}
             placeholder="Buscar nodos..."

@@ -24,7 +24,7 @@ const App: React.FC = () => {
                   path="/cosmograph"
                   element={
                     
-                     <Display nodes={nodes} links={links} setNodes={setNodes} />
+                     <Display />
                     
                   }
                 />
