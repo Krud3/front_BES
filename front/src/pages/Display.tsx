@@ -61,10 +61,10 @@ const Display: React.FC<DisplayProps> = () => {
       });
 
       // Use setData to update nodes
-      cosmograph.setData(updatedNodes, links || [], false );
+      cosmograph.setData(updatedNodes, links || [], true );
     } else {
       // Reset nodes to original state if no selection is made
-      cosmograph.setData(nodes || [], links || [], false );
+      cosmograph.setData(nodes || [], links || [], true );
     }
 
     timeline.setSelection(selection);
@@ -140,11 +140,12 @@ const Display: React.FC<DisplayProps> = () => {
       tabIndex={0}
       style={{ outline: 'none', position: 'relative', width: '100%', height: '100%' }}
     >
-      <ContextMenu>
+      <ContextMenu>  
+        <ContextMenuTrigger>
         <CosmographTimeline
             ref={timelineRef}
             accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
-            animationSpeed={25}
+            animationSpeed={100}
             showAnimationControls
             onAnimationPlay={() => console.log('Animation started')}
             // onAnimationPause={() => {
@@ -159,23 +160,27 @@ const Display: React.FC<DisplayProps> = () => {
         <CosmographHistogram 
           accessor={(d: Node) => d.belief || 0}
           allowSelection
-          barCount={50}
-        />    
-        <ContextMenuTrigger>
+          barCount={6}
+        />  
           <Cosmograph
             nodes={nodes}
             links={links}
-            disableSimulation={true}
+            curvedLinks={true}
+            disableSimulation={false}
             nodeColor={(node: Node) => node.color || '#b3b3b3'}
-            nodeSize={20}
+            nodeSize={2}
             nodeGreyoutOpacity={0.1}
             hoveredNodeRingColor={'red'}
             focusedNodeRingColor={'white'}
             nodeLabelAccessor={nodeLabelFunction}
             linkWidth={(link: Links) => link.influenceValue || 0.1}
             linkColor={'#666666'}
-            spaceSize={8192}
-            
+            spaceSize={8096}
+            simulationRepulsion={1.0}
+            simulationFriction={0.1} 
+            simulationLinkSpring={1} 
+            simulationLinkDistance={1.0}
+            simulationGravity={0.1}
           />
         </ContextMenuTrigger>
         <ContextMenuContent>
