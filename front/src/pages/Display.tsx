@@ -1,7 +1,7 @@
 // Display.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Cosmograph, CosmographSearch, useCosmograph } from '@cosmograph/react';
+import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 
 import {
@@ -12,13 +12,63 @@ import {
   ContextMenuShortcut,
 } from '@/components/ui/context-menu';
 
-type DisplayProps = {};
+interface DisplayProps {
+}
+
+const setColor = (value: boolean) => {
+  if (value) {
+    return '#88C6FF';
+  } else {
+    return '#FFD700';
+  }
+}
 
 const Display: React.FC<DisplayProps> = () => {
-  const cosmographContext = useCosmograph();
-  const cosmograph = cosmographContext?.cosmograph;
-  const nodes = cosmographContext?.nodes || [];
-  const links = cosmographContext?.links || [];
+  const timelineRef = useRef<CosmographTimelineRef<any>>(null);
+
+  const { cosmograph, nodes, links } = useCosmograph() || {};
+
+  const updateBeliefsBasedOnTimeline = () => {
+    const timeline = timelineRef.current;
+    if (!timeline || !cosmograph || !nodes ) return;
+
+    const selection = timeline.getCurrentSelection() as [Date, Date] | undefined;
+    if (selection) {
+      const [startDate, endDate] = selection;
+
+      const updatedNodes = nodes.map((node) => {
+        const customNode = node as Node;
+
+        const beliefEntry = customNode.beliefsOverTime?.find(
+          (entry) => entry.date >= startDate && entry.date <= endDate
+        );
+        const publicBeliefEntry = customNode.publicBeliefsOverTime?.find(
+          (entry) => entry.date >= startDate && entry.date <= endDate
+        );
+        const isSpeakingEntry = customNode.isSpeakingOverTime?.find(
+          (entry) => entry.date >= startDate && entry.date <= endDate
+        );
+
+        console.log('beliefEntry', beliefEntry);
+
+        return {
+          ...customNode,
+          belief: beliefEntry ? beliefEntry.value : customNode.belief,
+          publicBelief: publicBeliefEntry ? publicBeliefEntry.value : customNode.publicBelief,
+          isSpeaking: isSpeakingEntry ? isSpeakingEntry.value : customNode.isSpeaking,
+          color: isSpeakingEntry ? setColor(isSpeakingEntry.value) : customNode.color,
+        };
+      });
+
+      // Use setData to update nodes
+      cosmograph.setData(updatedNodes, links || [], true );
+    } else {
+      // Reset nodes to original state if no selection is made
+      cosmograph.setData(nodes || [], links || [], true );
+    }
+
+    timeline.setSelection(selection);
+  };
 
   const [labelButton, setLabelButton] = useState<string>('id');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +102,7 @@ const Display: React.FC<DisplayProps> = () => {
       cosmograph?.fitView(400);
       // Deseleccionar todos los nodos
       cosmograph?.unselectNodes();
-      cosmograph?.selectNodes(nodes);
+      cosmograph?.selectNodes(nodes || []);
       cosmograph?.setConfig();
     }
   };
@@ -90,22 +140,47 @@ const Display: React.FC<DisplayProps> = () => {
       tabIndex={0}
       style={{ outline: 'none', position: 'relative', width: '100%', height: '100%' }}
     >
-      <ContextMenu>
+      <ContextMenu>  
         <ContextMenuTrigger>
+        <CosmographTimeline
+            ref={timelineRef}
+            accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
+            animationSpeed={100}
+            showAnimationControls
+            onAnimationPlay={() => console.log('Animation started')}
+            // onAnimationPause={() => {
+            //   const timeline = timelineRef.current;
+            //   if (!timeline) return;
+            //   if (timeline.getIsAnimationRunning()) {
+            //     timeline.stopAnimation();
+            //   } 
+            //   updateBeliefsBasedOnTimeline();
+            // }}
+          />
+        <CosmographHistogram 
+          accessor={(d: Node) => d.belief || 0}
+          allowSelection
+          barCount={6}
+        />  
           <Cosmograph
             nodes={nodes}
             links={links}
+            curvedLinks={true}
             disableSimulation={false}
             nodeColor={(node: Node) => node.color || '#b3b3b3'}
-            nodeSize={20}
+            nodeSize={2}
             nodeGreyoutOpacity={0.1}
             hoveredNodeRingColor={'red'}
             focusedNodeRingColor={'white'}
             nodeLabelAccessor={nodeLabelFunction}
             linkWidth={(link: Links) => link.influenceValue || 0.1}
             linkColor={'#666666'}
-            spaceSize={1024}
-            
+            spaceSize={8096}
+            simulationRepulsion={1.0}
+            simulationFriction={0.1} 
+            simulationLinkSpring={1} 
+            simulationLinkDistance={1.0}
+            simulationGravity={0.1}
           />
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -138,6 +213,24 @@ const Display: React.FC<DisplayProps> = () => {
             alignItems: 'center',
           }}
         >
+          <button
+            onClick={() => {
+              const timeline = timelineRef.current;
+              if (!timeline) return;
+              if (timeline.getIsAnimationRunning()) {
+                timeline.stopAnimation();
+              } 
+              updateBeliefsBasedOnTimeline();
+              // timeline.setConfig();
+            }}
+            style={{
+              marginLeft: '5px',
+              padding: '5px',
+              cursor: 'pointer',
+            }}
+          >
+            Actualizar
+          </button>
           <CosmographSearch
             ref={cosmographSearchRef}
             placeholder="Buscar nodos..."
