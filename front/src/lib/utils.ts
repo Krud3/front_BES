@@ -7,15 +7,15 @@ export function cn(...inputs: ClassValue[]) {
 
 export const setNodeColor = (value: number) => {
   if (value >= 0 && value < 0.2) {
-    return '#ffe252';
+    return '#ddc947';
   } else if (value >= 0.2 && value < 0.4) {
-    return '#FABC3F';
+    return '#dbb339';
   } else if (value >= 0.4 && value < 0.6) {
-    return '#E85C0D';
+    return '#daa03c';
   } else if (value >= 0.6 && value < 0.8) {
-    return '#C7253E';
+    return '#db893d';
   } else if (value >= 0.8 && value <= 1){
-    return '#821131';
+    return '#dd6d3d';
   } else {
     return '#88C6FF';
   }
