@@ -127,6 +127,8 @@ const Display: React.FC<DisplayProps> = () => {
     }
   };
 
+  const colors = ['#F1F0E8', '#E5E1DA', '#B3C8CF', '#89A8B2', '#5a9bb0'];
+
   return (
     <div
       ref={containerRef}
@@ -145,8 +147,8 @@ const Display: React.FC<DisplayProps> = () => {
               hoveredNodeRingColor={'red'}
               focusedNodeRingColor={'white'}
               nodeLabelAccessor={nodeLabelFunction}
-              linkWidth={(link: Links) => link.influenceValue || 0.1}
-              linkColor={'#666666'}
+              linkWidth={(link: Links) => (link.influenceValue || 0.1)*2}
+              linkColor={(link: Links) => colors[Math.floor((link.influenceValue || 0.1) * colors.length)]}
               spaceSize={8096}
               simulationRepulsion={1.0}
               simulationFriction={0.1} 
