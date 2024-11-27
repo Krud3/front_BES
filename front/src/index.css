@@ -27,8 +27,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
-  ;
+    --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -36,7 +35,17 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --cosmograph-histogram-bar-color-0: #ffe252;
+    --cosmograph-histogram-bar-color-1: #FABC3F;
+    --cosmograph-histogram-bar-color-2: #E85C0D;
+    --cosmograph-histogram-bar-color-3: #C7253E;
+    --cosmograph-histogram-bar-color-4: #821131be;
+    --cosmograph-histogram-bar-color-5: #88C6FF;
+    --cosmograph-histogram-background: #22222200;
+    --cosmograph-timeline-bar-color-0: #ffe669be;
+    --cosmograph-timeline-background: #22222200;
+  }
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

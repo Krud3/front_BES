@@ -135,44 +135,49 @@ const Display: React.FC<DisplayProps> = () => {
     >
       <ContextMenu>  
         <ContextMenuTrigger>
-        <CosmographTimeline
-            ref={timelineRef}
-            accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
-            animationSpeed={100}
-            showAnimationControls
-            onAnimationPlay={() => console.log('Animation started')}
-            // onAnimationPause={() => {
-            //   const timeline = timelineRef.current;
-            //   if (!timeline) return;
-            //   if (timeline.getIsAnimationRunning()) {
-            //     timeline.stopAnimation();
-            //   } 
-            //   updateBeliefsBasedOnTimeline();
-            // }}
-          />
-        <CosmographHistogram 
-          accessor={(d: Node) => d.belief || 0}
-          allowSelection
-          barCount={6}
-        />  
-          <Cosmograph
-            curvedLinks={true}
-            disableSimulation={false}
-            nodeColor={(node: Node) => node.color || '#b3b3b3'}
-            nodeSize={2}
-            nodeGreyoutOpacity={0.1}
-            hoveredNodeRingColor={'red'}
-            focusedNodeRingColor={'white'}
-            nodeLabelAccessor={nodeLabelFunction}
-            linkWidth={(link: Links) => link.influenceValue || 0.1}
-            linkColor={'#666666'}
-            spaceSize={8096}
-            simulationRepulsion={1.0}
-            simulationFriction={0.1} 
-            simulationLinkSpring={1} 
-            simulationLinkDistance={1.0}
-            simulationGravity={0.1}
-          />
+          <div className="relative w-full h-full">
+            <Cosmograph
+              curvedLinks={true}
+              disableSimulation={false}
+              nodeColor={(node: Node) => node.color || '#b3b3b3'}
+              nodeSize={2}
+              nodeGreyoutOpacity={0.1}
+              hoveredNodeRingColor={'red'}
+              focusedNodeRingColor={'white'}
+              nodeLabelAccessor={nodeLabelFunction}
+              linkWidth={(link: Links) => link.influenceValue || 0.1}
+              linkColor={'#666666'}
+              spaceSize={8096}
+              simulationRepulsion={1.0}
+              simulationFriction={0.1} 
+              simulationLinkSpring={1} 
+              simulationLinkDistance={1.0}
+              simulationGravity={0.1}
+              className="z-10 w-full h-full"
+            />
+            <div className=" flex-column absolute bottom-0 left-0 z-20 w-full">
+              <CosmographHistogram 
+                accessor={(d: Node) => d.belief || 0}
+                allowSelection
+                barCount={6}
+                className='histogram w-1/4'
+                style={{
+                  '--cosmograph-histogram-bar-color': `var(--cosmograph-histogram-bar-color-4)`,
+                }}
+              />
+              <CosmographTimeline
+                  ref={timelineRef}
+                  accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
+                  animationSpeed={100}
+                  showAnimationControls
+                  onAnimationPlay={() => console.log('Animation started')}
+                  className='timeline w-full'
+                  style={{
+                    '--cosmograph-timeline-bar-color': `var(--cosmograph-timeline-bar-color-0)`,
+                  }}
+                />
+            </div>  
+          </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onSelect={() => setLabelButton('belief')}>
