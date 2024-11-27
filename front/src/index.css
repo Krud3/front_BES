@@ -45,6 +45,7 @@
     --cosmograph-histogram-background: #22222200;
     --cosmograph-timeline-bar-color-0: #ffe669be;
     --cosmograph-timeline-background: #22222200;
+    --cosmograph-search-input-background: #22222200;
   }
   .dark {
     --background: 222.2 84% 4.9%;
