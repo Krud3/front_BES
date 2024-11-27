@@ -127,7 +127,7 @@ const Display: React.FC<DisplayProps> = () => {
     }
   };
 
-  const colors = ['#F1F0E8', '#E5E1DA', '#B3C8CF', '#89A8B2', '#5a9bb0'];
+  const colors = ['#385357', '#4B7076', '#5E8B92', '#70A6AE', '#82C1CB'];
 
   return (
     <div
@@ -165,7 +165,7 @@ const Display: React.FC<DisplayProps> = () => {
                   barCount={6}
                   className='histogram w-1/4 backdrop-blur ml-auto'
                   style={{
-                    '--cosmograph-histogram-bar-color': `var(--cosmograph-histogram-bar-color-4)`,
+                    '--cosmograph-histogram-bar-color': `var(--cosmograph-histogram-bar-color-3)`,
                   }}
                 />
                 <CosmographTimeline
