@@ -42,13 +42,13 @@
     --cosmograph-histogram-bar-color-3: #C7253E;
     --cosmograph-histogram-bar-color-4: #821131be;
     --cosmograph-histogram-bar-color-5: #88C6FF; */
-    --cosmograph-histogram-bar-color-0: #ddc947;
-    --cosmograph-histogram-bar-color-1: #dbb339;
-    --cosmograph-histogram-bar-color-2: #daa03c;
-    --cosmograph-histogram-bar-color-3: #db893d;
-    --cosmograph-histogram-bar-color-4: #dd6d3d;
+    --cosmograph-histogram-bar-color-0: #daa03c;
+    --cosmograph-histogram-bar-color-1: #db893d;
+    --cosmograph-histogram-bar-color-2: #dd7d3d;
+    --cosmograph-histogram-bar-color-3: #db7438;
+    --cosmograph-histogram-bar-color-4: #dd6734;
     --cosmograph-histogram-background: #22222200;
-    --cosmograph-timeline-bar-color-0: #daa03c;
+    --cosmograph-timeline-bar-color-0: #db893d;
     --cosmograph-timeline-background: #22222200;
     --cosmograph-search-input-background: #22222200;
   }

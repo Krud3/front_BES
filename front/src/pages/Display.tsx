@@ -127,7 +127,7 @@ const Display: React.FC<DisplayProps> = () => {
     }
   };
 
-  const colors = ['#125763', '#177282', '#198a9e', '#21a7bf', '#21c0db'];
+  const colors = ['#385357', '#4B7076', '#5E8B92', '#70A6AE', '#82C1CB'];
 
   return (
     <div
