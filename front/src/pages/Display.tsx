@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
+import { setNodeColor } from '@/lib/utils';
 
 import {
   ContextMenu,
@@ -13,14 +14,6 @@ import {
 } from '@/components/ui/context-menu';
 
 interface DisplayProps {
-}
-
-const setColor = (value: boolean) => {
-  if (value) {
-    return '#88C6FF';
-  } else {
-    return '#FFD700';
-  }
 }
 
 const Display: React.FC<DisplayProps> = () => {
@@ -56,7 +49,7 @@ const Display: React.FC<DisplayProps> = () => {
           belief: beliefEntry ? beliefEntry.value : customNode.belief,
           publicBelief: publicBeliefEntry ? publicBeliefEntry.value : customNode.publicBelief,
           isSpeaking: isSpeakingEntry ? isSpeakingEntry.value : customNode.isSpeaking,
-          color: isSpeakingEntry ? setColor(isSpeakingEntry.value) : customNode.color,
+          color: beliefEntry ? setNodeColor(beliefEntry.value) : customNode.color,
         };
       });
 
@@ -163,8 +156,6 @@ const Display: React.FC<DisplayProps> = () => {
           barCount={6}
         />  
           <Cosmograph
-            nodes={nodes}
-            links={links}
             curvedLinks={true}
             disableSimulation={false}
             nodeColor={(node: Node) => node.color || '#b3b3b3'}
