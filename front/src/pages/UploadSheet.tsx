@@ -8,6 +8,7 @@ import Papa from 'papaparse';
 import { useNavigate, Link } from 'react-router-dom';
 import { Node, Links } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { setNodeColor } from '@/lib/utils';
 
 interface UploadSheetProps {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
@@ -61,7 +62,8 @@ const UploadSheet: React.FC<UploadSheetProps> = ({ setNodes, setLinks }) => {
                 id: agentId,
                 // x,
                 // y,
-                color: isSpeaking? '#88C6FF' : '#FFD700',
+                // color: isSpeaking? '#88C6FF' : '#FFD700',
+                color: setNodeColor(belief),
                 belief, // Set initial belief
                 publicBelief,
                 isSpeaking,

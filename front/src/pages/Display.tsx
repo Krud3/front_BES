@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
+import { setNodeColor } from '@/lib/utils';
 
 import {
   ContextMenu,
@@ -13,14 +14,6 @@ import {
 } from '@/components/ui/context-menu';
 
 interface DisplayProps {
-}
-
-const setColor = (value: boolean) => {
-  if (value) {
-    return '#88C6FF';
-  } else {
-    return '#FFD700';
-  }
 }
 
 const Display: React.FC<DisplayProps> = () => {
@@ -56,7 +49,7 @@ const Display: React.FC<DisplayProps> = () => {
           belief: beliefEntry ? beliefEntry.value : customNode.belief,
           publicBelief: publicBeliefEntry ? publicBeliefEntry.value : customNode.publicBelief,
           isSpeaking: isSpeakingEntry ? isSpeakingEntry.value : customNode.isSpeaking,
-          color: isSpeakingEntry ? setColor(isSpeakingEntry.value) : customNode.color,
+          color: beliefEntry ? setNodeColor(beliefEntry.value) : customNode.color,
         };
       });
 
@@ -134,6 +127,8 @@ const Display: React.FC<DisplayProps> = () => {
     }
   };
 
+  const colors = ['#F1F0E8', '#E5E1DA', '#B3C8CF', '#89A8B2', '#5a9bb0'];
+
   return (
     <div
       ref={containerRef}
@@ -142,46 +137,91 @@ const Display: React.FC<DisplayProps> = () => {
     >
       <ContextMenu>  
         <ContextMenuTrigger>
-        <CosmographTimeline
-            ref={timelineRef}
-            accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
-            animationSpeed={100}
-            showAnimationControls
-            onAnimationPlay={() => console.log('Animation started')}
-            // onAnimationPause={() => {
-            //   const timeline = timelineRef.current;
-            //   if (!timeline) return;
-            //   if (timeline.getIsAnimationRunning()) {
-            //     timeline.stopAnimation();
-            //   } 
-            //   updateBeliefsBasedOnTimeline();
-            // }}
-          />
-        <CosmographHistogram 
-          accessor={(d: Node) => d.belief || 0}
-          allowSelection
-          barCount={6}
-        />  
-          <Cosmograph
-            nodes={nodes}
-            links={links}
-            curvedLinks={true}
-            disableSimulation={false}
-            nodeColor={(node: Node) => node.color || '#b3b3b3'}
-            nodeSize={2}
-            nodeGreyoutOpacity={0.1}
-            hoveredNodeRingColor={'red'}
-            focusedNodeRingColor={'white'}
-            nodeLabelAccessor={nodeLabelFunction}
-            linkWidth={(link: Links) => link.influenceValue || 0.1}
-            linkColor={'#666666'}
-            spaceSize={8096}
-            simulationRepulsion={1.0}
-            simulationFriction={0.1} 
-            simulationLinkSpring={1} 
-            simulationLinkDistance={1.0}
-            simulationGravity={0.1}
-          />
+          <div className="relative w-full h-full">
+            <Cosmograph
+              curvedLinks={true}
+              disableSimulation={false}
+              nodeColor={(node: Node) => node.color || '#b3b3b3'}
+              nodeSize={2}
+              nodeGreyoutOpacity={0.1}
+              hoveredNodeRingColor={'red'}
+              focusedNodeRingColor={'white'}
+              nodeLabelAccessor={nodeLabelFunction}
+              linkWidth={(link: Links) => (link.influenceValue || 0.1)*2}
+              linkColor={(link: Links) => colors[Math.floor((link.influenceValue || 0.1) * colors.length)]}
+              spaceSize={8096}
+              simulationRepulsion={1.0}
+              simulationFriction={0.1} 
+              simulationLinkSpring={1} 
+              simulationLinkDistance={1.0}
+              simulationGravity={0.1}
+              className="z-10 w-full h-full"
+            />
+            {nodes && nodes.length> 0 && 
+              <div className=" flex-column absolute bottom-0 left-0 z-20 w-full px-1 space-y-2">
+                <CosmographHistogram 
+                  accessor={(d: Node) => d.belief || 0}
+                  allowSelection
+                  barCount={6}
+                  className='histogram w-1/4 backdrop-blur ml-auto'
+                  style={{
+                    '--cosmograph-histogram-bar-color': `var(--cosmograph-histogram-bar-color-4)`,
+                  }}
+                />
+                <CosmographTimeline
+                    ref={timelineRef}
+                    accessor={(l: Links) => l.date || new Date("2000-01-01T00:00:00Z")}
+                    animationSpeed={100}
+                    showAnimationControls
+                    onAnimationPlay={() => console.log('Animation started')}
+                    className='timeline w-full backdrop-blur'
+                    style={{
+                      '--cosmograph-timeline-bar-color': `var(--cosmograph-timeline-bar-color-0)`,
+                    }}
+                  />
+              </div>
+            }
+            {nodes && nodes.length > 0 && 
+              <div className='flex absolute top-0 right-0 z-20 w-auto py-1 space-x-2 justify-end backdrop-blur'>
+                <button
+                  onClick={() => {
+                    const timeline = timelineRef.current;
+                    if (!timeline) return;
+                    if (timeline.getIsAnimationRunning()) {
+                      timeline.stopAnimation();
+                    } 
+                    updateBeliefsBasedOnTimeline();
+                    // timeline.setConfig();
+                  }}
+                  className="ml-1 px-2 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
+                >
+                  Actualizar
+                </button>
+                <CosmographSearch
+                  ref={cosmographSearchRef}
+                  placeholder="Buscar nodos..."
+                  style={{ minWidth: '200px' }}
+                  onSelectResult={(node?: Node) => {
+                    if (node) {
+                      cosmograph?.selectNode(node);
+                      cosmograph?.zoomToNode(node);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    cosmographSearchRef.current?.clearInput();
+                    cosmograph?.fitView(400);
+                    // Deseleccionar todos los nodos
+                    cosmograph?.unselectNodes();
+                  }}
+                  className="ml-1 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
+                >
+                  X
+                </button>
+              </div>
+            }
+          </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onSelect={() => setLabelButton('belief')}>
@@ -202,63 +242,6 @@ const Display: React.FC<DisplayProps> = () => {
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
-      {nodes && nodes.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          <button
-            onClick={() => {
-              const timeline = timelineRef.current;
-              if (!timeline) return;
-              if (timeline.getIsAnimationRunning()) {
-                timeline.stopAnimation();
-              } 
-              updateBeliefsBasedOnTimeline();
-              // timeline.setConfig();
-            }}
-            style={{
-              marginLeft: '5px',
-              padding: '5px',
-              cursor: 'pointer',
-            }}
-          >
-            Actualizar
-          </button>
-          <CosmographSearch
-            ref={cosmographSearchRef}
-            placeholder="Buscar nodos..."
-            style={{ minWidth: '200px' }}
-            onSelectResult={(node?: Node) => {
-              if (node) {
-                cosmograph?.selectNode(node);
-                cosmograph?.zoomToNode(node);
-              }
-            }}
-          />
-          <button
-            onClick={() => {
-              cosmographSearchRef.current?.clearInput();
-              cosmograph?.fitView(400);
-              // Deseleccionar todos los nodos
-              cosmograph?.unselectNodes();
-            }}
-            style={{
-              marginLeft: '5px',
-              padding: '5px',
-              cursor: 'pointer',
-            }}
-          >
-            X
-          </button>
-        </div>
-      )}
     </div>
   );
 };
