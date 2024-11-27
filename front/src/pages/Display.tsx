@@ -156,12 +156,12 @@ const Display: React.FC<DisplayProps> = () => {
               className="z-10 w-full h-full"
             />
             {nodes && nodes.length> 0 && 
-              <div className=" flex-column absolute bottom-0 left-0 z-20 w-full ">
+              <div className=" flex-column absolute bottom-0 left-0 z-20 w-full px-1 space-y-2">
                 <CosmographHistogram 
                   accessor={(d: Node) => d.belief || 0}
                   allowSelection
                   barCount={6}
-                  className='histogram w-1/4 backdrop-blur'
+                  className='histogram w-1/4 backdrop-blur ml-auto'
                   style={{
                     '--cosmograph-histogram-bar-color': `var(--cosmograph-histogram-bar-color-4)`,
                   }}
@@ -180,7 +180,7 @@ const Display: React.FC<DisplayProps> = () => {
               </div>
             }
             {nodes && nodes.length > 0 && 
-              <div className='flex absolute top-0 right-0 z-20 w-1/4 py-1 space-x-2 backdrop-blur' >
+              <div className='flex absolute top-0 right-0 z-20 w-auto py-1 space-x-2 justify-end backdrop-blur'>
                 <button
                   onClick={() => {
                     const timeline = timelineRef.current;
