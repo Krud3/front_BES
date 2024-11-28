@@ -3,7 +3,7 @@
 import sys
 import json
 import numpy as np
-from measures.metrics.literature import Experts
+from measures.metrics.literature import EstebanRay
 
 def bucket_belief(value):
     if value <= 0.125:
@@ -32,10 +32,10 @@ def calculate_polarization(nodes):
     unique_beliefs, distribution = calculate_distribution(nodes)
     
     # Create measure instance
-    expert = Experts()
+    er = EstebanRay()
     
     # Calculate polarization using the Experts metric
-    polarization = expert(unique_beliefs, distribution)
+    polarization = er(unique_beliefs, distribution)
     return polarization
 
 if __name__ == "__main__":

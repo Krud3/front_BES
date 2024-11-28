@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 import { setNodeColor } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 import {
   ContextMenu,
@@ -201,8 +202,9 @@ const Display: React.FC<DisplayProps> = () => {
               </div>
             }
             {nodes && nodes.length > 0 && 
-              <div className='flex absolute top-0 right-0 z-20 w-auto py-1 space-x-2 justify-end backdrop-blur'>
-                <button
+              <div className='flex absolute text-md font-medium top-0 right-0 z-20 w-auto py-1 px-2 space-x-2 justify-end backdrop-blur' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <Button
+                  variant="outline"
                   onClick={() => {
                     const timeline = timelineRef.current;
                     if (!timeline) return;
@@ -212,25 +214,27 @@ const Display: React.FC<DisplayProps> = () => {
                     updateBeliefsBasedOnTimeline();
                     // timeline.setConfig();
                   }}
-                  className="ml-1 px-2 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
+                  className="ml-1 px-2 py-1 bg-transparent transition-colors rounded hover:bg-cyan-500 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
                 >
                   Actualizar
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={handleCalculatePolarization}
-                  className="ml-1 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 cursor-pointer"
+                  className="ml-1 px-2 py-1 bg-transparent transition-colors text-white rounded hover:bg-green-500 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 cursor-pointer"
                 >
                   Calcular Polarización
-                </button>
+                </Button>
                 {polarization !== null && (
-                  <div className="ml-2 px-2 py-1 bg-gray-200 text-black rounded">
+                  <div className="ml-2 px-2 py-1 bg-transparent text-white" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                     Polarización: {polarization.toFixed(6)}
                   </div>
                 )}
                 <CosmographSearch
                   ref={cosmographSearchRef}
                   placeholder="Buscar nodos..."
-                  style={{ minWidth: '200px' }}
+                  // style={{ margin: '0 0rem' }}
+                  // className="w-48 h-12"
                   onSelectResult={(node?: Node) => {
                     if (node) {
                       cosmograph?.selectNode(node);
@@ -238,17 +242,18 @@ const Display: React.FC<DisplayProps> = () => {
                     }
                   }}
                 />
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => {
                     cosmographSearchRef.current?.clearInput();
                     cosmograph?.fitView(400);
                     // Deseleccionar todos los nodos
                     cosmograph?.unselectNodes();
                   }}
-                  className="ml-1 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
+                  className="ml-1 px-2 py-1 bg-transparent transition-colors text-white rounded hover:bg-red-600 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
                 >
                   X
-                </button>
+                </Button>
               </div>
             }
           </div>
