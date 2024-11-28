@@ -107,7 +107,7 @@ const UploadSheet: React.FC<UploadSheetProps> = ({ setNodes, setLinks }) => {
         const graph = await parseCSVToNodes(selectedFile);
         setNodes(graph.nodes);
         setLinks(graph.links);
-        navigate('/cosmograph');
+        navigate('/board/cosmograph');
       } catch (error) {
         console.error('Error parsing CSV:', error);
         alert('Hubo un error al procesar el archivo CSV. Por favor, intenta de nuevo.');
