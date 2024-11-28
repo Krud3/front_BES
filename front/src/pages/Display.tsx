@@ -42,8 +42,6 @@ const Display: React.FC<DisplayProps> = () => {
           (entry) => entry.date >= startDate && entry.date <= endDate
         );
 
-        console.log('beliefEntry', beliefEntry);
-
         return {
           ...customNode,
           belief: beliefEntry ? beliefEntry.value : customNode.belief,
@@ -129,6 +127,27 @@ const Display: React.FC<DisplayProps> = () => {
 
   const colors = ['#385357', '#4B7076', '#5E8B92', '#70A6AE', '#82C1CB'];
 
+  const [polarization, setPolarization] = useState<number | null>(null);
+
+  const handleCalculatePolarization = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/process_nodes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(nodes),
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const result = await response.json();
+      setPolarization(result.polarization);
+    } catch (error) {
+      console.error('Failed to fetch:', error);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -150,10 +169,10 @@ const Display: React.FC<DisplayProps> = () => {
               linkWidth={(link: Links) => (link.influenceValue || 0.1)*2}
               linkColor={(link: Links) => colors[Math.floor((link.influenceValue || 0.1) * colors.length)]}
               spaceSize={8096}
-              simulationRepulsion={1.0}
+              simulationRepulsion={2.0}
               simulationFriction={0.1} 
-              simulationLinkSpring={1} 
-              simulationLinkDistance={1.0}
+              simulationLinkSpring={2} 
+              simulationLinkDistance={2.0}
               simulationGravity={0.1}
               className="z-10 w-full h-full"
             />
@@ -197,6 +216,17 @@ const Display: React.FC<DisplayProps> = () => {
                 >
                   Actualizar
                 </button>
+                <button
+                  onClick={handleCalculatePolarization}
+                  className="ml-1 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 cursor-pointer"
+                >
+                  Calcular Polarización
+                </button>
+                {polarization !== null && (
+                  <div className="ml-2 px-2 py-1 bg-gray-200 text-black rounded">
+                    Polarización: {polarization.toFixed(6)}
+                  </div>
+                )}
                 <CosmographSearch
                   ref={cosmographSearchRef}
                   placeholder="Buscar nodos..."
