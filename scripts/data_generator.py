@@ -23,14 +23,16 @@ start_date = datetime(2024, 1, 1)
 
 # Define weighted values and their corresponding weights
 belief_values = [0, 0.25, 0.5, 0.75, 1]
-weights = [4, 1, 0, 1, 4]  # Adjust these weights to change the distribution
+weights = [4, 0, 0, 0, 4]  # Adjust these weights to change the distribution
 
 for round_num in range(num_rounds):
     for i in range(num_nodes):
         agent_id = uuids[i]
         is_speaking = random.choice([True, False])
         belief = round(random.choices(belief_values, weights)[0] + random.uniform(-0.05, 0.05), 7)
+        belief = max(0, min(1, belief))  # Clamp value between 0 and 1
         public_belief = round(random.choices(belief_values, weights)[0] + random.uniform(-0.05, 0.05), 7)
+        public_belief = max(0, min(1, public_belief))  # Clamp value between 0 and 1
         created_at = start_date + timedelta(days=round_num)
         source_id = agent_id
         target_id = random.choice(uuids)
@@ -42,7 +44,7 @@ for round_num in range(num_rounds):
         ])
 
 # Write to CSV
-with open(f'graph_data_{num_nodes}_{num_rounds}.csv', mode='w', newline='') as file:
+with open(f'../front/public/csv/graph_data_{num_nodes}_{num_rounds}.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow([
         'agent_id', 'round', 'is_speaking', 'belief', 'public_belief',
