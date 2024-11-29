@@ -84,7 +84,7 @@ const UploadSheet: React.FC<UploadSheetProps> = ({ setNodes, setLinks }) => {
             const influenceValue = parseFloat(row.influence_value || '0');
   
             // Create a link with the roundDate as the temporal attribute
-            if (source && target) {
+            if (source && target && isSpeaking) {
               links.push({
                 source,
                 target,

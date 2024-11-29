@@ -159,7 +159,7 @@ const Display: React.FC<DisplayProps> = () => {
         <ContextMenuTrigger>
           <div className="relative w-full h-full">
             <Cosmograph
-              curvedLinks={true}
+              curvedLinks={false}
               disableSimulation={false}
               nodeColor={(node: Node) => node.color || '#b3b3b3'}
               nodeSize={2}
@@ -170,9 +170,9 @@ const Display: React.FC<DisplayProps> = () => {
               linkWidth={(link: Links) => (link.influenceValue || 0.1)*2}
               linkColor={(link: Links) => colors[Math.floor((link.influenceValue || 0.1) * colors.length)]}
               spaceSize={8096}
-              simulationRepulsion={2.0}
+              simulationRepulsion={4.0}
               simulationFriction={0.1} 
-              simulationLinkSpring={2} 
+              simulationLinkSpring={1} 
               simulationLinkDistance={2.0}
               simulationGravity={0.1}
               className="z-10 w-full h-full"
