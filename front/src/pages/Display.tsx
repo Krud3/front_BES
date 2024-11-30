@@ -239,7 +239,7 @@ const Display: React.FC<DisplayProps> = () => {
               className="z-10 w-full h-full"
             />
             {nodes && nodes.length> 0 && 
-              <div className=" flex-column absolute bottom-0 left-0 z-20 w-full px-1 py-1 space-y-1">
+              <div className=" flex-column absolute bottom-0 left-0 z-20 w-full px-1 py-1 space-y-1" style={{ pointerEvents: 'none' }}>
                 <CosmographHistogram 
                   accessor={(d: Node) => d.belief || 0}
                   allowSelection
