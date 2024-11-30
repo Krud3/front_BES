@@ -22,6 +22,8 @@ const Display: React.FC<DisplayProps> = () => {
 
   const { cosmograph, nodes, links } = useCosmograph() || {};
 
+  const [selectedDateRange, setSelectedDateRange] = useState<[Date, Date] | undefined>(undefined);
+
   const updateBeliefsBasedOnTimeline = () => {
     const timeline = timelineRef.current;
     if (!timeline || !cosmograph || !nodes ) return;
@@ -111,20 +113,78 @@ const Display: React.FC<DisplayProps> = () => {
     };
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    const updateBeliefsBasedOnTimeline = () => {
+      const timeline = timelineRef.current;
+      if (!timeline || !cosmograph || !nodes) return;
+
+      const selection = timeline.getCurrentSelection() as [Date, Date] | undefined;
+      setSelectedDateRange(selection);
+
+      timeline.setSelection(selection);
+    };
+    
+    const intervalId = setInterval(() => {
+      const timeline = timelineRef.current;
+      if (!timeline) return;
+
+      const selection = timeline.getCurrentSelection() as [Date, Date] | undefined;
+      if (selection && selection !== selectedDateRange) {
+        setSelectedDateRange(selection);
+      }
+    }, 100);
+
+    return () => clearInterval(intervalId);
+  }, [timelineRef, cosmograph, nodes, selectedDateRange]);
+
   const nodeLabelFunction = (d: Node) => {
-    switch (labelButton) {
-      case 'belief':
-        return d.belief !== undefined ? d.belief.toFixed(2) : '';
-      case 'publicBelief':
-        return d.publicBelief !== undefined ? d.publicBelief.toFixed(2) : '';
-      case 'isSpeaking':
-        return d.isSpeaking !== undefined ? d.isSpeaking.toString() : '';
-      case 'id':
-        return d.id || '';
-      default:
-        return d.id || '';
+    if (selectedDateRange) {
+      const [startDate, endDate] = selectedDateRange;
+  
+      const beliefEntry = d.beliefsOverTime?.find(
+        (entry) => entry.date >= startDate && entry.date <= endDate
+      );
+      const publicBeliefEntry = d.publicBeliefsOverTime?.find(
+        (entry) => entry.date >= startDate && entry.date <= endDate
+      );
+      const isSpeakingEntry = d.isSpeakingOverTime?.find(
+        (entry) => entry.date >= startDate && entry.date <= endDate
+      );
+
+      switch (labelButton) {
+        case 'belief':
+          return beliefEntry ? beliefEntry.value.toFixed(2) : (d.belief !== undefined ? d.belief.toFixed(2) : '');
+        case 'publicBelief':
+          return publicBeliefEntry ? publicBeliefEntry.value.toFixed(2) : (d.publicBelief !== undefined ? d.publicBelief.toFixed(2) : '');
+        case 'isSpeaking':
+          return isSpeakingEntry ? isSpeakingEntry.value.toString() : (d.isSpeaking !== undefined ? d.isSpeaking.toString() : '');
+        case 'id':
+          return d.id || '';
+        default:
+          return d.id || '';
+      }
+    } else {
+      switch (labelButton) {
+        case 'belief':
+          return d.belief !== undefined ? d.belief.toFixed(2) : '';
+        case 'publicBelief':
+          return d.publicBelief !== undefined ? d.publicBelief.toFixed(2) : '';
+        case 'isSpeaking':
+          return d.isSpeaking !== undefined ? d.isSpeaking.toString() : '';
+        case 'id':
+          return d.id || '';
+        default:
+          return d.id || '';
+      }
     }
   };
+
+  // Pass the nodeLabelFunction to the cosmograph instance
+  useEffect(() => {
+    cosmograph?.setConfig({
+      nodeLabelAccessor: nodeLabelFunction,
+    });
+  }, [cosmograph, nodeLabelFunction, labelButton, selectedDateRange]);
 
   const colors = ['#385357', '#4B7076', '#5E8B92', '#70A6AE', '#82C1CB'];
 
