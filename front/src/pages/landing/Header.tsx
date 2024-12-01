@@ -12,12 +12,12 @@ const Header: React.FC = () => {
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6">
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-        <Logo className="h-10 w-10" />
+        <Logo className="h-9 w-9" />
         <span className="sr-only">BES</span>
       </Link>
 
       {/* Navegación para pantallas grandes */}
-      <nav className="hidden md:flex md:flex-1 justify-center gap-6 text-lg font-medium">
+      <nav className="hidden md:flex md:flex-1 justify-center gap-6 text-lg font-medium ">
         <Link to="#introduction" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
           Introduction
         </Link>
@@ -86,7 +86,7 @@ const Header: React.FC = () => {
         </DropdownMenu>
 
         {/* Cambiar tema */}
-        <ModeToggle />
+        {/*<ModeToggle />*/}
       </div>
     </header>
   );

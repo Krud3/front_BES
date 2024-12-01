@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { CosmographProvider } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 import Board from '@/pages/Board';
@@ -8,7 +8,28 @@ import Display from '@/pages/Display';
 import Home from '@/pages/landing/Home';
 import NotFound from '@/pages/not-found';
 import OnConstruction from './pages/on-construction';
+import { useTheme } from '@/components/theme-provider';
 
+import { ReactNode } from 'react';
+
+interface ThemeManagerProps {
+  children: ReactNode;
+}
+
+const ThemeManager: React.FC<ThemeManagerProps> = ({ children }) => {
+  const location = useLocation();
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/board')) {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+  }, [location.pathname, setTheme]);
+
+  return <>{children}</>;
+};
 
 const App: React.FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -17,21 +38,23 @@ const App: React.FC = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route
-            path="/board"
-            element={
-              <CosmographProvider nodes={nodes} links={links}>
-                <Board setNodes={setNodes} setLinks={setLinks} />
-              </CosmographProvider>
-            }
-          >
-            <Route path="cosmograph" element={<Display />} />
-          </Route>
-          <Route path='*' element={<NotFound/>}/>
-          <Route path='/wiki' element={<OnConstruction/>}/>
-        </Routes>
+        <ThemeManager>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route
+              path="/board"
+              element={
+                <CosmographProvider nodes={nodes} links={links}>
+                  <Board setNodes={setNodes} setLinks={setLinks} />
+                </CosmographProvider>
+              }
+            >
+              <Route path="cosmograph" element={<Display />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+            <Route path="/wiki" element={<OnConstruction />} />
+          </Routes>
+        </ThemeManager>
       </Router>
     </ThemeProvider>
   );
