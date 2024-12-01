@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+
 import {
     Sheet,
     SheetClose,
@@ -85,9 +84,12 @@ interface PRSheetProps {
     };
   
     const handleViewData = () => {
-      // Implementa la lógica para ver los datos de la simulación seleccionada
-      alert(`Viewing data for ${selectedSimulation}`);
-    };
+        if (selectedSimulation) {
+          navigate('/board/table-data', { state: { simulation: selectedSimulation } });
+        } else {
+          alert('Please select a simulation before proceeding.');
+        }
+      }
   
     return (
       <Sheet>
@@ -96,7 +98,7 @@ interface PRSheetProps {
             Previous Results
           </Link>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[400px]">
+        <SheetContent side="left" className="w-[400px] overflow-y-auto">
           <Tabs defaultValue="results" className="w-full">
             <SheetHeader>
               <SheetTitle>Previous Results</SheetTitle>
@@ -117,6 +119,7 @@ interface PRSheetProps {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
+                  
                     <Table>
                       <TableCaption>List of available simulations.</TableCaption>
                       <TableHeader>
@@ -136,6 +139,7 @@ interface PRSheetProps {
                         ))}
                       </TableBody>
                     </Table>
+
                   </CardContent>
                   <CardFooter className="grid w-full grid-cols-2 gap-2">
                     <Button onClick={handleViewData} disabled={!selectedSimulation}>

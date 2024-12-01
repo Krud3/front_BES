@@ -32,15 +32,12 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
         <Logo className="h-9 w-9" />
         <span className="sr-only">BES</span>
       </Link>
-        <PRSheet setNodes={setNodes} setLinks={setLinks} />
-
-        <CSSHeet/>
-        {/* Uso del Componente UploadSheet */}
-        <UploadDialog setNodes={setNodes} setLinks={setLinks} />
-
-        <Link to="/products" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
-          User's Management
-        </Link>
+      <PRSheet setNodes={setNodes} setLinks={setLinks} />       
+      <CSSHeet/>
+      <UploadDialog setNodes={setNodes} setLinks={setLinks} />
+      <Link to="/user-management" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
+        User's Management
+      </Link>
       </nav>
 
       {/* Sheet para el menú móvil (hamburguesa) */}
@@ -55,19 +52,12 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
           <nav className="grid gap-6 text-lg font-medium">
             <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
               <Package2 className="h-6 w-6" />
-              <span className="sr-only">Acme Inc</span>
+              <span className="sr-only">BES</span>
             </Link>
-            <Link to="/dashboard" className="hover:text-foreground">
-              Previous Results
-            </Link>
-            <Link to="/orders" className="text-muted-foreground hover:text-foreground">
-              Create Simulation
-            </Link>
-
-            {/* Uso del Componente UploadSheet en el menú móvil */}
-            <UploadSheet setNodes={setNodes} setLinks={setLinks} />
-
-            <Link to="/products" className="text-muted-foreground hover:text-foreground">
+            <PRSheet setNodes={setNodes} setLinks={setLinks} />       
+            <CSSHeet/>
+            <UploadDialog setNodes={setNodes} setLinks={setLinks} />
+            <Link to="/user-management" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
               User's Management
             </Link>
           </nav>

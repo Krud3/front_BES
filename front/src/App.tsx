@@ -11,6 +11,7 @@ import OnConstruction from './pages/on-construction';
 import { useTheme } from '@/components/theme-provider';
 
 import { ReactNode } from 'react';
+import TableData from '@/pages/board/TableData';
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -50,6 +51,7 @@ const App: React.FC = () => {
               }
             >
               <Route path="cosmograph" element={<Display />} />
+              <Route path ="table-data" element={<TableData/>}/>
             </Route>
             <Route path="*" element={<NotFound />} />
             <Route path="/wiki" element={<OnConstruction />} />
