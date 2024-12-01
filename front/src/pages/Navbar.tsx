@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Node, Links } from '@/lib/types';
 import UploadSheet from '@/pages/UploadSheet'; // Asegúrate de la ruta correcta
+import { Logo } from '@/components/Logo';
 
 type NavbarProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
@@ -26,10 +27,10 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-        <Link to="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-          <Package2 className="h-6 w-6" />
-          <span className="sr-only">BES</span>
-        </Link>
+      <Link to="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
+        <Logo className="h-9 w-9" />
+        <span className="sr-only">BES</span>
+      </Link>
         <Link to="/dashboard" className="text-foreground transition-colors hover:text-foreground whitespace-nowrap">
           Previous Results
         </Link>
@@ -94,7 +95,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
               <DropdownMenuItem>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <ModeToggle />
+          {/*<ModeToggle />*/}
         </div>
       </div>
     </header>
