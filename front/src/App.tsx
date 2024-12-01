@@ -11,7 +11,7 @@ import OnConstruction from './pages/on-construction';
 import { useTheme } from '@/components/theme-provider';
 
 import { ReactNode } from 'react';
-import TableData from '@/pages/board/TableData';
+import TableData from '@/components/TableData';
 
 interface ThemeManagerProps {
   children: ReactNode;
