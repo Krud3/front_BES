@@ -32,7 +32,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
         <Logo className="h-9 w-9" />
         <span className="sr-only">BES</span>
       </Link>
-        <PRSheet/>
+        <PRSheet setNodes={setNodes} setLinks={setLinks} />
 
         <CSSHeet/>
         {/* Uso del Componente UploadSheet */}

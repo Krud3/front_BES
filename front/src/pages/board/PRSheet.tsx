@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,17 @@ import {
     SheetTitle,
     SheetTrigger,
   } from "@/components/ui/sheet"
+
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from "@/components/ui/table"
+  
 import {
   Tabs,
   TabsContent,
@@ -27,115 +38,135 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Node, Links } from '@/lib/types';
+import { parseCSVToNodes } from '@/lib/parseCSVToNodes';
 
-const PRSheet: React.FC = () => {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Link to="#" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
-          Previous Results
-        </Link>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[400px]">
-        <Tabs defaultValue="Simulations" className="w-full">
-          <SheetHeader>
+interface PRSheetProps {
+    setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+    setLinks: React.Dispatch<React.SetStateAction<Links[]>>;
+  }
 
-          <SheetTitle>Previous Results</SheetTitle>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="results">Simulations</TabsTrigger>
-              <TabsTrigger value="network">Network</TabsTrigger>
-              <TabsTrigger value="agent">Agent</TabsTrigger>
-            </TabsList>
-          </SheetHeader>
-
-          <TabsContent value="results">
-            <div className="py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Simulations</CardTitle>
-                  <CardDescription>
-                    Make changes to your Simulations here. Click save when you're done.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" defaultValue="Pedro Duarte" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="username">Username</Label>
-                    <Input id="username" defaultValue="@peduarte" />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button>Save changes</Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="network">
-            <div className="py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Network</CardTitle>
-                  <CardDescription>
-                    Change your Network here. After saving, you'll be logged out.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="current">Current Network</Label>
-                    <Input id="current" type="Network" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="new">New Network</Label>
-                    <Input id="new" type="Network" />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button>Save Network</Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </TabsContent>
-          <TabsContent value="agent">
-            <div className="py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Agent</CardTitle>
-                  <CardDescription>
-                    Change your Network here. After saving, you'll be logged out.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="current">Current Network</Label>
-                    <Input id="current" type="Network" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="new">New Network</Label>
-                    <Input id="new" type="Network" />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button>Save Network</Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <SheetFooter>
+  const PRSheet: React.FC<PRSheetProps> = ({ setNodes, setLinks }) => {
+    const [simulations, setSimulations] = useState<string[]>([]);
+    const [selectedSimulation, setSelectedSimulation] = useState<string | null>(null);
+    const navigate = useNavigate();
+  
+    // Cargar la lista de simulaciones desde 'public/simulations.json'
+    useEffect(() => {
+      const fetchSimulations = async () => {
+        try {
+          const response = await fetch('/simulations.json');
+          const data = await response.json();
+          setSimulations(data);
+        } catch (error) {
+          console.error('Error fetching simulations:', error);
+        }
+      };
+      fetchSimulations();
+    }, []);
+  
+    const handleViewGraph = async () => {
+      if (selectedSimulation) {
+        try {
+          const response = await fetch(`/csv/${selectedSimulation}`);
+          const csvText = await response.text();
+          const csvFile = new File([csvText], selectedSimulation, { type: 'text/csv' });
+          const graph = await parseCSVToNodes(csvFile);
+          setNodes(graph.nodes);
+          setLinks(graph.links);
+          navigate('/board/cosmograph');
+        } catch (error) {
+          console.error('Error loading CSV:', error);
+          alert('There was an error loading the CSV file. Please try again.');
+        }
+      } else {
+        alert('Please select a simulation before proceeding.');
+      }
+    };
+  
+    const handleViewData = () => {
+      // Implementa la lógica para ver los datos de la simulación seleccionada
+      alert(`Viewing data for ${selectedSimulation}`);
+    };
+  
+    return (
+      <Sheet>
+        <SheetTrigger asChild>
+          <Link to="#" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
+            Previous Results
+          </Link>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[400px]">
+          <Tabs defaultValue="results" className="w-full">
+            <SheetHeader>
+              <SheetTitle>Previous Results</SheetTitle>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="results">Simulations</TabsTrigger>
+                <TabsTrigger value="network">Network</TabsTrigger>
+                <TabsTrigger value="agent">Agent</TabsTrigger>
+              </TabsList>
+            </SheetHeader>
+  
+            <TabsContent value="results">
+              <div className="py-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Simulations</CardTitle>
+                    <CardDescription>
+                      Select a previous simulation to load, then click on View Data or View Graph.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableCaption>List of available simulations.</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">File</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {simulations.map((simulation, index) => (
+                          <TableRow
+                            key={index}
+                            className={`cursor-pointer ${selectedSimulation === simulation ? 'bg-accent' : ''}`}
+                            onClick={() => setSelectedSimulation(simulation)}
+                          >
+                            <TableCell className="font-medium">{simulation}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                  <CardFooter className="grid w-full grid-cols-2 gap-2">
+                    <Button onClick={handleViewData} disabled={!selectedSimulation}>
+                      View Data
+                    </Button>
+                    <Button onClick={handleViewGraph} disabled={!selectedSimulation}>
+                      View Graph
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </TabsContent>
+  
+            {/* Las otras pestañas pueden permanecer como están o ser modificadas según tus necesidades */}
+  
+            <TabsContent value="network">
+              {/* Contenido de la pestaña Network */}
+            </TabsContent>
+            <TabsContent value="agent">
+              {/* Contenido de la pestaña Agent */}
+            </TabsContent>
+  
             <SheetClose asChild>
               <Button variant="ghost" className="mt-4">
                 Close
               </Button>
             </SheetClose>
-          </SheetFooter>
-        </Tabs>
-      </SheetContent>
-    </Sheet>
-  );
-};
-
-export default PRSheet;
+          </Tabs>
+        </SheetContent>
+      </Sheet>
+    );
+  };
+  
+  export default PRSheet;
