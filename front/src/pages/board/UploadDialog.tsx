@@ -31,12 +31,11 @@ const UploadDialog: React.FC<UploadDialogProps> = ({ setNodes, setLinks }) => {
     setSelectedFile(file);
   };
 
-  const parseCSV = parseCSVToNodes;
 
   const handleProceed = async () => {
     if (selectedFile) {
       try {
-        const graph = await parseCSV(selectedFile);
+        const graph = await parseCSVToNodes(selectedFile);
         setNodes(graph.nodes);
         setLinks(graph.links);
         navigate('/board/cosmograph');

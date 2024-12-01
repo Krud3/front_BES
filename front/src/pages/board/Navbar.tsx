@@ -1,7 +1,7 @@
 // Navbar.tsx
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CircleUser, Menu, Package2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,12 +13,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { ModeToggle } from '@/components/mode-toggle';
 import { Node, Links } from '@/lib/types';
 import UploadSheet from '@/pages/board/UploadSheet'; // Asegúrate de la ruta correcta
 import { Logo } from '@/components/Logo';
-import UploadDialog from './UploadDialog';
-
+import UploadDialog from '@/pages/board/UploadDialog';
+import CSSHeet from '@/pages/board/CSSheet';
+import PRSheet from '@/pages/board/PRSheet';
 type NavbarProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setLinks: React.Dispatch<React.SetStateAction<Links[]>>;
@@ -32,13 +32,9 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
         <Logo className="h-9 w-9" />
         <span className="sr-only">BES</span>
       </Link>
-        <Link to="/dashboard" className="text-foreground transition-colors hover:text-foreground whitespace-nowrap">
-          Previous Results
-        </Link>
-        <Link to="/orders" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
-          Create Simulation
-        </Link>
+        <PRSheet/>
 
+        <CSSHeet/>
         {/* Uso del Componente UploadSheet */}
         <UploadDialog setNodes={setNodes} setLinks={setLinks} />
 
