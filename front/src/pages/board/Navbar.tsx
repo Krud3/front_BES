@@ -15,8 +15,9 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Node, Links } from '@/lib/types';
-import UploadSheet from '@/pages/UploadSheet'; // Asegúrate de la ruta correcta
+import UploadSheet from '@/pages/board/UploadSheet'; // Asegúrate de la ruta correcta
 import { Logo } from '@/components/Logo';
+import UploadDialog from './UploadDialog';
 
 type NavbarProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
@@ -39,7 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
         </Link>
 
         {/* Uso del Componente UploadSheet */}
-        <UploadSheet setNodes={setNodes} setLinks={setLinks} />
+        <UploadDialog setNodes={setNodes} setLinks={setLinks} />
 
         <Link to="/products" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
           User's Management
