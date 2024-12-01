@@ -3,14 +3,15 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { CosmographProvider } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
-import Board from '@/pages/Board';
-import Display from '@/pages/Display';
+import Board from '@/pages/board/Board';
+import Display from '@/pages/board/Display';
 import Home from '@/pages/landing/Home';
 import NotFound from '@/pages/not-found';
 import OnConstruction from './pages/on-construction';
 import { useTheme } from '@/components/theme-provider';
 
 import { ReactNode } from 'react';
+import TableData from '@/pages/board/TableData';
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -50,6 +51,7 @@ const App: React.FC = () => {
               }
             >
               <Route path="cosmograph" element={<Display />} />
+              <Route path ="table-data" element={<TableData/>}/>
             </Route>
             <Route path="*" element={<NotFound />} />
             <Route path="/wiki" element={<OnConstruction />} />
