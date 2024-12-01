@@ -142,12 +142,17 @@ interface PRSheetProps {
 
                   </CardContent>
                   <CardFooter className="grid w-full grid-cols-2 gap-2">
+                  <SheetClose asChild>
                     <Button onClick={handleViewData} disabled={!selectedSimulation}>
                       View Data
                     </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
                     <Button onClick={handleViewGraph} disabled={!selectedSimulation}>
                       View Graph
                     </Button>
+                    </SheetClose>
+
                   </CardFooter>
                 </Card>
               </div>

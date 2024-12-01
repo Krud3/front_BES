@@ -19,10 +19,11 @@ import { parseCSVToNodes } from '@/lib/parseCSVToNodes';
 interface UploadDialogProps {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setLinks: React.Dispatch<React.SetStateAction<Links[]>>;
+  closeSheet: () => void;
 }
 
 
-const UploadDialog: React.FC<UploadDialogProps> = ({ setNodes, setLinks }) => {
+const UploadDialog: React.FC<UploadDialogProps> = ({ setNodes, setLinks, closeSheet }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const navigate = useNavigate();
 
@@ -31,20 +32,20 @@ const UploadDialog: React.FC<UploadDialogProps> = ({ setNodes, setLinks }) => {
     setSelectedFile(file);
   };
 
-
   const handleProceed = async () => {
     if (selectedFile) {
       try {
         const graph = await parseCSVToNodes(selectedFile);
         setNodes(graph.nodes);
         setLinks(graph.links);
+        closeSheet(); // Cerrar el Sheet al completar
         navigate('/board/cosmograph');
       } catch (error) {
         console.error('Error parsing CSV:', error);
-        alert('There was an error processing CSV file. Try again, please.');
+        alert('There was an error processing the CSV file. Try again, please.');
       }
     } else {
-      alert('Please select CSV file before proceed.');
+      alert('Please select a CSV file before proceeding.');
     }
   };
 
@@ -59,7 +60,7 @@ const UploadDialog: React.FC<UploadDialogProps> = ({ setNodes, setLinks }) => {
         <DialogHeader>
           <DialogTitle>Upload Simulation</DialogTitle>
           <DialogDescription>
-            Slect CSV file, to load simulation data.
+            Select a CSV file to load simulation data.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col space-y-4">
