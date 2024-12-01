@@ -1,7 +1,7 @@
 // Display.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram } from '@cosmograph/react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Cosmograph, CosmographSearch, useCosmograph, CosmographTimeline, CosmographTimelineRef, CosmographHistogram,  } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 import { setNodeColor } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,16 +13,56 @@ import {
   ContextMenuTrigger,
   ContextMenuShortcut,
 } from '@/components/ui/context-menu';
+import NodeInfoTable from '@/components/NodeInfoTable';
 
 interface DisplayProps {
 }
 
+
 const Display: React.FC<DisplayProps> = () => {
   const timelineRef = useRef<CosmographTimelineRef<any>>(null);
-
   const { cosmograph, nodes, links } = useCosmograph() || {};
-
   const [selectedDateRange, setSelectedDateRange] = useState<[Date, Date] | undefined>(undefined);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [labelButton, setLabelButton] = useState<string>('id');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cosmographSearchRef = useRef<any>(null);
+  const colors = ['#385357', '#4B7076', '#5E8B92', '#70A6AE', '#82C1CB'];
+  const [polarization, setPolarization] = useState<number | null>(null);
+
+  const handleNodeClick = useCallback(
+    (node?: Node) => {
+      console.log('Nodo clicado:', node);
+      if (node) {
+        setSelectedNode(node);
+        if (cosmograph) {
+          const adjacentNodes = cosmograph.getAdjacentNodes(node.id) || [];
+          cosmograph.selectNodes([node, ...adjacentNodes]);
+        }
+      } else {
+        setSelectedNode(null);
+        cosmograph?.unselectNodes();
+      }
+    },
+    [cosmograph]
+  );
+  
+  
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as HTMLElement)) {
+
+        setSelectedNode(null);
+        cosmograph?.unselectNodes();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [cosmograph]);
 
   const updateBeliefsBasedOnTimeline = () => {
     const timeline = timelineRef.current;
@@ -53,7 +93,6 @@ const Display: React.FC<DisplayProps> = () => {
           color: beliefEntry ? setNodeColor(beliefEntry.value) : customNode.color,
         };
       });
-
       // Use setData to update nodes
       cosmograph.setData(updatedNodes, links || [], true );
     } else {
@@ -63,10 +102,6 @@ const Display: React.FC<DisplayProps> = () => {
 
     timeline.setSelection(selection);
   };
-
-  const [labelButton, setLabelButton] = useState<string>('id');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cosmographSearchRef = useRef<any>(null);
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.ctrlKey) {
@@ -180,15 +215,11 @@ const Display: React.FC<DisplayProps> = () => {
   };
 
   // Pass the nodeLabelFunction to the cosmograph instance
-  useEffect(() => {
-    cosmograph?.setConfig({
-      nodeLabelAccessor: nodeLabelFunction,
-    });
-  }, [cosmograph, nodeLabelFunction, labelButton, selectedDateRange]);
-
-  const colors = ['#385357', '#4B7076', '#5E8B92', '#70A6AE', '#82C1CB'];
-
-  const [polarization, setPolarization] = useState<number | null>(null);
+//  useEffect(() => {
+//    cosmograph?.setConfig({
+//      nodeLabelAccessor: nodeLabelFunction,
+//    });
+//  }, [cosmograph, nodeLabelFunction, labelButton, selectedDateRange]);
 
   const handleCalculatePolarization = async () => {
     try {
@@ -237,9 +268,20 @@ const Display: React.FC<DisplayProps> = () => {
               simulationLinkDistance={2.0}
               simulationGravity={0.1}
               className="z-10 w-full h-full"
+              onClick={handleNodeClick}
             />
             {nodes && nodes.length> 0 && 
               <div className=" flex-column absolute bottom-0 left-0 z-20 w-full px-1 py-1 space-y-1" style={{ pointerEvents: 'none' }}>
+
+                {/* Mostrar TableData si hay un nodo seleccionado */}
+                {selectedNode && (
+                  <div
+                    className="w-1/4 ml-auto mb-2 backdrop-blur rounded-lg py-1"
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <NodeInfoTable node={selectedNode} />
+                  </div>
+                )}
                 <CosmographHistogram 
                   accessor={(d: Node) => d.belief || 0}
                   allowSelection
