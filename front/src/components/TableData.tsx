@@ -35,7 +35,7 @@ const TableData: React.FC = () => {
     const fetchData = async () => {
       if (simulation) {
         try {
-          const response = await fetch(`/csv/${simulation}`);
+          const response = await fetch(`http://localhost:5000/csv/${simulation}`);
           const csvText = await response.text();
           // Parsear los datos CSV
           const parsedData = Papa.parse(csvText, {

@@ -53,21 +53,27 @@ interface PRSheetProps {
     // Cargar la lista de simulaciones desde 'public/simulations.json'
     useEffect(() => {
       const fetchSimulations = async () => {
-        try {
-          const response = await fetch('/simulations.json');
-          const data = await response.json();
-          setSimulations(data);
-        } catch (error) {
-          console.error('Error fetching simulations:', error);
-        }
+          try {
+              const response = await fetch('http://localhost:5000/list_simulations');
+              if (!response.ok) {
+                  throw new Error('Failed to fetch simulations.');
+              }
+              const data = await response.json();
+              setSimulations(data.simulations);
+          } catch (error) {
+              console.error('Error fetching simulations:', error);
+          }
       };
       fetchSimulations();
-    }, []);
+  }, []);
   
     const handleViewGraph = async () => {
       if (selectedSimulation) {
         try {
-          const response = await fetch(`/csv/${selectedSimulation}`);
+          const response = await fetch(`http://localhost:5000/csv/${selectedSimulation}`);
+          if (!response.ok) {
+              throw new Error('Failed to fetch CSV file.');
+          }
           const csvText = await response.text();
           const csvFile = new File([csvText], selectedSimulation, { type: 'text/csv' });
           const graph = await parseCSVToNodes(csvFile);
