@@ -300,6 +300,7 @@ const Display: React.FC<DisplayProps> = () => {
                     className='timeline w-full backdrop-blur rounded-lg py-1 items-center space-x-1'
                     style={{
                       '--cosmograph-timeline-bar-color': `var(--cosmograph-timeline-bar-color-0)`,
+                      pointerEvents: 'auto' 
                     }}
                   />
               </div>
