@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import logoPromueva from '@/assets/logos/SVG/promueva.svg'
 import logoAvispa from '@/assets/logos/SVG/avispa.svg'
 import logoUnivalle from '@/assets/logos/SVG/univalle.svg'
+import logoAvispa2 from '@/assets/logos/JPG/AVISPA.jpg'
 const Introduction: React.FC = () => {
   return (
     <Container className="pb-16 pt-20 text-center lg:pt-32">
@@ -31,7 +32,7 @@ const Introduction: React.FC = () => {
                 [
                 { name: 'Universidad del valle', logo: logoUnivalle },
                 { name: 'Promueva', logo: logoPromueva },
-                { name: 'Avispa', logo: logoAvispa },
+                { name: 'Avispa', logo: logoAvispa2 },
                 ],
                 /*[
                 { name: 'Mirage', logo: logoMirage },

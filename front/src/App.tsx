@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { CosmographProvider } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 import Board from '@/pages/board/Board';
-import Display from '@/pages/board/Display';
+import Display from '@/pages/Display';
 import Home from '@/pages/landing/Home';
 import NotFound from '@/pages/not-found';
 import OnConstruction from './pages/on-construction';
