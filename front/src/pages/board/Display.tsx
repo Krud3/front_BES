@@ -258,11 +258,12 @@ const Display: React.FC<DisplayProps> = () => {
               hoveredNodeRingColor={'red'}
               focusedNodeRingColor={'white'}
               nodeLabelAccessor={nodeLabelFunction}
+              linkArrows={false}
               renderLinks={nodes && nodes.length <= 10000? true : false}
               linkWidth={(link: Links) => (link.influenceValue || 0.1)*2}
               linkColor={(link: Links) => colors[Math.floor((link.influenceValue || 0.1) * colors.length)]}
               spaceSize={8096}
-              simulationRepulsion={4.0}
+              simulationRepulsion={10.0}
               simulationFriction={0.1} 
               simulationLinkSpring={1} 
               simulationLinkDistance={2.0}
