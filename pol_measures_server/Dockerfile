@@ -1,23 +1,29 @@
-# Use an official Python runtime as a parent image
+# Dockerfile
+
+# Usa una imagen base oficial de Python
 FROM python:3.13-slim
 
-# Set the working directory in the container
+# Establece el directorio de trabajo en el contenedor
 WORKDIR /app
 
-# Install git
+# Instala git y otras dependencias del sistema si es necesario
 RUN apt-get update && apt-get install -y git && apt-get clean
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copia los archivos del servidor al contenedor
+COPY server.py process_nodes.py data_generator.py requirements.txt ./
+COPY proper_dates.py to_csv.py ./
 
-# Make the process_nodes.py script executable
-RUN chmod +x process_nodes.py
-
-# Install any needed packages specified in requirements.txt
+# Instala las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 5000 available to the world outside this container
+# Crea el directorio para los archivos CSV
+RUN mkdir -p /app/csv && chmod -R 755 /app/csv
+
+# Asegura que los scripts sean ejecutables
+RUN chmod +x process_nodes.py data_generator.py server.py
+
+# Expone el puerto 5000 para acceder al servidor Flask
 EXPOSE 5000
 
-# Run server.py when the container launches
+# Comando para ejecutar el servidor Flask
 CMD ["python", "server.py"]

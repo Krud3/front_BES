@@ -1,20 +1,20 @@
-// src/components/CSSHeet.tsx
+// CSSHeet.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Sheet,
-    SheetClose,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-  } from "@/components/ui/sheet"
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Tabs,
   TabsContent,
@@ -31,6 +31,40 @@ import {
 } from '@/components/ui/card';
 
 const CSSHeet: React.FC = () => {
+  const [nodesInput, setNodesInput] = useState<number>(50);
+  const [roundsInput, setRoundsInput] = useState<number>(10);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [simulationMessage, setSimulationMessage] = useState<string>('');
+
+  const handleCreateSimulation = async () => {
+    setLoading(true);
+    setSimulationMessage('');
+    try {
+      const response = await fetch('http://127.0.0.1:5000/generate_simulation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nodes: nodesInput,
+          rounds: roundsInput,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate simulation.');
+      }
+
+      setSimulationMessage(result.message || 'Simulation generated successfully.');
+    } catch (error: any) {
+      setSimulationMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -39,63 +73,78 @@ const CSSHeet: React.FC = () => {
         </Link>
       </SheetTrigger>
       <SheetContent side="left" className="w-[400px]">
-        <Tabs defaultValue="account" className="w-full">
+        <Tabs defaultValue="new" className="w-full">
           <SheetHeader>
-
-          <SheetTitle>Create Simulation</SheetTitle>
+            <SheetTitle>Create Simulation</SheetTitle>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="password">Password</TabsTrigger>
+              <TabsTrigger value="new">New simulation</TabsTrigger>
+              <TabsTrigger value="previous">From previous results</TabsTrigger>
             </TabsList>
           </SheetHeader>
 
-          <TabsContent value="account">
+          <TabsContent value="new">
             <div className="py-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Account</CardTitle>
+                  <CardTitle>New Simulation</CardTitle>
                   <CardDescription>
-                    Make changes to your account here. Click save when you're done.
+                    Make a new simulation here. Click "Create" when you're done.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="space-y-1">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" defaultValue="Pedro Duarte" />
+                    <Label htmlFor="nodes">Nodes</Label>
+                    <Input
+                      id="nodes"
+                      type="number"
+                      min="1"
+                      value={nodesInput}
+                      onChange={(e) => setNodesInput(parseInt(e.target.value) || 1)}
+                    />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="username">Username</Label>
-                    <Input id="username" defaultValue="@peduarte" />
+                    <Label htmlFor="rounds">Rounds</Label>
+                    <Input
+                      id="rounds"
+                      type="number"
+                      min="1"
+                      value={roundsInput}
+                      onChange={(e) => setRoundsInput(parseInt(e.target.value) || 1)}
+                    />
                   </div>
+                  {simulationMessage && (
+                    <div className={`mt-2 text-sm ${simulationMessage.startsWith('Error') ? 'text-red-500' : 'text-green-500'}`}>
+                      {simulationMessage}
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter>
-                  <Button>Save changes</Button>
+                  <Button
+                    onClick={handleCreateSimulation}
+                    disabled={loading}
+                  >
+                    {loading ? 'Creating...' : 'Create'}
+                  </Button>
                 </CardFooter>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="password">
+          <TabsContent value="previous">
             <div className="py-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Password</CardTitle>
+                  <CardTitle>Previous Results</CardTitle>
                   <CardDescription>
-                    Change your password here. After saving, you'll be logged out.
+                    Load simulations from previous results.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="current">Current password</Label>
-                    <Input id="current" type="password" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="new">New password</Label>
-                    <Input id="new" type="password" />
-                  </div>
+                <CardContent>
+                  {/* Implementar funcionalidad para cargar simulaciones previas si es necesario */}
+                  <p>No implemented yet.</p>
                 </CardContent>
                 <CardFooter>
-                  <Button>Save password</Button>
+                  <Button disabled>Load</Button>
                 </CardFooter>
               </Card>
             </div>
