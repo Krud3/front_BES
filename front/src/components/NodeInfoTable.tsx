@@ -21,7 +21,7 @@ const NodeInfoTable: React.FC<NodeInfoTableProps> = ({ node }) => {
   const entries = Object.entries(node);
 
   return (
-    <div className="p-4 overflow-y-auto max-h-64 bg-white rounded shadow-lg">
+    <div className="p-4 overflow-y-auto overflow-x-auto max-h-64  rounded shadow-lg">
       <Table className="min-w-full">
         <TableCaption className="mt-0">
           Data for node: {node.id}
