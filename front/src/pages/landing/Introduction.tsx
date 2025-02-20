@@ -6,7 +6,11 @@ import logoPromueva from '@/assets/logos/SVG/promueva.svg'
 import logoAvispa from '@/assets/logos/SVG/avispa.svg'
 import logoUnivalle from '@/assets/logos/SVG/univalle.svg'
 import logoAvispa2 from '@/assets/logos/JPG/AVISPA.jpg'
+import { useAuth } from "@/hooks/useAuth";
+
 const Introduction: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <Container className="pb-16 pt-20 text-center lg:pt-32">
         <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
@@ -15,11 +19,14 @@ const Introduction: React.FC = () => {
         <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
             Our opinion evolution simulator, SiLEnSeSS, combines advanced social network models with an intuitive interface, designed so that both the general public and scientists can easily understand and apply the results. We handle the technical complexity so you can focus on the data and its impact.
         </p>
-        <div className="mt-10 flex justify-center gap-x-6">
-            <Link to='/register'>
-                <Button>Register</Button>
+        { !user && (
+          <div className="mt-10 flex justify-center gap-x-6">
+            {/* <Link to='/register'> */}
+            <Link to='/'>
+                <Button>Register / Log In</Button>
             </Link>
-        </div>
+          </div>
+        )}
         <div className="mt-36 lg:mt-44">
             <p className="font-display text-base text-slate-900">
             With the participation of

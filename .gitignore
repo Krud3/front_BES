@@ -25,4 +25,8 @@ dist-ssr
 
 public/csv/graph_data_*.csv
 
+
 venv/*
+
+.env
+
