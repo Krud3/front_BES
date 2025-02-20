@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 public/csv/graph_data_*.csv
+
+.env

@@ -16,6 +16,8 @@ import { Logo } from '@/components/Logo';
 import UploadDialog from '@/pages/board/UploadDialog';
 import CSSHeet from '@/pages/board/CSSheet';
 import PRSheet from '@/pages/board/PRSheet';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/firebaseConfig';
 
 type NavbarProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
@@ -24,6 +26,15 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error: any) { // Type as 'any' or Error for broader type coverage
+      console.error("Logout error:", error);
+        alert(`Logout failed: ${error.message}`); // Basic error feedback
+    }
+  }
 
   const closeSheet = () => setIsSheetOpen(false);
 
@@ -90,7 +101,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Languages</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

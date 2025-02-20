@@ -16,7 +16,8 @@ const Introduction: React.FC = () => {
             Our opinion evolution simulator, SiLEnSeSS, combines advanced social network models with an intuitive interface, designed so that both the general public and scientists can easily understand and apply the results. We handle the technical complexity so you can focus on the data and its impact.
         </p>
         <div className="mt-10 flex justify-center gap-x-6">
-            <Link to='/register'>
+            {/* <Link to='/register'> */}
+            <Link to='/'>
                 <Button>Register</Button>
             </Link>
         </div>
