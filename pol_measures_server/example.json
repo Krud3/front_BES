@@ -1,0 +1,124 @@
+{
+  "runs": [
+    {
+      "id": 2,
+      "run_time": 3321564662562,
+      "build_time": 332313583168,
+      "run_date": 3321564662562,
+      "number_of_networks": 10,
+      "iteration_limit": 1000,
+      "stop_threshold": 0.0001,
+      "initial_distribution": 1,
+      "run_mode": 1,
+      "save_mode": 2,
+      "networks": [
+        {
+          "id": "01950029-10e4-78c5-aee4-e35e161c744d",
+          "run_time": 3321564662562,
+          "build_time": 332313583168,
+          "number_of_agents": 1000,
+          "final_round": -1,
+          "name": "Red 1",
+          "outcome": false,
+          "agents": [
+            { "id": 1, 
+              "number_of_networks": 5,
+              "tolerance_radius" : 0.5,
+              "tolerance_offset": 2,
+              "silence_strategy": 2,
+              "silence_effect": 1,
+              "expression_threshold": 0.2,
+              "open_mindedness": 5,
+              "name": "Frank"
+            }
+          ],
+          "neighbors": [
+            { "source": 1, "target": 2, "value": 0.5, "cognitive_bias": 2 },
+            { "source": 1, "target": 3, "value": 0.6, "cognitive_bias": 1 },
+            { "source": 2, "target": 3, "value": 0.7, "cognitive_bias": 3 }
+          ] 
+        }
+      ] 
+    },
+    {
+      "id": 3,
+      "run_time": 3322564789654,
+      "build_time": 332425678312,
+      "run_date": 3322564789654,
+      "number_of_networks": 8,
+      "iteration_limit": 1200,
+      "stop_threshold": 0.00005,
+      "initial_distribution": 2,
+      "run_mode": 2,
+      "save_mode": 1,
+      "networks": [
+        {
+          "id": "52a45d11-8e3b-4c56-bf0e-5e3f671aabcd",
+          "run_time": 3322564789654,
+          "build_time": 332425678312,
+          "number_of_agents": 800,
+          "final_round": -1,
+          "name": "Red 2",
+          "outcome": true,
+          "agents": [
+            { "id": 2, 
+              "number_of_networks": 4,
+              "tolerance_radius" : 0.3,
+              "tolerance_offset": 1,
+              "silence_strategy": 1,
+              "silence_effect": 2,
+              "expression_threshold": 0.25,
+              "open_mindedness": 4,
+              "name": "Alice"
+            }
+          ],
+          "neighbors": [
+            { "source": 2, "target": 3, "value": 0.4, "cognitive_bias": 1 },
+            { "source": 3, "target": 4, "value": 0.6, "cognitive_bias": 2 },
+            { "source": 2, "target": 4, "value": 0.5, "cognitive_bias": 3 }
+          ] 
+        }
+      ] 
+    },
+    {
+      "id": 4,
+      "run_time": 3323564898741,
+      "build_time": 332587889231,
+      "run_date": 3323564898741,
+      "number_of_networks": 12,
+      "iteration_limit": 1500,
+      "stop_threshold": 0.0002,
+      "initial_distribution": 3,
+      "run_mode": 3,
+      "save_mode": 3,
+      "networks": [
+        {
+          "id": "876fae33-9bcd-4d65-87ef-8d21f623efgh",
+          "run_time": 3323564898741,
+          "build_time": 332587889231,
+          "number_of_agents": 1200,
+          "final_round": -1,
+          "name": "Red 3",
+          "outcome": false,
+          "agents": [
+            { "id": 3, 
+              "number_of_networks": 6,
+              "tolerance_radius" : 0.7,
+              "tolerance_offset": 3,
+              "silence_strategy": 3,
+              "silence_effect": 3,
+              "expression_threshold": 0.15,
+              "open_mindedness": 6,
+              "name": "Bob"
+            }
+          ],
+          "neighbors": [
+            { "source": 3, "target": 5, "value": 0.3, "cognitive_bias": 3 },
+            { "source": 5, "target": 6, "value": 0.5, "cognitive_bias": 2 },
+            { "source": 3, "target": 6, "value": 0.7, "cognitive_bias": 1 }
+          ] 
+        }
+      ] 
+    }
+  ] 
+}
