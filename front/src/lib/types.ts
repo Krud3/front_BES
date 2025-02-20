@@ -20,7 +20,6 @@ export type Node = {
     target: string;
     influenceValue?: number;
     date?: Date;
-    // Agrega otras propiedades si es necesario
   };
 
 
