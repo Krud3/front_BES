@@ -16,13 +16,13 @@ const LoginPage: React.FC = () => {
           Welcome to the Belief Evolution Simulator
         </h1>
         <p className="mt-3 text-sm text-gray-700 text-center max-w-md">
-          Please log in to access the application.
+          Sign Up to access special features.
         </p>
         <div className="mt-10">
           <LoginButton />
         </div>
         <Link to="/home" className="mt-4 text-blue-500 hover:underline">
-          Go to Dashboard
+          Continue without signing in
         </Link>
       </div>
     </SlimLayout>

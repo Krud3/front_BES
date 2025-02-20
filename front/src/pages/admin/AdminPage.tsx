@@ -2,41 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { getFirestore, collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+
+const firestore = getFirestore();
 
 const AdminPage: React.FC = () => {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
-  const [users, setUsers] = useState<any[]>([]); // Replace with actual user type
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch users from backend
     const fetchUsers = async () => {
-      // Replace with actual API call
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      setUsers(data);
+      const usersCollection = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(usersList);
     };
 
     fetchUsers();
   }, []);
 
-  const handleRoleChange = (userId: string, newRole: string) => {
-    // Update user role in backend
-    // Replace with actual API call
-    fetch(`/api/users/${userId}/role`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ role: newRole }),
-    }).then(() => {
-      // Update local state
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
-    });
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    const userDoc = doc(firestore, 'users', userId);
+    await updateDoc(userDoc, { roles: [newRole] });
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, roles: [newRole] } : user
+      )
+    );
   };
 
   if (!hasPermission('manageUsers')) {
@@ -58,10 +51,10 @@ const AdminPage: React.FC = () => {
           {users.map((user) => (
             <tr key={user.id}>
               <td className="py-2">{user.email}</td>
-              <td className="py-2">{user.role}</td>
+              <td className="py-2">{(user.roles || []).join(', ')}</td>
               <td className="py-2">
                 <select
-                  value={user.role}
+                  value={(user.roles || [])[0]} 
                   onChange={(e) => handleRoleChange(user.id, e.target.value)}
                 >
                   <option value="Guest">Guest</option>

@@ -9,8 +9,9 @@ export const LogoutButton: React.FC = () => {
       await signOut(auth);
     } catch (error: any) { // Type as 'any' or Error for broader type coverage
       console.error("Logout error:", error);
-       alert(`Logout failed: ${error.message}`); // Basic error feedback
+      alert(`Logout failed: ${error.message}`); // Basic error feedback
     }
-};
-    return <Button onClick={handleLogout}>Logout</Button>;
+  };
+
+  return <Button onClick={handleLogout}>Logout</Button>;
 };

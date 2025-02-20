@@ -1,29 +1,37 @@
 import { useAuth } from './useAuth';
 import { useEffect, useState } from 'react';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { auth } from '@/firebaseConfig';
+
+const firestore = getFirestore();
 
 export const usePermissions = () => {
   const { user } = useAuth();
   const [roles, setRoles] = useState<string[]>([]);
+  const [usageLimits, setUsageLimits] = useState<any>({});
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
   useEffect(() => {
-    setLoadingPermissions(true);
-    if (user) {
-      user.getIdTokenResult(true) // Force refresh to get latest custom claims
-        .then((idTokenResult) => {
-          const userRoles = (idTokenResult.claims.roles as string[]) || [];
-          setRoles(userRoles);
-          setLoadingPermissions(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching custom claims:", error);
-          setRoles([]); // Default to no roles on error
-          setLoadingPermissions(false);
-        });
-    } else {
-      setRoles([]);
+    const fetchRolesAndLimits = async () => {
+      setLoadingPermissions(true);
+      if (user) {
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setRoles(userData.roles || []);
+          setUsageLimits(userData.usageLimits || {});
+        } else {
+          setRoles([]);
+          setUsageLimits({});
+        }
+      } else {
+        setRoles([]);
+        setUsageLimits({});
+      }
       setLoadingPermissions(false);
-    }
+    };
+
+    fetchRolesAndLimits();
   }, [user]);
 
   const hasPermission = (permissionName: string): boolean => {
@@ -37,7 +45,7 @@ export const usePermissions = () => {
     return false;
   };
 
-  return { hasPermission, loadingPermissions, roles };
+  return { hasPermission, loadingPermissions, roles, usageLimits };
 };
 
 // Example: Function to map roles to permissions (define this based on your role/permission table)
