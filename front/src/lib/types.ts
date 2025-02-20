@@ -22,4 +22,49 @@ export type Node = {
     date?: Date;
     // Agrega otras propiedades si es necesario
   };
-  
+
+
+export interface Agent {
+  id: number;
+  number_of_networks: number;
+  tolerance_radius: number;
+  tolerance_offset: number;
+  silence_strategy: number;
+  silence_effect: number;
+  expression_threshold: number;
+  open_mindedness: number;
+  name: string;
+}
+
+export interface Neighbor {
+  source: number;
+  target: number;
+  value: number;
+  cognitive_bias: number;
+}
+
+export interface Network {
+  id: string;
+  run_time: number;
+  build_time: number;
+  number_of_agents: number;
+  final_round: number;
+  name: string;
+  outcome: boolean;
+  agents: Agent[];
+  neighbors: Neighbor[];
+}
+
+export interface Simulation {
+  id: number;
+  run_time: number;
+  build_time: number;
+  run_date: number;
+  number_of_networks: number;
+  iteration_limit: number;
+  stop_threshold: number;
+  initial_distribution: number;
+  run_mode: number;
+  save_mode: number;
+  networks: Network[];
+}
