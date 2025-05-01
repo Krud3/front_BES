@@ -15,7 +15,7 @@ const Board: React.FC<BoardProps> = ({ setNodes, setLinks }) => {
     
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <Navbar setNodes={setNodes} setLinks={setLinks} />
-        <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ flex: 1, overflow: 'auto' }}>
           <Outlet />
         </div>
       </div>

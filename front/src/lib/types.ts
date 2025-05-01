@@ -1,5 +1,4 @@
-// types.ts
-
+// Cosmograph Simulation Types
 export type Node = {
   id: string;
   x?: number;
@@ -15,11 +14,55 @@ export type Node = {
   isSpeakingOverTime?: { date: Date; value: boolean }[]; // Historical speaking states
 };
   
-  export type Links = {
-    source: string;
-    target: string;
-    influenceValue?: number;
-    date?: Date;
-    // Agrega otras propiedades si es necesario
-  };
+export type Links = {
+  source: string;
+  target: string;
+  influenceValue?: number;
+  date?: Date;
+  // Agrega otras propiedades si es necesario
+};
+
+// Simulation Form Types
+export type AgentType =
+  | 'DeGroot'
+  | 'Memory'
+  | 'Recency'
+  | 'Peers-Memory'
+  | 'Peers-Memoryless'
+  | 'Peers-Recency';
+
+export type CognitiveBias =
+  | 'DeGroot'
+  | 'Confirmation'
+  | 'Backfire'
+  | 'Authority'
+  | 'Insular';
+
+export const ALL_AGENT_TYPES: AgentType[] = [
+  'DeGroot',
+  'Memory',
+  'Recency',
+  'Peers-Memory',
+  'Peers-Memoryless',
+  'Peers-Recency',
+];
+
+export const ALL_COGNITIVE_BIASES: CognitiveBias[] = [
+  'DeGroot',
+  'Confirmation',
+  'Backfire',
+  'Authority',
+  'Insular',
+];
+
+export interface SimulationConfig {
+  numNetworks: number;
+  numAgents: number;
+  density: number;
+  iterationLimit: number;
+  stopThreshold: number;
+  saveMode: string;
+  agentTypeDistribution: Record<AgentType, number>;
+  cognitiveBiasDistribution: Record<CognitiveBias, number>; // Represents counts per bias
+}
   
