@@ -35,7 +35,7 @@ export function SimulationForm() {
     defaultValues: {
       numNetworks: 1,
       numAgents: 100, // Default example value
-      density: 0.1, // Default example value
+      density: 10, // Default example value
       iterationLimit: 100,
       stopThreshold: 1e-8, // From your example 0.00000001
       saveMode: 'Debug', // From your example
@@ -71,7 +71,7 @@ export function SimulationForm() {
     const d = density || 0;
     if (n <= 1) return 0;
     // Use Math.floor to ensure integer count
-    return Math.floor(n * (n - 1) * d);
+    return d * (d - 1) + ((n - d) * 2 * d);
   }, [numAgents, density]);
 
   const totalAssignedBiases = useMemo(() => {
@@ -202,7 +202,7 @@ export function SimulationForm() {
                 <Label htmlFor="density">Density</Label>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                       <Input id="density" type="number" min="0" max="1" step="0.01" {...register("density")}
+                       <Input id="density" type="number" min="0" max="1" step="1" {...register("density")}
                             onChange={(e) => {
                                 setFormValue('density', parseFloat(e.target.value) || 0);
                                // Recalculates maxEdges implicitly due to watch()
