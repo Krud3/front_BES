@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { CosmographProvider } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 import Board from '@/pages/board/Board';
+import SimulationPage from '@/pages/board/SimulationPage';
 import Display from '@/pages/Display';
 import Home from '@/pages/landing/Home';
 import NotFound from '@/pages/not-found';
@@ -73,6 +74,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
+              <Route path="simulation" element={<ProtectedRoute><SimulationPage /></ProtectedRoute>} />
               <Route path="cosmograph" element={<ProtectedRoute><Display /></ProtectedRoute>} />
               <Route path="table-data" element={<ProtectedRoute><TableData /></ProtectedRoute>} />
             </Route>
