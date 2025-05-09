@@ -14,13 +14,22 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
 import { AgentType, CognitiveBias, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // --- Zod Schema for Basic Validation ---
 // We'll handle complex inter-field validation manually for now
 const formSchema = z.object({
   numNetworks: z.coerce.number().int().positive("Must be positive"),
   numAgents: z.coerce.number().int().positive("Must be positive"),
-  density: z.coerce.number().min(0).max(1, "Must be between 0 and 1"),
+  density: z.coerce.number().min(0),
   iterationLimit: z.coerce.number().int().positive("Must be positive"),
   stopThreshold: z.coerce.number().min(0),
   saveMode: z.string().min(1, "Required"),
@@ -29,6 +38,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function SimulationForm() {
+  const [agentEffects, setAgentEffects] = useState<Record<AgentType, "DeGroot" | "Memory" | "Memoryless">>(
+    () =>
+      Object.fromEntries(
+        ALL_AGENT_TYPES.map(type => [type, "Memory"])
+      ) as Record<AgentType, "DeGroot" | "Memory" | "Memoryless">
+  );
   // === Basic Parameters State ===
   const { register, handleSubmit, watch, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -42,6 +57,7 @@ export function SimulationForm() {
     },
   });
 
+  const ws = useMemo(() => new WebSocket("ws://localhost:8080/ws"), []);
   const numAgents = watch('numAgents');
   const density = watch('density');
 
@@ -154,18 +170,26 @@ export function SimulationForm() {
     };
 
     console.log("Simulation Configuration:", config);
-    // TODO: Replace console.log with actual API call
-    // Example:
-    // fetch('/api/run-simulation', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(config),
-    // })
-    // .then(response => response.json())
-    // .then(result => console.log('API Success:', result))
-    // .catch(error => console.error('API Error:', error));
-
-    alert("Simulation configuration logged to console. Check development tools.");
+    const payload = {
+      numNetworks: data.numNetworks,
+      density: data.density,
+      iterationLimit: data.iterationLimit,
+      stopThreshold: data.stopThreshold,
+      saveMode: data.saveMode,
+      degreeDistribution: 2.5,
+      agentTypeDistribution: ALL_AGENT_TYPES.map(type => ({
+        strategy: type,
+        effect: agentEffects[type],
+        count: agentCounts[type]
+      })),
+      cognitiveBiasDistribution: ALL_COGNITIVE_BIASES.map(bias => ({
+        bias,
+        count: biasCounts[bias]
+      }))
+    };
+  
+    ws.send(JSON.stringify(payload));
+    alert("Configuración enviada al servidor via WebSocket");
   };
 
 
@@ -202,7 +226,7 @@ export function SimulationForm() {
                 <Label htmlFor="density">Density</Label>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                       <Input id="density" type="number" min="0" max="1" step="1" {...register("density")}
+                      <Input id="density" type="number" min="0" max={numAgents-1} step="1" {...register("density")}
                             onChange={(e) => {
                                 setFormValue('density', parseFloat(e.target.value) || 0);
                                // Recalculates maxEdges implicitly due to watch()
@@ -222,7 +246,7 @@ export function SimulationForm() {
               </div>
               <div>
                 <Label htmlFor="stopThreshold">Stop Threshold</Label>
-                <Input id="stopThreshold" type="number" min="0" step="any" {...register("stopThreshold")} />
+                <Input id="stopThreshold" type="number" min="0" step="0.00000001" {...register("stopThreshold")} />
                  {errors.stopThreshold && <p className="text-red-500 text-sm mt-1">{errors.stopThreshold.message}</p>}
              </div>
               <div>
@@ -249,40 +273,60 @@ export function SimulationForm() {
                      </div>
 
                      <div className="space-y-6">
-                        {ALL_AGENT_TYPES.map((type) => {
-                            const count = agentCounts[type] || 0;
-                            const percentage = (numAgents && numAgents > 0) ? (count / numAgents * 100).toFixed(1) : '0.0';
-                            return (
-                                <div key={type} className="space-y-2">
-                                    <Label htmlFor={`agent-${type}`} className="flex justify-between">
-                                        <span>{type}</span>
-                                        <span className='text-sm text-muted-foreground'>{percentage}%</span>
-                                    </Label>
-                                    <div className="flex items-center gap-4">
-                                       <Slider
-                                            id={`agent-slider-${type}`}
-                                            min={0}
-                                            max={numAgents || 0}
-                                            step={1}
-                                            value={[count]}
-                                            onValueChange={(value) => handleAgentChange(type, value[0], 'slider')}
-                                            disabled={!numAgents || numAgents <= 0}
-                                            className="flex-1"
-                                        />
-                                        <Input
-                                            id={`agent-${type}`}
-                                            type="number"
-                                            min="0"
-                                            max={numAgents || 0} // Technically max is dynamic, but this is a hint
-                                            value={count}
-                                            onChange={(e) => handleAgentChange(type, e.target.value, 'input')}
-                                            disabled={!numAgents || numAgents <= 0}
-                                            className="w-24"
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
+                     {ALL_AGENT_TYPES.map((type) => {
+                        const count = agentCounts[type] || 0;
+                        const effect = agentEffects[type];
+
+                        return (
+                          <div key={type} className="space-y-2">
+                            <Label className="flex justify-between">
+                              <span>{type}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {numAgents > 0 ? ((count / numAgents) * 100).toFixed(1) : "0.0"}%
+                              </span>
+                            </Label>
+                            <div className="flex items-center gap-4">
+                              {/* Slider e Input para count */}
+                              <Slider
+                                min={0}
+                                max={numAgents || 0}
+                                step={1}
+                                value={[count]}
+                                onValueChange={(v) => handleAgentChange(type, v[0], "slider")}
+                                className="flex-1"
+                              />
+                              <Input
+                                type="number"
+                                min={0}
+                                max={numAgents || 0}
+                                value={count}
+                                onChange={(e) => handleAgentChange(type, e.target.value, "input")}
+                                className="w-24"
+                              />
+
+                              {/* Tu Select personalizado para el efecto */}
+                              <Select
+                                value={effect}
+                                onValueChange={(val) =>
+                                  setAgentEffects(prev => ({ ...prev, [type]: val as any }))
+                                }
+                              >
+                                <SelectTrigger className="w-[140px]">
+                                  <SelectValue placeholder="Effect" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Effects</SelectLabel>
+                                    <SelectItem value="DeGroot">DeGroot</SelectItem>
+                                    <SelectItem value="Memory">Memory</SelectItem>
+                                    <SelectItem value="Memoryless">Memoryless</SelectItem>
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        );
+                      })}
                      </div>
                     </>
                )}
