@@ -38,6 +38,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function SimulationForm() {
+  const [thresholdValue, setThresholdValue] = useState<number>(0);
+  const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(1);
+  const [openMindedness, setopenMindedness] = useState<number>(2);
   const [agentEffects, setAgentEffects] = useState<Record<AgentType, "DeGroot" | "Memory" | "Memoryless">>(
     () =>
       Object.fromEntries(
@@ -272,61 +275,158 @@ export function SimulationForm() {
                         </p>
                      </div>
 
-                     <div className="space-y-6">
-                     {ALL_AGENT_TYPES.map((type) => {
-                        const count = agentCounts[type] || 0;
-                        const effect = agentEffects[type];
+                     <div className="space-y-6 w-full">
+                                     {ALL_AGENT_TYPES.map((type) => {
+                  const count = agentCounts[type] || 0;
+                  const effect = agentEffects[type];
 
-                        return (
-                          <div key={type} className="space-y-2">
-                            <Label className="flex justify-between">
-                              <span>{type}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {numAgents > 0 ? ((count / numAgents) * 100).toFixed(1) : "0.0"}%
-                              </span>
-                            </Label>
-                            <div className="flex items-center gap-4">
-                              {/* Slider e Input para count */}
-                              <Slider
-                                min={0}
-                                max={numAgents || 0}
-                                step={1}
-                                value={[count]}
-                                onValueChange={(v) => handleAgentChange(type, v[0], "slider")}
-                                className="flex-1"
-                              />
-                              <Input
-                                type="number"
-                                min={0}
-                                max={numAgents || 0}
-                                value={count}
-                                onChange={(e) => handleAgentChange(type, e.target.value, "input")}
-                                className="w-24"
-                              />
+                  return (
+                    <Card key={type} className="w-full">
+                      <CardHeader>
+                        <CardTitle>{type}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-[1fr_auto_140px] items-center gap-4 w-full">
+                          <Slider
+                            min={0}
+                            max={numAgents || 0}
+                            step={1}
+                            value={[count]}
+                            onValueChange={(v) =>
+                              handleAgentChange(
+                                type,
+                                v[0],
+                                "slider"
+                              )
+                            }
+                            className="col-start-1 w-full"
+                          />
 
-                              {/* Tu Select personalizado para el efecto */}
-                              <Select
-                                value={effect}
-                                onValueChange={(val) =>
-                                  setAgentEffects(prev => ({ ...prev, [type]: val as any }))
-                                }
-                              >
-                                <SelectTrigger className="w-[140px]">
-                                  <SelectValue placeholder="Effect" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Effects</SelectLabel>
-                                    <SelectItem value="DeGroot">DeGroot</SelectItem>
-                                    <SelectItem value="Memory">Memory</SelectItem>
-                                    <SelectItem value="Memoryless">Memoryless</SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                          <div className="relative w-24">
+                            <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
+                              {numAgents > 0
+                                ? (
+                                    (count / numAgents) *
+                                    100
+                                  ).toFixed(1)
+                                : "0.0"}
+                              %
+                            </span>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={numAgents || 0}
+                              value={count}
+                              onChange={(e) =>
+                                handleAgentChange(
+                                  type,
+                                  e.target.value,
+                                  "input"
+                                )
+                              }
+                              className="w-full"
+                            />
                           </div>
-                        );
-                      })}
+
+                          <Select
+                            value={effect}
+                            onValueChange={(val) =>
+                              setAgentEffects((prev) => ({
+                                ...prev,
+                                [type]: val as any,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Effect" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>
+                                  Effects
+                                </SelectLabel>
+                                <SelectItem value="DeGroot">
+                                  DeGroot
+                                </SelectItem>
+                                <SelectItem value="Memory">
+                                  Memory
+                                </SelectItem>
+                                <SelectItem value="Memoryless">
+                                  Memoryless
+                                </SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {type === "Threshold" && (
+                              <div className="col-start-3 mt-2 flex flex-col space-y-1">
+                                <Label htmlFor={`threshold-${type}`}>Threshold (0–1)</Label>
+                                <Input
+                                  id={`threshold-${type}`}
+                                  type="number"
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  value={thresholdValue}
+                                  onChange={(e) => {
+                                    let v =
+                                      parseFloat(e.target
+                                        .value) || 0;
+                                    if (v < 0) v = 0;
+                                    if (v > 1) v = 1;
+                                    setThresholdValue(v);
+                                  }}
+                                  className="w-32"
+                                />
+                              </div>
+                            )}
+                            {type === "Confidence" && (
+                              <div className="col-start-3 mt-2 flex items-start gap-x-6">
+
+                                {/* Threshold */}
+                                <div className="flex flex-col space-y-1">
+                                  <Label htmlFor={`thresconf-${type}`}>Threshold (0–1)</Label>
+                                  <Input
+                                    id={`thresconf-${type}`}
+                                    type="number"
+                                    min={0}
+                                    max={1}
+                                    step={0.01}
+                                    value={thresholdValueConfidence}
+                                    onChange={(e) => {
+                                      let v = parseFloat(e.target.value) || 0;
+                                      if (v < 0) v = 0;
+                                      if (v > 1) v = 1;
+                                      setThresholdValueConfidence(v);
+                                    }}
+                                    className="w-32"
+                                  />
+                                </div>
+                                                                {/* Open Mindedness */}
+                                <div className="flex flex-col space-y-1">
+                                  <Label htmlFor={`openm-${type}`}>Open Mindedness (≥1)</Label>
+                                  <Input
+                                    id={`openm-${type}`}
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={openMindedness}
+                                    onChange={(e) => {
+                                      let v = parseInt(e.target.value, 10) || 1;
+                                      if (v < 1) v = 1;
+                                      setopenMindedness(v);
+                                    }}
+                                    className="w-32"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                      </CardContent>
+                    </Card>
+                  );
+                })}
                      </div>
                     </>
                )}
