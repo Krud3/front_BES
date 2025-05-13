@@ -36,10 +36,16 @@ export type CognitiveBias =
   | 'Authority'
   | 'Insular';
 
-export  type AgentConfig = {
+export type AgentConfig = {
   id: string; // Unique identifier for this configuration
   type: AgentType;
   effect: "DeGroot" | "Memory" | "Memoryless";
+  count: number;
+};
+
+export type BiasConfig = {
+  id: string;
+  bias: CognitiveBias;
   count: number;
 };
 

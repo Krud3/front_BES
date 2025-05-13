@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
-import { AgentType, CognitiveBias, AgentConfig, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
+import { AgentType, AgentConfig, CognitiveBias, BiasConfig, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ import {
 // --- Zod Schema for Basic Validation ---
 // We'll handle complex inter-field validation manually for now
 const formSchema = z.object({
+  seed: z.coerce.bigint().nonnegative("Must be 0 or positive").optional(),
   numNetworks: z.coerce.number().int().positive("Must be positive"),
   numAgents: z.coerce.number().int().positive("Must be positive"),
   density: z.coerce.number().min(0),
@@ -131,9 +132,28 @@ export function SimulationForm() {
   }, [usedTypeEffectCombinations]);
 
   // === Cognitive Bias Distribution State ===
-  const [biasCounts, setBiasCounts] = useState<Record<CognitiveBias, number>>(
-    () => Object.fromEntries(ALL_COGNITIVE_BIASES.map(bias => [bias, 0])) as Record<CognitiveBias, number>
-  );
+  const [biasConfigs, setBiasConfigs] = useState<BiasConfig[]>([
+    {
+      id: "default-bias",
+      bias: "DeGroot",
+      count: 0
+    }
+  ]);
+
+  const usedBiases = useMemo(() => {
+    return biasConfigs.map(config => config.bias);
+  }, [biasConfigs]);
+
+  const getAvailableBiases = useCallback((currentConfig: BiasConfig) => {
+    return ALL_COGNITIVE_BIASES.filter(bias => {
+      // Include current bias
+      if (currentConfig.bias === bias) return true;
+      
+      // Only include biases that aren't already used
+      return !usedBiases.includes(bias);
+    });
+  }, [usedBiases]);
+
 
   // === Derived Values ===
   const totalAssignedAgents = useMemo(() => {
@@ -155,8 +175,8 @@ export function SimulationForm() {
   }, [numAgents, density]);
 
   const totalAssignedBiases = useMemo(() => {
-    return Object.values(biasCounts).reduce((sum, count) => sum + count, 0);
-  }, [biasCounts]);
+    return biasConfigs.reduce((sum, config) => sum + config.count, 0);
+  }, [biasConfigs]);
 
   const remainingBiases = useMemo(() => {
     return maxEdges - totalAssignedBiases;
@@ -252,27 +272,58 @@ export function SimulationForm() {
 
 
   // --- Cognitive Bias Handlers ---
-    const handleBiasChange = useCallback((bias: CognitiveBias, value: string | number, source: 'input' | 'slider') => {
-        if (maxEdges <= 0) return; // Don't allow changes if max edges is 0 or less
-
-        let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
-        if (isNaN(newCount) || newCount < 0) {
-            newCount = 0;
+  const handleAddBiasConfig = useCallback(() => {
+    const availableBias = ALL_COGNITIVE_BIASES.find(bias => !usedBiases.includes(bias));
+    
+    if (availableBias) {
+      setBiasConfigs(prev => [
+        ...prev,
+        {
+          id: `bias-${Date.now()}`,
+          bias: availableBias,
+          count: 0
         }
+      ]);
+    }
+  }, [usedBiases]);
 
-        setBiasCounts(prevCounts => {
-            const otherBiasesTotal = totalAssignedBiases - (prevCounts[bias] || 0);
-            const maxAllowed = maxEdges - otherBiasesTotal;
-            const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+  const handleRemoveBiasConfig = useCallback((configId: string) => {
+    setBiasConfigs(prev => prev.filter(config => config.id !== configId));
+  }, []);
 
-             // Only update state if the clamped value is different
-             // or if the source was the input (to reflect clamping immediately)
-            if(clampedCount !== prevCounts[bias] || source === 'input') {
-                return { ...prevCounts, [bias]: clampedCount };
-            }
-            return prevCounts; // No change needed
-        });
-    }, [maxEdges, totalAssignedBiases]);
+  // Handler for changing bias value
+  const handleBiasChange = useCallback((configId: string, bias: CognitiveBias) => {
+    setBiasConfigs(prev => 
+      prev.map(c => c.id === configId ? {...c, bias} : c)
+    );
+  }, []);
+
+  // Handler for changing bias count
+  const handleBiasCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
+    if (maxEdges <= 0) return;
+
+    let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
+    if (isNaN(newCount) || newCount < 0) {
+      newCount = 0;
+    }
+
+    setBiasConfigs(prev => {
+      const currentConfig = prev.find(c => c.id === configId);
+      if (!currentConfig) return prev;
+
+      const otherConfigsTotal = prev.reduce((sum, c) => 
+        c.id === configId ? sum : sum + c.count, 0);
+      const maxAllowed = maxEdges - otherConfigsTotal;
+      const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+
+      if (clampedCount !== currentConfig.count || source === 'input') {
+        return prev.map(c => 
+          c.id === configId ? {...c, count: clampedCount} : c
+        );
+      }
+      return prev;
+    });
+  }, [maxEdges]);
 
 
   // --- Form Submission ---
@@ -289,11 +340,15 @@ export function SimulationForm() {
         acc[config.type] += config.count;
         return acc;
       }, {} as Record<AgentType, number>),
-      cognitiveBiasDistribution: biasCounts,
+      cognitiveBiasDistribution: biasConfigs.reduce((acc, config) => {
+        acc[config.bias] = config.count;
+        return acc;
+      }, {} as Record<CognitiveBias, number>),
     };
 
     console.log("Simulation Configuration:", config);
     const payload = {
+      seed: data.seed ? data.seed.toString() : undefined, // Convert BigInt to string
       numNetworks: data.numNetworks,
       density: data.density,
       iterationLimit: data.iterationLimit,
@@ -305,9 +360,9 @@ export function SimulationForm() {
         effect: config.effect,
         count: config.count
       })),
-      cognitiveBiasDistribution: ALL_COGNITIVE_BIASES.map(bias => ({
-        bias,
-        count: biasCounts[bias]
+      cognitiveBiasDistribution: biasConfigs.map(config => ({
+        bias: config.bias,
+        count: config.count
       }))
     };
   
@@ -377,6 +432,25 @@ export function SimulationForm() {
                 <Input id="saveMode" {...register("saveMode")} />
                  {errors.saveMode && <p className="text-red-500 text-sm mt-1">{errors.saveMode.message}</p>}
              </div>
+             <div>
+                <Label htmlFor="seed">Seed (Optional)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input 
+                      id="seed" 
+                      type="number" 
+                      min="0" 
+                      step="1" 
+                      {...register("seed")} 
+                      placeholder="Random if not provided"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Specific seed for reproducible results. Leave empty for random generation.</p>
+                  </TooltipContent>
+                </Tooltip>
+                {errors.seed && <p className="text-red-500 text-sm mt-1">{errors.seed.message}</p>}
+              </div>
             </div>
 
             <Separator />
@@ -573,57 +647,102 @@ export function SimulationForm() {
 
             {/* --- Cognitive Bias Distribution --- */}
             <div>
-                <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
-                {(maxEdges <= 0) ? (
-                   <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
-               ) : (
-                 <>
-                    <div className={`mb-4 p-3 rounded-md ${remainingBiases < 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
-                         <p className={`font-medium ${remainingBiases < 0 ? 'text-destructive' : ''}`}>
-                            Biased Edges Assigned: {totalAssignedBiases} / {maxEdges} (Max Possible)
-                        </p>
-                        <p className="text-sm text-muted-foreground">Remaining edges that can be assigned a bias: {remainingBiases}</p>
-                         {remainingBiases < 0 && <p className="text-destructive font-semibold">Too many biases assigned!</p>}
-                    </div>
+              <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
+              {(maxEdges <= 0) ? (
+                <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
+              ) : (
+                <>
+                  <div className={`mb-4 p-3 rounded-md ${remainingBiases < 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
+                    <p className={`font-medium ${remainingBiases < 0 ? 'text-destructive' : ''}`}>
+                      Biased Edges Assigned: {totalAssignedBiases} / {maxEdges} (Max Possible)
+                    </p>
+                    <p className="text-sm text-muted-foreground">Remaining edges that can be assigned a bias: {remainingBiases}</p>
+                    {remainingBiases < 0 && <p className="text-destructive font-semibold">Too many biases assigned!</p>}
+                  </div>
 
-                     <div className="space-y-6">
-                        {ALL_COGNITIVE_BIASES.map((bias) => {
-                            const count = biasCounts[bias] || 0;
-                             const percentage = maxEdges > 0 ? (count / maxEdges * 100).toFixed(1) : '0.0';
-                             return (
-                                <div key={bias} className="space-y-2">
-                                    <Label htmlFor={`bias-${bias}`} className="flex justify-between">
-                                        <span>{bias}</span>
-                                         <span className='text-sm text-muted-foreground'>{percentage}%</span>
-                                     </Label>
-                                    <div className="flex items-center gap-4">
-                                       <Slider
-                                            id={`bias-slider-${bias}`}
-                                            min={0}
-                                            max={maxEdges}
-                                            step={1}
-                                            value={[count]}
-                                            onValueChange={(value) => handleBiasChange(bias, value[0], 'slider')}
-                                            disabled={maxEdges <= 0}
-                                             className="flex-1"
-                                         />
-                                        <Input
-                                            id={`bias-${bias}`}
-                                            type="number"
-                                            min="0"
-                                            max={maxEdges} // Technically max is dynamic
-                                            value={count}
-                                            onChange={(e) => handleBiasChange(bias, e.target.value, 'input')}
-                                            disabled={maxEdges <= 0}
-                                             className="w-24"
-                                         />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                  <div className="space-y-6 w-full">
+                    {biasConfigs.map((config) => {
+                      const availableBiases = getAvailableBiases(config);
+                      
+                      return (
+                        <Card key={config.id} className="w-full">
+                          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <div className="flex flex-col gap-0">
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={config.bias} 
+                                  onValueChange={(val) => handleBiasChange(config.id, val as CognitiveBias)}
+                                >
+                                  <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Cognitive Bias" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Cognitive Bias</SelectLabel>
+                                      {availableBiases.map(bias => (
+                                        <SelectItem key={bias} value={bias}>{bias}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            {biasConfigs.length > 1 && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleRemoveBiasConfig(config.id)}
+                                className="h-8 w-8 hover:bg-red-500/10 -mt-2 self-start"
+                              >
+                                ✕
+                              </Button>
+                            )}
+                          </CardHeader>
+                          
+                          <CardContent>
+                            <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
+                              <Slider
+                                min={0}
+                                max={maxEdges}
+                                step={1}
+                                value={[config.count]}
+                                onValueChange={(v) => handleBiasCountChange(config.id, v[0], "slider")}
+                                className="col-start-1 w-full"
+                              />
+
+                              <div className="relative w-24 mt-2">
+                                <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
+                                  {maxEdges > 0
+                                    ? ((config.count / maxEdges) * 100).toFixed(1)
+                                    : "0.0"}
+                                  %
+                                </span>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={maxEdges}
+                                  value={config.count}
+                                  onChange={(e) => handleBiasCountChange(config.id, e.target.value, "input")}
+                                  className="w-full"
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    
+                    <Button 
+                      onClick={handleAddBiasConfig}
+                      variant="outline"
+                      className="w-full"
+                      disabled={usedBiases.length >= ALL_COGNITIVE_BIASES.length}
+                    >
+                      + Add Cognitive Bias
+                    </Button>
+                  </div>
                 </>
-               )}
+              )}
             </div>
 
              {/* --- Validation Error Summary --- */}
