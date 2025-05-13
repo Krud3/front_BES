@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
-import { AgentType, CognitiveBias, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
+import { AgentType, CognitiveBias, AgentConfig, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
 import {
   Select,
   SelectContent,
@@ -41,12 +41,6 @@ export function SimulationForm() {
   const [thresholdValue, setThresholdValue] = useState<number>(0);
   const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(1);
   const [openMindedness, setopenMindedness] = useState<number>(2);
-  const [agentEffects, setAgentEffects] = useState<Record<AgentType, "DeGroot" | "Memory" | "Memoryless">>(
-    () =>
-      Object.fromEntries(
-        ALL_AGENT_TYPES.map(type => [type, "Memory"])
-      ) as Record<AgentType, "DeGroot" | "Memory" | "Memoryless">
-  );
   // === Basic Parameters State ===
   const { register, handleSubmit, watch, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,9 +59,76 @@ export function SimulationForm() {
   const density = watch('density');
 
   // === Agent Type Distribution State ===
-  const [agentCounts, setAgentCounts] = useState<Record<AgentType, number>>(
-    () => Object.fromEntries(ALL_AGENT_TYPES.map(type => [type, 0])) as Record<AgentType, number>
-  );
+  const [agentConfigs, setAgentConfigs] = useState<AgentConfig[]>([
+    // Start with one default configuration
+    {
+      id: "default",
+      type: "DeGroot",
+      effect: "Memory",
+      count: 0
+    }
+  ]);
+
+  React.useEffect(() => {
+    // This empty dependency array ensures it only runs once on mount
+  }, []);
+
+  // Track used Type-Effect combinations
+  const usedTypeEffectCombinations = useMemo(() => {
+    const combinations: Record<string, string[]> = {};
+    
+    // Initialize all agent types with empty arrays
+    ALL_AGENT_TYPES.forEach(type => {
+      combinations[type] = [];
+    });
+    
+    // Fill with used effects - handle consistently
+    agentConfigs.forEach(config => {
+      if (config.type && config.effect) { // Only track if both are set
+        if (!combinations[config.type]) {
+          combinations[config.type] = [];
+        }
+        
+        // Avoid duplicates
+        if (!combinations[config.type].includes(config.effect)) {
+          combinations[config.type].push(config.effect);
+        }
+      }
+    });
+    
+    return combinations;
+  }, [agentConfigs]);
+
+  // Get available types (those that don't have all effects used)
+  const getAvailableTypes = useCallback((currentConfig: AgentConfig) => {
+    const allEffects = ["DeGroot", "Memory", "Memoryless"];
+    
+    // Filter types that don't have all effects used yet
+    return ALL_AGENT_TYPES.filter(type => {
+      // If this is the current type being edited, always include it
+      if (currentConfig.type === type) return true;
+      
+      // Check if all possible effects are already used for this type
+      const usedEffects = usedTypeEffectCombinations[type] || [];
+      return usedEffects.length < allEffects.length;
+    });
+  }, [usedTypeEffectCombinations]);
+
+  // Get available effects for a specific type
+  const getAvailableEffects = useCallback((type: string, currentConfig: AgentConfig) => {
+    if (!type) return []; // Return empty if no type selected
+    
+    const allEffects = ["DeGroot", "Memory", "Memoryless"] as const;
+    const usedEffects = usedTypeEffectCombinations[type] || [];
+    
+    return allEffects.filter(effect => {
+      // If this is the current effect being edited, include it
+      if (currentConfig.effect === effect && currentConfig.type === type) return true;
+      
+      // Otherwise, only include effects not yet used for this type
+      return !usedEffects.includes(effect);
+    });
+  }, [usedTypeEffectCombinations]);
 
   // === Cognitive Bias Distribution State ===
   const [biasCounts, setBiasCounts] = useState<Record<CognitiveBias, number>>(
@@ -76,8 +137,8 @@ export function SimulationForm() {
 
   // === Derived Values ===
   const totalAssignedAgents = useMemo(() => {
-    return Object.values(agentCounts).reduce((sum, count) => sum + count, 0);
-  }, [agentCounts]);
+    return agentConfigs.reduce((sum, config) => sum + config.count, 0);
+  }, [agentConfigs]);
 
   const remainingAgents = useMemo(() => {
     return (numAgents || 0) - totalAssignedAgents;
@@ -108,30 +169,86 @@ export function SimulationForm() {
   const isFormValid = !Object.keys(errors).length && isAgentDistributionValid && isBiasDistributionValid;
 
   // === Handlers ===
+  // Handler for adding a new agent configuration
+  const handleAddAgentConfig = useCallback(() => {
+    // Find an available type-effect combination
+    const availableTypeEffect = ALL_AGENT_TYPES.reduce((found, type) => {
+      if (found) return found;
+      
+      const usedEffects = usedTypeEffectCombinations[type] || [];
+      const allEffects = ["DeGroot", "Memory", "Memoryless"];
+      
+      const availableEffect = allEffects.find(effect => 
+        !usedEffects.includes(effect)
+      );
+      
+      if (availableEffect) {
+        return { type, effect: availableEffect };
+      }
+      
+      return null;
+    }, null as { type: string, effect: string } | null);
+    
+    // Only add if there's an available combination
+    if (availableTypeEffect) {
+      setAgentConfigs(prev => [
+        ...prev, 
+        {
+          id: `agent-${Date.now()}`,
+          type: availableTypeEffect.type as AgentType,
+          effect: availableTypeEffect.effect as "DeGroot" | "Memory" | "Memoryless",
+          count: 0
+        }
+      ]);
+    }
+  }, [usedTypeEffectCombinations]);
 
-  // --- Agent Type Handlers ---
-  const handleAgentChange = useCallback((type: AgentType, value: string | number, source: 'input' | 'slider') => {
+  // Handler for removing an agent configuration
+  const handleRemoveAgentConfig = useCallback((configId: string) => {
+    setAgentConfigs(prev => prev.filter(config => config.id !== configId));
+  }, []);
+
+  // Handler for changing agent count for a configuration
+  const handleAgentCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
     const currentNumAgents = numAgents || 0;
-    if (currentNumAgents <= 0) return; // Don't allow changes if total agents is 0 or less
+    if (currentNumAgents <= 0) return;
 
     let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
     if (isNaN(newCount) || newCount < 0) {
-        newCount = 0;
+      newCount = 0;
     }
 
-    setAgentCounts(prevCounts => {
-        const otherAgentsTotal = totalAssignedAgents - (prevCounts[type] || 0);
-        const maxAllowed = currentNumAgents - otherAgentsTotal;
-        const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+    setAgentConfigs(prev => {
+      const currentConfig = prev.find(c => c.id === configId);
+      if (!currentConfig) return prev;
 
-        // Only update state if the clamped value is different
-        // or if the source was the input (to reflect clamping immediately)
-        if (clampedCount !== prevCounts[type] || source === 'input') {
-             return { ...prevCounts, [type]: clampedCount };
-        }
-        return prevCounts; // No change needed
+      const otherConfigsTotal = prev.reduce((sum, c) => 
+        c.id === configId ? sum : sum + c.count, 0);
+      const maxAllowed = currentNumAgents - otherConfigsTotal;
+      const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+
+      if (clampedCount !== currentConfig.count || source === 'input') {
+        return prev.map(c => 
+          c.id === configId ? {...c, count: clampedCount} : c
+        );
+      }
+      return prev;
     });
-  }, [numAgents, totalAssignedAgents]);
+  }, [numAgents]);
+
+  // Handler for changing agent type for a configuration
+  const handleAgentTypeChange = useCallback((configId: string, type: AgentType) => {
+    setAgentConfigs(prev => 
+      prev.map(c => c.id === configId ? {...c, type} : c)
+    );
+  }, []);
+
+  // Handler for changing effect for a configuration
+  const handleEffectChange = useCallback((configId: string, effect: "DeGroot" | "Memory" | "Memoryless") => {
+    setAgentConfigs(prev => 
+      prev.map(c => c.id === configId ? {...c, effect} : c)
+    );
+  }, []);
 
 
   // --- Cognitive Bias Handlers ---
@@ -161,15 +278,18 @@ export function SimulationForm() {
   // --- Form Submission ---
   const onFormSubmit = (data: FormValues) => {
     if (!isFormValid) {
-        console.error("Form is invalid. Submission prevented.");
-        // Optionally show a user-facing error message
-        return;
+      console.error("Form is invalid. Submission prevented.");
+      return;
     }
 
     const config: SimulationConfig = {
-        ...data,
-        agentTypeDistribution: agentCounts,
-        cognitiveBiasDistribution: biasCounts,
+      ...data,
+      agentTypeDistribution: agentConfigs.reduce((acc, config) => {
+        if (!acc[config.type]) acc[config.type] = 0;
+        acc[config.type] += config.count;
+        return acc;
+      }, {} as Record<AgentType, number>),
+      cognitiveBiasDistribution: biasCounts,
     };
 
     console.log("Simulation Configuration:", config);
@@ -180,10 +300,10 @@ export function SimulationForm() {
       stopThreshold: data.stopThreshold,
       saveMode: data.saveMode,
       degreeDistribution: 2.5,
-      agentTypeDistribution: ALL_AGENT_TYPES.map(type => ({
-        strategy: type,
-        effect: agentEffects[type],
-        count: agentCounts[type]
+      agentTypeDistribution: agentConfigs.map(config => ({
+        strategy: config.type,
+        effect: config.effect,
+        count: config.count
       })),
       cognitiveBiasDistribution: ALL_COGNITIVE_BIASES.map(bias => ({
         bias,
@@ -264,115 +384,120 @@ export function SimulationForm() {
             {/* --- Agent Type Distribution --- */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Agent Type Distribution</h3>
-               {(numAgents === undefined || numAgents <= 0) ? (
-                   <p className="text-muted-foreground text-sm">Enter a positive Number of Agents to configure types.</p>
-               ) : (
-                   <>
-                      <div className={`mb-4 p-3 rounded-md ${remainingAgents !== 0 ? 'bg-destructive/10 border border-destructive' : 'bg-green-100 dark:bg-green-900/30 border border-green-500'}`}>
-                        <p className={`font-medium ${remainingAgents !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
-                          Agents to Assign: {remainingAgents} / {numAgents || 0}
-                          {remainingAgents !== 0 && " (Must be exactly 0)"}
-                        </p>
-                     </div>
+              {(numAgents === undefined || numAgents <= 0) ? (
+                <p className="text-muted-foreground text-sm">Enter a positive Number of Agents to configure types.</p>
+              ) : (
+                <>
+                  <div className={`mb-4 p-3 rounded-md ${remainingAgents !== 0 ? 'bg-destructive/10 border border-destructive' : 'bg-green-100 dark:bg-green-900/30 border border-green-500'}`}>
+                    <p className={`font-medium ${remainingAgents !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
+                      Agents to Assign: {remainingAgents} / {numAgents || 0}
+                      {remainingAgents !== 0 && " (Must be exactly 0)"}
+                    </p>
+                  </div>
 
-                     <div className="space-y-6 w-full">
-                                     {ALL_AGENT_TYPES.map((type) => {
-                  const count = agentCounts[type] || 0;
-                  const effect = agentEffects[type];
+                  <div className="space-y-6 w-full">
+                    {agentConfigs.map((config) => {
+                      const availableTypes = getAvailableTypes(config);
+                      const availableEffects = getAvailableEffects(config.type, config);
 
-                  return (
-                    <Card key={type} className="w-full">
-                      <CardHeader>
-                        <CardTitle>{type}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-[1fr_auto_140px] items-center gap-4 w-full">
-                          <Slider
-                            min={0}
-                            max={numAgents || 0}
-                            step={1}
-                            value={[count]}
-                            onValueChange={(v) =>
-                              handleAgentChange(
-                                type,
-                                v[0],
-                                "slider"
-                              )
-                            }
-                            className="col-start-1 w-full"
-                          />
+                      return (
+                        <Card key={config.id} className="w-full">
+                          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <div className="flex flex-col gap-0">
+                              {/* <CardTitle>Agent Configuration</CardTitle> */}
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={config.type} 
+                                  onValueChange={(val) => handleAgentTypeChange(config.id, val as AgentType)}
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue placeholder="Type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Agent Type</SelectLabel>
+                                      {availableTypes.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                                
+                                <Select
+                                  value={config.effect}
+                                  onValueChange={(val) => handleEffectChange(
+                                    config.id, 
+                                    val as "DeGroot" | "Memory" | "Memoryless"
+                                  )}
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue placeholder="Effect" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Effects</SelectLabel>
+                                      {availableEffects.map(effect => (
+                                        <SelectItem key={effect} value={effect}>{effect}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            {agentConfigs.length > 1 && (
+                              <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleRemoveAgentConfig(config.id)}
+                              className="h-8 w-8 hover:bg-red-500/10 -mt-2 self-start"
+                              >
+                              ✕
+                              </Button>
+                            )}
 
-                          <div className="relative w-24">
-                            <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
-                              {numAgents > 0
-                                ? (
-                                    (count / numAgents) *
-                                    100
-                                  ).toFixed(1)
-                                : "0.0"}
-                              %
-                            </span>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={numAgents || 0}
-                              value={count}
-                              onChange={(e) =>
-                                handleAgentChange(
-                                  type,
-                                  e.target.value,
-                                  "input"
-                                )
-                              }
-                              className="w-full"
-                            />
-                          </div>
+                          </CardHeader>
+                          
+                          <CardContent>
+                            <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
+                              <Slider
+                                min={0}
+                                max={numAgents || 0}
+                                step={1}
+                                value={[config.count]}
+                                onValueChange={(v) => handleAgentCountChange(config.id, v[0], "slider")}
+                                className="col-start-1 w-full"
+                              />
 
-                          <Select
-                            value={effect}
-                            onValueChange={(val) =>
-                              setAgentEffects((prev) => ({
-                                ...prev,
-                                [type]: val as any,
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder="Effect" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>
-                                  Effects
-                                </SelectLabel>
-                                <SelectItem value="DeGroot">
-                                  DeGroot
-                                </SelectItem>
-                                <SelectItem value="Memory">
-                                  Memory
-                                </SelectItem>
-                                <SelectItem value="Memoryless">
-                                  Memoryless
-                                </SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {type === "Threshold" && (
-                              <div className="col-start-3 mt-2 flex flex-col space-y-1">
-                                <Label htmlFor={`threshold-${type}`}>Threshold (0–1)</Label>
+                              <div className="relative w-24 mt-2">
+                                <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
+                                  {numAgents > 0
+                                    ? ((config.count / numAgents) * 100).toFixed(1)
+                                    : "0.0"}
+                                  %
+                                </span>
                                 <Input
-                                  id={`threshold-${type}`}
+                                  type="number"
+                                  min={0}
+                                  max={numAgents || 0}
+                                  value={config.count}
+                                  onChange={(e) => handleAgentCountChange(config.id, e.target.value, "input")}
+                                  className="w-full"
+                                />
+                              </div>
+                            </div>
+
+                            {config.type === "Threshold" && (
+                              <div className="mt-2 flex flex-col space-y-1">
+                                <Label htmlFor={`threshold-${config.id}`}>Threshold (0–1)</Label>
+                                <Input
+                                  id={`threshold-${config.id}`}
                                   type="number"
                                   min={0}
                                   max={1}
                                   step={0.01}
                                   value={thresholdValue}
                                   onChange={(e) => {
-                                    let v =
-                                      parseFloat(e.target
-                                        .value) || 0;
+                                    let v = parseFloat(e.target.value) || 0;
                                     if (v < 0) v = 0;
                                     if (v > 1) v = 1;
                                     setThresholdValue(v);
@@ -381,14 +506,14 @@ export function SimulationForm() {
                                 />
                               </div>
                             )}
-                            {type === "Confidence" && (
-                              <div className="col-start-3 mt-2 flex items-start gap-x-6">
-
+                            
+                            {config.type === "Confidence" && (
+                              <div className="mt-2 flex items-start gap-x-6">
                                 {/* Threshold */}
                                 <div className="flex flex-col space-y-1">
-                                  <Label htmlFor={`thresconf-${type}`}>Threshold (0–1)</Label>
+                                  <Label htmlFor={`thresconf-${config.id}`}>Threshold (0–1)</Label>
                                   <Input
-                                    id={`thresconf-${type}`}
+                                    id={`thresconf-${config.id}`}
                                     type="number"
                                     min={0}
                                     max={1}
@@ -403,11 +528,12 @@ export function SimulationForm() {
                                     className="w-32"
                                   />
                                 </div>
-                                                                {/* Open Mindedness */}
+                                
+                                {/* Open Mindedness */}
                                 <div className="flex flex-col space-y-1">
-                                  <Label htmlFor={`openm-${type}`}>Open Mindedness (≥1)</Label>
+                                  <Label htmlFor={`openm-${config.id}`}>Open Mindedness (≥1)</Label>
                                   <Input
-                                    id={`openm-${type}`}
+                                    id={`openm-${config.id}`}
                                     type="number"
                                     min={1}
                                     step={1}
@@ -422,14 +548,25 @@ export function SimulationForm() {
                                 </div>
                               </div>
                             )}
-
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-                     </div>
-                    </>
-               )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    
+                    <Button 
+                      onClick={handleAddAgentConfig}
+                      variant="outline"
+                      className="w-full"
+                      // Disable the button if all possible combinations are already used
+                      disabled={Object.entries(usedTypeEffectCombinations).every(
+                        ([type, effects]) => effects.length >= 3
+                      )}
+                    >
+                      + Add Agent Type Configuration
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             <Separator />
