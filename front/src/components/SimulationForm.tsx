@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
-import { AgentType, CognitiveBias, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
+import { AgentType, AgentConfig, CognitiveBias, BiasConfig, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ import {
 // --- Zod Schema for Basic Validation ---
 // We'll handle complex inter-field validation manually for now
 const formSchema = z.object({
+  seed: z.coerce.bigint().nonnegative("Must be 0 or positive").optional(),
   numNetworks: z.coerce.number().int().positive("Must be positive"),
   numAgents: z.coerce.number().int().positive("Must be positive"),
   density: z.coerce.number().min(0),
@@ -38,12 +39,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function SimulationForm() {
-  const [agentEffects, setAgentEffects] = useState<Record<AgentType, "DeGroot" | "Memory" | "Memoryless">>(
-    () =>
-      Object.fromEntries(
-        ALL_AGENT_TYPES.map(type => [type, "Memory"])
-      ) as Record<AgentType, "DeGroot" | "Memory" | "Memoryless">
-  );
+  const [thresholdValue, setThresholdValue] = useState<number>(0);
+  const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(1);
+  const [openMindedness, setopenMindedness] = useState<number>(2);
   // === Basic Parameters State ===
   const { register, handleSubmit, watch, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,19 +60,105 @@ export function SimulationForm() {
   const density = watch('density');
 
   // === Agent Type Distribution State ===
-  const [agentCounts, setAgentCounts] = useState<Record<AgentType, number>>(
-    () => Object.fromEntries(ALL_AGENT_TYPES.map(type => [type, 0])) as Record<AgentType, number>
-  );
+  const [agentConfigs, setAgentConfigs] = useState<AgentConfig[]>([
+    // Start with one default configuration
+    {
+      id: "default",
+      type: "DeGroot",
+      effect: "Memory",
+      count: 0
+    }
+  ]);
+
+  React.useEffect(() => {
+    // This empty dependency array ensures it only runs once on mount
+  }, []);
+
+  // Track used Type-Effect combinations
+  const usedTypeEffectCombinations = useMemo(() => {
+    const combinations: Record<string, string[]> = {};
+    
+    // Initialize all agent types with empty arrays
+    ALL_AGENT_TYPES.forEach(type => {
+      combinations[type] = [];
+    });
+    
+    // Fill with used effects - handle consistently
+    agentConfigs.forEach(config => {
+      if (config.type && config.effect) { // Only track if both are set
+        if (!combinations[config.type]) {
+          combinations[config.type] = [];
+        }
+        
+        // Avoid duplicates
+        if (!combinations[config.type].includes(config.effect)) {
+          combinations[config.type].push(config.effect);
+        }
+      }
+    });
+    
+    return combinations;
+  }, [agentConfigs]);
+
+  // Get available types (those that don't have all effects used)
+  const getAvailableTypes = useCallback((currentConfig: AgentConfig) => {
+    const allEffects = ["DeGroot", "Memory", "Memoryless"];
+    
+    // Filter types that don't have all effects used yet
+    return ALL_AGENT_TYPES.filter(type => {
+      // If this is the current type being edited, always include it
+      if (currentConfig.type === type) return true;
+      
+      // Check if all possible effects are already used for this type
+      const usedEffects = usedTypeEffectCombinations[type] || [];
+      return usedEffects.length < allEffects.length;
+    });
+  }, [usedTypeEffectCombinations]);
+
+  // Get available effects for a specific type
+  const getAvailableEffects = useCallback((type: string, currentConfig: AgentConfig) => {
+    if (!type) return []; // Return empty if no type selected
+    
+    const allEffects = ["DeGroot", "Memory", "Memoryless"] as const;
+    const usedEffects = usedTypeEffectCombinations[type] || [];
+    
+    return allEffects.filter(effect => {
+      // If this is the current effect being edited, include it
+      if (currentConfig.effect === effect && currentConfig.type === type) return true;
+      
+      // Otherwise, only include effects not yet used for this type
+      return !usedEffects.includes(effect);
+    });
+  }, [usedTypeEffectCombinations]);
 
   // === Cognitive Bias Distribution State ===
-  const [biasCounts, setBiasCounts] = useState<Record<CognitiveBias, number>>(
-    () => Object.fromEntries(ALL_COGNITIVE_BIASES.map(bias => [bias, 0])) as Record<CognitiveBias, number>
-  );
+  const [biasConfigs, setBiasConfigs] = useState<BiasConfig[]>([
+    {
+      id: "default-bias",
+      bias: "DeGroot",
+      count: 0
+    }
+  ]);
+
+  const usedBiases = useMemo(() => {
+    return biasConfigs.map(config => config.bias);
+  }, [biasConfigs]);
+
+  const getAvailableBiases = useCallback((currentConfig: BiasConfig) => {
+    return ALL_COGNITIVE_BIASES.filter(bias => {
+      // Include current bias
+      if (currentConfig.bias === bias) return true;
+      
+      // Only include biases that aren't already used
+      return !usedBiases.includes(bias);
+    });
+  }, [usedBiases]);
+
 
   // === Derived Values ===
   const totalAssignedAgents = useMemo(() => {
-    return Object.values(agentCounts).reduce((sum, count) => sum + count, 0);
-  }, [agentCounts]);
+    return agentConfigs.reduce((sum, config) => sum + config.count, 0);
+  }, [agentConfigs]);
 
   const remainingAgents = useMemo(() => {
     return (numAgents || 0) - totalAssignedAgents;
@@ -91,8 +175,8 @@ export function SimulationForm() {
   }, [numAgents, density]);
 
   const totalAssignedBiases = useMemo(() => {
-    return Object.values(biasCounts).reduce((sum, count) => sum + count, 0);
-  }, [biasCounts]);
+    return biasConfigs.reduce((sum, config) => sum + config.count, 0);
+  }, [biasConfigs]);
 
   const remainingBiases = useMemo(() => {
     return maxEdges - totalAssignedBiases;
@@ -105,86 +189,180 @@ export function SimulationForm() {
   const isFormValid = !Object.keys(errors).length && isAgentDistributionValid && isBiasDistributionValid;
 
   // === Handlers ===
+  // Handler for adding a new agent configuration
+  const handleAddAgentConfig = useCallback(() => {
+    // Find an available type-effect combination
+    const availableTypeEffect = ALL_AGENT_TYPES.reduce((found, type) => {
+      if (found) return found;
+      
+      const usedEffects = usedTypeEffectCombinations[type] || [];
+      const allEffects = ["DeGroot", "Memory", "Memoryless"];
+      
+      const availableEffect = allEffects.find(effect => 
+        !usedEffects.includes(effect)
+      );
+      
+      if (availableEffect) {
+        return { type, effect: availableEffect };
+      }
+      
+      return null;
+    }, null as { type: string, effect: string } | null);
+    
+    // Only add if there's an available combination
+    if (availableTypeEffect) {
+      setAgentConfigs(prev => [
+        ...prev, 
+        {
+          id: `agent-${Date.now()}`,
+          type: availableTypeEffect.type as AgentType,
+          effect: availableTypeEffect.effect as "DeGroot" | "Memory" | "Memoryless",
+          count: 0
+        }
+      ]);
+    }
+  }, [usedTypeEffectCombinations]);
 
-  // --- Agent Type Handlers ---
-  const handleAgentChange = useCallback((type: AgentType, value: string | number, source: 'input' | 'slider') => {
+  // Handler for removing an agent configuration
+  const handleRemoveAgentConfig = useCallback((configId: string) => {
+    setAgentConfigs(prev => prev.filter(config => config.id !== configId));
+  }, []);
+
+  // Handler for changing agent count for a configuration
+  const handleAgentCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
     const currentNumAgents = numAgents || 0;
-    if (currentNumAgents <= 0) return; // Don't allow changes if total agents is 0 or less
+    if (currentNumAgents <= 0) return;
 
     let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
     if (isNaN(newCount) || newCount < 0) {
-        newCount = 0;
+      newCount = 0;
     }
 
-    setAgentCounts(prevCounts => {
-        const otherAgentsTotal = totalAssignedAgents - (prevCounts[type] || 0);
-        const maxAllowed = currentNumAgents - otherAgentsTotal;
-        const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+    setAgentConfigs(prev => {
+      const currentConfig = prev.find(c => c.id === configId);
+      if (!currentConfig) return prev;
 
-        // Only update state if the clamped value is different
-        // or if the source was the input (to reflect clamping immediately)
-        if (clampedCount !== prevCounts[type] || source === 'input') {
-             return { ...prevCounts, [type]: clampedCount };
-        }
-        return prevCounts; // No change needed
+      const otherConfigsTotal = prev.reduce((sum, c) => 
+        c.id === configId ? sum : sum + c.count, 0);
+      const maxAllowed = currentNumAgents - otherConfigsTotal;
+      const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+
+      if (clampedCount !== currentConfig.count || source === 'input') {
+        return prev.map(c => 
+          c.id === configId ? {...c, count: clampedCount} : c
+        );
+      }
+      return prev;
     });
-  }, [numAgents, totalAssignedAgents]);
+  }, [numAgents]);
+
+  // Handler for changing agent type for a configuration
+  const handleAgentTypeChange = useCallback((configId: string, type: AgentType) => {
+    setAgentConfigs(prev => 
+      prev.map(c => c.id === configId ? {...c, type} : c)
+    );
+  }, []);
+
+  // Handler for changing effect for a configuration
+  const handleEffectChange = useCallback((configId: string, effect: "DeGroot" | "Memory" | "Memoryless") => {
+    setAgentConfigs(prev => 
+      prev.map(c => c.id === configId ? {...c, effect} : c)
+    );
+  }, []);
 
 
   // --- Cognitive Bias Handlers ---
-    const handleBiasChange = useCallback((bias: CognitiveBias, value: string | number, source: 'input' | 'slider') => {
-        if (maxEdges <= 0) return; // Don't allow changes if max edges is 0 or less
-
-        let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
-        if (isNaN(newCount) || newCount < 0) {
-            newCount = 0;
+  const handleAddBiasConfig = useCallback(() => {
+    const availableBias = ALL_COGNITIVE_BIASES.find(bias => !usedBiases.includes(bias));
+    
+    if (availableBias) {
+      setBiasConfigs(prev => [
+        ...prev,
+        {
+          id: `bias-${Date.now()}`,
+          bias: availableBias,
+          count: 0
         }
+      ]);
+    }
+  }, [usedBiases]);
 
-        setBiasCounts(prevCounts => {
-            const otherBiasesTotal = totalAssignedBiases - (prevCounts[bias] || 0);
-            const maxAllowed = maxEdges - otherBiasesTotal;
-            const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+  const handleRemoveBiasConfig = useCallback((configId: string) => {
+    setBiasConfigs(prev => prev.filter(config => config.id !== configId));
+  }, []);
 
-             // Only update state if the clamped value is different
-             // or if the source was the input (to reflect clamping immediately)
-            if(clampedCount !== prevCounts[bias] || source === 'input') {
-                return { ...prevCounts, [bias]: clampedCount };
-            }
-            return prevCounts; // No change needed
-        });
-    }, [maxEdges, totalAssignedBiases]);
+  // Handler for changing bias value
+  const handleBiasChange = useCallback((configId: string, bias: CognitiveBias) => {
+    setBiasConfigs(prev => 
+      prev.map(c => c.id === configId ? {...c, bias} : c)
+    );
+  }, []);
+
+  // Handler for changing bias count
+  const handleBiasCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
+    if (maxEdges <= 0) return;
+
+    let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
+    if (isNaN(newCount) || newCount < 0) {
+      newCount = 0;
+    }
+
+    setBiasConfigs(prev => {
+      const currentConfig = prev.find(c => c.id === configId);
+      if (!currentConfig) return prev;
+
+      const otherConfigsTotal = prev.reduce((sum, c) => 
+        c.id === configId ? sum : sum + c.count, 0);
+      const maxAllowed = maxEdges - otherConfigsTotal;
+      const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+
+      if (clampedCount !== currentConfig.count || source === 'input') {
+        return prev.map(c => 
+          c.id === configId ? {...c, count: clampedCount} : c
+        );
+      }
+      return prev;
+    });
+  }, [maxEdges]);
 
 
   // --- Form Submission ---
   const onFormSubmit = (data: FormValues) => {
     if (!isFormValid) {
-        console.error("Form is invalid. Submission prevented.");
-        // Optionally show a user-facing error message
-        return;
+      console.error("Form is invalid. Submission prevented.");
+      return;
     }
 
     const config: SimulationConfig = {
-        ...data,
-        agentTypeDistribution: agentCounts,
-        cognitiveBiasDistribution: biasCounts,
+      ...data,
+      agentTypeDistribution: agentConfigs.reduce((acc, config) => {
+        if (!acc[config.type]) acc[config.type] = 0;
+        acc[config.type] += config.count;
+        return acc;
+      }, {} as Record<AgentType, number>),
+      cognitiveBiasDistribution: biasConfigs.reduce((acc, config) => {
+        acc[config.bias] = config.count;
+        return acc;
+      }, {} as Record<CognitiveBias, number>),
     };
 
     console.log("Simulation Configuration:", config);
     const payload = {
+      seed: data.seed ? data.seed.toString() : undefined, // Convert BigInt to string
       numNetworks: data.numNetworks,
       density: data.density,
       iterationLimit: data.iterationLimit,
       stopThreshold: data.stopThreshold,
       saveMode: data.saveMode,
       degreeDistribution: 2.5,
-      agentTypeDistribution: ALL_AGENT_TYPES.map(type => ({
-        strategy: type,
-        effect: agentEffects[type],
-        count: agentCounts[type]
+      agentTypeDistribution: agentConfigs.map(config => ({
+        strategy: config.type,
+        effect: config.effect,
+        count: config.count
       })),
-      cognitiveBiasDistribution: ALL_COGNITIVE_BIASES.map(bias => ({
-        bias,
-        count: biasCounts[bias]
+      cognitiveBiasDistribution: biasConfigs.map(config => ({
+        bias: config.bias,
+        count: config.count
       }))
     };
   
@@ -254,6 +432,25 @@ export function SimulationForm() {
                 <Input id="saveMode" {...register("saveMode")} />
                  {errors.saveMode && <p className="text-red-500 text-sm mt-1">{errors.saveMode.message}</p>}
              </div>
+             <div>
+                <Label htmlFor="seed">Seed (Optional)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input 
+                      id="seed" 
+                      type="number" 
+                      min="0" 
+                      step="1" 
+                      {...register("seed")} 
+                      placeholder="Random if not provided"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Specific seed for reproducible results. Leave empty for random generation.</p>
+                  </TooltipContent>
+                </Tooltip>
+                {errors.seed && <p className="text-red-500 text-sm mt-1">{errors.seed.message}</p>}
+              </div>
             </div>
 
             <Separator />
@@ -261,132 +458,291 @@ export function SimulationForm() {
             {/* --- Agent Type Distribution --- */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Agent Type Distribution</h3>
-               {(numAgents === undefined || numAgents <= 0) ? (
-                   <p className="text-muted-foreground text-sm">Enter a positive Number of Agents to configure types.</p>
-               ) : (
-                   <>
-                      <div className={`mb-4 p-3 rounded-md ${remainingAgents !== 0 ? 'bg-destructive/10 border border-destructive' : 'bg-green-100 dark:bg-green-900/30 border border-green-500'}`}>
-                        <p className={`font-medium ${remainingAgents !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
-                          Agents to Assign: {remainingAgents} / {numAgents || 0}
-                          {remainingAgents !== 0 && " (Must be exactly 0)"}
-                        </p>
-                     </div>
+              {(numAgents === undefined || numAgents <= 0) ? (
+                <p className="text-muted-foreground text-sm">Enter a positive Number of Agents to configure types.</p>
+              ) : (
+                <>
+                  <div className={`mb-4 p-3 rounded-md ${remainingAgents !== 0 ? 'bg-destructive/10 border border-destructive' : 'bg-green-100 dark:bg-green-900/30 border border-green-500'}`}>
+                    <p className={`font-medium ${remainingAgents !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
+                      Agents to Assign: {remainingAgents} / {numAgents || 0}
+                      {remainingAgents !== 0 && " (Must be exactly 0)"}
+                    </p>
+                  </div>
 
-                     <div className="space-y-6">
-                     {ALL_AGENT_TYPES.map((type) => {
-                        const count = agentCounts[type] || 0;
-                        const effect = agentEffects[type];
+                  <div className="space-y-6 w-full">
+                    {agentConfigs.map((config) => {
+                      const availableTypes = getAvailableTypes(config);
+                      const availableEffects = getAvailableEffects(config.type, config);
 
-                        return (
-                          <div key={type} className="space-y-2">
-                            <Label className="flex justify-between">
-                              <span>{type}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {numAgents > 0 ? ((count / numAgents) * 100).toFixed(1) : "0.0"}%
-                              </span>
-                            </Label>
-                            <div className="flex items-center gap-4">
-                              {/* Slider e Input para count */}
+                      return (
+                        <Card key={config.id} className="w-full">
+                          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <div className="flex flex-col gap-0">
+                              {/* <CardTitle>Agent Configuration</CardTitle> */}
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={config.type} 
+                                  onValueChange={(val) => handleAgentTypeChange(config.id, val as AgentType)}
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue placeholder="Type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Agent Type</SelectLabel>
+                                      {availableTypes.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                                
+                                <Select
+                                  value={config.effect}
+                                  onValueChange={(val) => handleEffectChange(
+                                    config.id, 
+                                    val as "DeGroot" | "Memory" | "Memoryless"
+                                  )}
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue placeholder="Effect" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Effects</SelectLabel>
+                                      {availableEffects.map(effect => (
+                                        <SelectItem key={effect} value={effect}>{effect}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            {agentConfigs.length > 1 && (
+                              <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleRemoveAgentConfig(config.id)}
+                              className="h-8 w-8 hover:bg-red-500/10 -mt-2 self-start"
+                              >
+                              ✕
+                              </Button>
+                            )}
+
+                          </CardHeader>
+                          
+                          <CardContent>
+                            <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
                               <Slider
                                 min={0}
                                 max={numAgents || 0}
                                 step={1}
-                                value={[count]}
-                                onValueChange={(v) => handleAgentChange(type, v[0], "slider")}
-                                className="flex-1"
-                              />
-                              <Input
-                                type="number"
-                                min={0}
-                                max={numAgents || 0}
-                                value={count}
-                                onChange={(e) => handleAgentChange(type, e.target.value, "input")}
-                                className="w-24"
+                                value={[config.count]}
+                                onValueChange={(v) => handleAgentCountChange(config.id, v[0], "slider")}
+                                className="col-start-1 w-full"
                               />
 
-                              {/* Tu Select personalizado para el efecto */}
-                              <Select
-                                value={effect}
-                                onValueChange={(val) =>
-                                  setAgentEffects(prev => ({ ...prev, [type]: val as any }))
-                                }
-                              >
-                                <SelectTrigger className="w-[140px]">
-                                  <SelectValue placeholder="Effect" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Effects</SelectLabel>
-                                    <SelectItem value="DeGroot">DeGroot</SelectItem>
-                                    <SelectItem value="Memory">Memory</SelectItem>
-                                    <SelectItem value="Memoryless">Memoryless</SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
+                              <div className="relative w-24 mt-2">
+                                <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
+                                  {numAgents > 0
+                                    ? ((config.count / numAgents) * 100).toFixed(1)
+                                    : "0.0"}
+                                  %
+                                </span>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={numAgents || 0}
+                                  value={config.count}
+                                  onChange={(e) => handleAgentCountChange(config.id, e.target.value, "input")}
+                                  className="w-full"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                     </div>
-                    </>
-               )}
+
+                            {config.type === "Threshold" && (
+                              <div className="mt-2 flex flex-col space-y-1">
+                                <Label htmlFor={`threshold-${config.id}`}>Threshold (0–1)</Label>
+                                <Input
+                                  id={`threshold-${config.id}`}
+                                  type="number"
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  value={thresholdValue}
+                                  onChange={(e) => {
+                                    let v = parseFloat(e.target.value) || 0;
+                                    if (v < 0) v = 0;
+                                    if (v > 1) v = 1;
+                                    setThresholdValue(v);
+                                  }}
+                                  className="w-32"
+                                />
+                              </div>
+                            )}
+                            
+                            {config.type === "Confidence" && (
+                              <div className="mt-2 flex items-start gap-x-6">
+                                {/* Threshold */}
+                                <div className="flex flex-col space-y-1">
+                                  <Label htmlFor={`thresconf-${config.id}`}>Threshold (0–1)</Label>
+                                  <Input
+                                    id={`thresconf-${config.id}`}
+                                    type="number"
+                                    min={0}
+                                    max={1}
+                                    step={0.01}
+                                    value={thresholdValueConfidence}
+                                    onChange={(e) => {
+                                      let v = parseFloat(e.target.value) || 0;
+                                      if (v < 0) v = 0;
+                                      if (v > 1) v = 1;
+                                      setThresholdValueConfidence(v);
+                                    }}
+                                    className="w-32"
+                                  />
+                                </div>
+                                
+                                {/* Open Mindedness */}
+                                <div className="flex flex-col space-y-1">
+                                  <Label htmlFor={`openm-${config.id}`}>Open Mindedness (≥1)</Label>
+                                  <Input
+                                    id={`openm-${config.id}`}
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={openMindedness}
+                                    onChange={(e) => {
+                                      let v = parseInt(e.target.value, 10) || 1;
+                                      if (v < 1) v = 1;
+                                      setopenMindedness(v);
+                                    }}
+                                    className="w-32"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    
+                    <Button 
+                      onClick={handleAddAgentConfig}
+                      variant="outline"
+                      className="w-full"
+                      // Disable the button if all possible combinations are already used
+                      disabled={Object.entries(usedTypeEffectCombinations).every(
+                        ([type, effects]) => effects.length >= 3
+                      )}
+                    >
+                      + Add Agent Type Configuration
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             <Separator />
 
             {/* --- Cognitive Bias Distribution --- */}
             <div>
-                <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
-                {(maxEdges <= 0) ? (
-                   <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
-               ) : (
-                 <>
-                    <div className={`mb-4 p-3 rounded-md ${remainingBiases < 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
-                         <p className={`font-medium ${remainingBiases < 0 ? 'text-destructive' : ''}`}>
-                            Biased Edges Assigned: {totalAssignedBiases} / {maxEdges} (Max Possible)
-                        </p>
-                        <p className="text-sm text-muted-foreground">Remaining edges that can be assigned a bias: {remainingBiases}</p>
-                         {remainingBiases < 0 && <p className="text-destructive font-semibold">Too many biases assigned!</p>}
-                    </div>
+              <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
+              {(maxEdges <= 0) ? (
+                <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
+              ) : (
+                <>
+                  <div className={`mb-4 p-3 rounded-md ${remainingBiases < 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
+                    <p className={`font-medium ${remainingBiases < 0 ? 'text-destructive' : ''}`}>
+                      Biased Edges Assigned: {totalAssignedBiases} / {maxEdges} (Max Possible)
+                    </p>
+                    <p className="text-sm text-muted-foreground">Remaining edges that can be assigned a bias: {remainingBiases}</p>
+                    {remainingBiases < 0 && <p className="text-destructive font-semibold">Too many biases assigned!</p>}
+                  </div>
 
-                     <div className="space-y-6">
-                        {ALL_COGNITIVE_BIASES.map((bias) => {
-                            const count = biasCounts[bias] || 0;
-                             const percentage = maxEdges > 0 ? (count / maxEdges * 100).toFixed(1) : '0.0';
-                             return (
-                                <div key={bias} className="space-y-2">
-                                    <Label htmlFor={`bias-${bias}`} className="flex justify-between">
-                                        <span>{bias}</span>
-                                         <span className='text-sm text-muted-foreground'>{percentage}%</span>
-                                     </Label>
-                                    <div className="flex items-center gap-4">
-                                       <Slider
-                                            id={`bias-slider-${bias}`}
-                                            min={0}
-                                            max={maxEdges}
-                                            step={1}
-                                            value={[count]}
-                                            onValueChange={(value) => handleBiasChange(bias, value[0], 'slider')}
-                                            disabled={maxEdges <= 0}
-                                             className="flex-1"
-                                         />
-                                        <Input
-                                            id={`bias-${bias}`}
-                                            type="number"
-                                            min="0"
-                                            max={maxEdges} // Technically max is dynamic
-                                            value={count}
-                                            onChange={(e) => handleBiasChange(bias, e.target.value, 'input')}
-                                            disabled={maxEdges <= 0}
-                                             className="w-24"
-                                         />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                  <div className="space-y-6 w-full">
+                    {biasConfigs.map((config) => {
+                      const availableBiases = getAvailableBiases(config);
+                      
+                      return (
+                        <Card key={config.id} className="w-full">
+                          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <div className="flex flex-col gap-0">
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={config.bias} 
+                                  onValueChange={(val) => handleBiasChange(config.id, val as CognitiveBias)}
+                                >
+                                  <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Cognitive Bias" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Cognitive Bias</SelectLabel>
+                                      {availableBiases.map(bias => (
+                                        <SelectItem key={bias} value={bias}>{bias}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            {biasConfigs.length > 1 && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleRemoveBiasConfig(config.id)}
+                                className="h-8 w-8 hover:bg-red-500/10 -mt-2 self-start"
+                              >
+                                ✕
+                              </Button>
+                            )}
+                          </CardHeader>
+                          
+                          <CardContent>
+                            <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
+                              <Slider
+                                min={0}
+                                max={maxEdges}
+                                step={1}
+                                value={[config.count]}
+                                onValueChange={(v) => handleBiasCountChange(config.id, v[0], "slider")}
+                                className="col-start-1 w-full"
+                              />
+
+                              <div className="relative w-24 mt-2">
+                                <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
+                                  {maxEdges > 0
+                                    ? ((config.count / maxEdges) * 100).toFixed(1)
+                                    : "0.0"}
+                                  %
+                                </span>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={maxEdges}
+                                  value={config.count}
+                                  onChange={(e) => handleBiasCountChange(config.id, e.target.value, "input")}
+                                  className="w-full"
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    
+                    <Button 
+                      onClick={handleAddBiasConfig}
+                      variant="outline"
+                      className="w-full"
+                      disabled={usedBiases.length >= ALL_COGNITIVE_BIASES.length}
+                    >
+                      + Add Cognitive Bias
+                    </Button>
+                  </div>
                 </>
-               )}
+              )}
             </div>
 
              {/* --- Validation Error Summary --- */}

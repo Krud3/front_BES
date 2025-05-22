@@ -26,10 +26,8 @@ export type Links = {
 export type AgentType =
   | 'DeGroot'
   | 'Memory'
-  | 'Recency'
-  | 'Peers-Memory'
-  | 'Peers-Memoryless'
-  | 'Peers-Recency';
+  | 'Threshold'
+  | 'Confidence';
 
 export type CognitiveBias =
   | 'DeGroot'
@@ -38,13 +36,24 @@ export type CognitiveBias =
   | 'Authority'
   | 'Insular';
 
+export type AgentConfig = {
+  id: string; // Unique identifier for this configuration
+  type: AgentType;
+  effect: "DeGroot" | "Memory" | "Memoryless";
+  count: number;
+};
+
+export type BiasConfig = {
+  id: string;
+  bias: CognitiveBias;
+  count: number;
+};
+
 export const ALL_AGENT_TYPES: AgentType[] = [
   'DeGroot',
   'Memory',
-  'Recency',
-  'Peers-Memory',
-  'Peers-Memoryless',
-  'Peers-Recency',
+  'Threshold',
+  'Confidence',
 ];
 
 export const ALL_COGNITIVE_BIASES: CognitiveBias[] = [
