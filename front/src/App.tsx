@@ -16,6 +16,7 @@ import TableData from '@/components/TableData';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import LoginPage from '@/pages/landing/LoginPage';
+import CustomSimulationPage from "@/pages/board/CustomSimulationPage.tsx";
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -74,6 +75,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
+              <Route path="custom-simulation" element={<ProtectedRoute><CustomSimulationPage /></ProtectedRoute>} />
               <Route path="simulation" element={<ProtectedRoute><SimulationPage /></ProtectedRoute>} />
               <Route path="cosmograph" element={<ProtectedRoute><Display /></ProtectedRoute>} />
               <Route path="table-data" element={<ProtectedRoute><TableData /></ProtectedRoute>} />
