@@ -25,7 +25,7 @@ export type Links = {
 // Simulation Form Types
 export type AgentType =
   | 'DeGroot'
-  | 'Memory'
+  | 'Majority'
   | 'Threshold'
   | 'Confidence';
 
@@ -51,7 +51,7 @@ export type BiasConfig = {
 
 export const ALL_AGENT_TYPES: AgentType[] = [
   'DeGroot',
-  'Memory',
+  'Majority',
   'Threshold',
   'Confidence',
 ];

@@ -1,748 +1,872 @@
-import React, {useMemo} from 'react';
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useFieldArray, useForm} from "react-hook-form";
-import * as z from "zod";
+import React, { useState, useMemo, useCallback } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Plus, AlertCircle, Check } from "lucide-react";
 
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Separator} from "@/components/ui/separator";
-import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {ExclamationTriangleIcon} from "@radix-ui/react-icons";
-import {PlusCircle, Trash2} from "lucide-react";
+// Agent type with all properties
+interface Agent {
+  id: string;
+  name: string;
+  initialBelief: number;
+  toleranceRadius: number;
+  toleranceOffset: number;
+  silenceStrategy: number;
+  thresholdValue?: number; // For Threshold strategy
+  confidenceValue?: number; // For Confidence strategy
+  updateValue?: number; // For Confidence strategy (u32 integer)
+  silenceEffect: number;
+}
 
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+// Neighbor type
+interface Neighbor {
+  id: string;
+  source: string;
+  target: string;
+  influence: number;
+  bias: number; // 0-4 for the five bias types
+}
 
-// Define save mode options
-const SAVE_MODES = [
-  { value: "0", label: "Full" },
-  { value: "1", label: "RoundSampling" },
-  { value: "2", label: "Standard" },
-  { value: "3", label: "StandardLight" },
-  { value: "4", label: "Roundless" },
-  { value: "5", label: "AgentlessTyped" },
-  { value: "6", label: "Agentless" },
-  { value: "7", label: "Performance" },
-  { value: "8", label: "Debug" },
-];
+// Save modes mapping
+const SAVE_MODES = {
+  0: "Full",
+  1: "Standard",
+  2: "Standard Light",
+  3: "Standard Light",
+  4: "Roundless",
+  5: "Agentless Typed",
+  6: "Agentless Typed",
+  7: "Agentless",
+  8: "Performance",
+  9: "Debug"
+};
 
-// Define silence strategy options
-const SILENCE_STRATEGIES = [
-  { value: "0", label: "DeGroot" },
-  { value: "1", label: "Majority" },
-  { value: "2", label: "Threshold" },
-  { value: "3", label: "Confidence" },
-];
+const SILENCE_STRATEGIES = {
+  0: "DeGroot",
+  1: "Majority",
+  2: "Threshold",
+  3: "Confidence"
+};
 
-// Define silence effect options
-const SILENCE_EFFECTS = [
-  { value: "0", label: "DeGroot" },
-  { value: "1", label: "Memory" },
-  { value: "2", label: "Memoryless" },
-];
+const SILENCE_EFFECTS = {
+  0: "DeGroot",
+  1: "Memory",
+  2: "Memoryless"
+};
 
-// Define cognitive bias options
-const COGNITIVE_BIASES = [
-  { value: "0", label: "DeGroot (No bias)" },
-  { value: "1", label: "Confirmation" },
-  { value: "2", label: "Backfire" },
-  { value: "3", label: "Authority" },
-  { value: "4", label: "Insular" },
-];
+const BIASES = {
+  0: "DeGroot",
+  1: "Confirmation",
+  2: "Backfire",
+  3: "Authority",
+  4: "Insular"
+};
 
-// Regular expression to ensure no spaces in names
-const noSpacesRegex = /^[^\s]+$/;
-
-// Zod schema for form validation
-const customFormSchema = z.object({
-  stopThreshold: z.coerce.number()
-    .min(0, "Must be non-negative")
-    .max(1, "Must be at most 1"),
-  iterationLimit: z.coerce.number()
-    .int("Must be an integer")
-    .nonnegative("Must be non-negative"),
-  networkName: z.string()
-    .min(1, "Network name is required")
-    .max(31, "Name must be 31 characters or less")
-    .regex(noSpacesRegex, "Spaces are not allowed in the name"),
-  saveMode: z.string().min(1, "Save mode is required"),
-
-  agents: z.array(z.object({
-    name: z.string()
-      .min(1, "Name is required")
-      .max(31, "Name must be 31 characters or less")
-      .regex(noSpacesRegex, "Spaces are not allowed in the name"),
-    initialBelief: z.coerce.number()
-      .min(0, "Must be at least 0")
-      .max(1, "Must be at most 1"),
-    toleranceRadius: z.coerce.number()
-      .min(0, "Must be at least 0")
-      .max(1, "Must be at most 1"),
-    toleranceOffset: z.coerce.number()
-      .min(0, "Must be at least 0")
-      .max(1, "Must be at most 1"),
-    silenceStrategy: z.string().min(1, "Strategy is required"),
-    silenceStrategyThreshold: z.coerce.number()
-      .min(0, "Must be at least 0")
-      .max(1, "Must be at most 1")
-      .optional(),
-    silenceStrategyConfidence: z.coerce.number()
-      .min(0, "Must be at least 0")
-      .max(1, "Must be at most 1")
-      .optional(),
-    silenceStrategyUpdate: z.coerce.number()
-      .int("Must be an integer")
-      .positive("Must be positive")
-      .optional(),
-    silenceEffect: z.string().min(1, "Effect is required"),
-  })).min(1, "At least one agent is required"),
-
-  neighbors: z.array(z.object({
-    source: z.string().min(1, "Source is required"),
-    target: z.string().min(1, "Target is required"),
-    influence: z.coerce.number()
-      .min(0, "Must be at least 0")
-      .max(1, "Must be at most 1"),
-    cognitiveBias: z.string().min(1, "Cognitive bias is required"),
-  })),
-}).refine(data => {
-  // Check for duplicate agent names
-  const names = data.agents.map(agent => agent.name);
-  return new Set(names).size === names.length;
-}, {
-  message: "Agent names must be unique",
-  path: ["agents"],
-}).refine(data => {
-  // Check for valid neighbor relationships
-  const agentNames = new Set(data.agents.map(agent => agent.name));
-  return data.neighbors.every(neighbor =>
-    agentNames.has(neighbor.source) &&
-    agentNames.has(neighbor.target) &&
-    neighbor.source !== neighbor.target
-  );
-}, {
-  message: "Neighbors must reference valid and different agents",
-  path: ["neighbors"],
-}).refine(data => {
-  // Check for duplicate neighbor pairs
-  const pairs = data.neighbors.map(n => `${n.source}-${n.target}`);
-  return new Set(pairs).size === pairs.length;
-}, {
-  message: "Cannot have duplicate neighbor pairs",
-  path: ["neighbors"],
-});
-
-type CustomFormValues = z.infer<typeof customFormSchema>;
+// Reusable component for agent float inputs (0-1 range)
+const AgentInput = ({ label, value, onChange, type = "float", min = 0, max = 1, step = 0.01, placeholder }) => (
+  <div className="space-y-1">
+    <Label className="text-xs text-muted-foreground">{label}</Label>
+    <Input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      placeholder={placeholder || (type === "float" ? "0.5" : "1")}
+      onChange={(e) => {
+        const inputVal = e.target.value;
+        if (inputVal === "") {
+          // Don't call onChange when empty, let it stay empty
+          return;
+        }
+        const val = type === "int" ? parseInt(inputVal) || 0 : parseFloat(inputVal) || 0;
+        onChange(val);
+      }}
+      onBlur={(e) => {
+        // Only set default if field is actually empty when user leaves
+        if (e.target.value === "") {
+          onChange(type === "float" ? 0.5 : 1);
+        }
+      }}
+      className="mt-2"
+    />
+  </div>
+);
 
 export function CustomSimulationForm() {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    formState: { errors },
-    setValue
-  } = useForm<CustomFormValues>({
-    resolver: zodResolver(customFormSchema),
-    defaultValues: {
-      stopThreshold: 0.0001,
-      iterationLimit: 100,
-      networkName: "",
-      saveMode: "8", // Debug
-      agents: [
-        {
-          name: "Agent1",
-          initialBelief: 0.5,
-          toleranceRadius: 0.1,
-          toleranceOffset: 0.0,
-          silenceStrategy: "0", // DeGroot
-          silenceEffect: "0" // DeGroot
-        }
-      ],
-      neighbors: []
-    }
-  });
-
-  const { fields: agentFields, append: appendAgent, remove: removeAgent } = useFieldArray({
-    control,
-    name: "agents"
-  });
-
-  const { fields: neighborFields, append: appendNeighbor, remove: removeNeighbor } = useFieldArray({
-    control,
-    name: "neighbors"
-  });
-
-  // Watch the agents array for dropdown options in neighbors
-  const agents = watch("agents");
-  const agentOptions = useMemo(() =>
-    agents.map(agent => ({
-      value: agent.name,
-      label: agent.name
-    })),
-    [agents]
-  );
-
-  // Watch silence strategy for conditional rendering
-  const watchedAgents = watch("agents");
-
-  // WebSocket connection
-  const ws = useMemo(() => new WebSocket("ws://localhost:8080/ws"), []);
-
-  const onFormSubmit = (data: CustomFormValues) => {
-    console.log("Custom Simulation Configuration:", data);
-
-    // Prepare agents with proper types based on selected strategies
-    const formattedAgents = data.agents.map(agent => {
-      let silenceStrategyObj;
-      switch (agent.silenceStrategy) {
-        case "0":
-          silenceStrategyObj = { type: "DeGroot" };
-          break;
-        case "1":
-          silenceStrategyObj = { type: "Majority" };
-          break;
-        case "2":
-          silenceStrategyObj = {
-            type: "Threshold",
-            thresholdValue: agent.silenceStrategyThreshold || 0.5
-          };
-          break;
-        case "3":
-          silenceStrategyObj = {
-            type: "Confidence",
-            confidenceValue: agent.silenceStrategyConfidence || 0.5,
-            updateValue: agent.silenceStrategyUpdate || 1
-          };
-          break;
-        default:
-          silenceStrategyObj = { type: "DeGroot" };
-      }
-
-      return {
-        name: agent.name,
-        initialBelief: agent.initialBelief,
-        toleranceRadius: agent.toleranceRadius,
-        toleranceOffset: agent.toleranceOffset,
-        silenceStrategy: silenceStrategyObj,
-        silenceEffect: parseInt(agent.silenceEffect)
-      };
-    });
-
-    // Format neighbors
-    const formattedNeighbors = data.neighbors.map(neighbor => ({
-      source: neighbor.source,
-      target: neighbor.target,
-      influence: neighbor.influence,
-      cognitiveBias: parseInt(neighbor.cognitiveBias)
-    }));
-
-    // Final payload
-    const payload = {
-      stopThreshold: data.stopThreshold,
-      iterationLimit: data.iterationLimit,
-      networkName: data.networkName,
-      saveMode: parseInt(data.saveMode),
-      agents: formattedAgents,
-      neighbors: formattedNeighbors
-    };
-
-    ws.send(JSON.stringify(payload));
-    alert("Configuration sent to server via WebSocket");
-  };
-
-  // Add a new agent with default values
-  const handleAddAgent = () => {
-    appendAgent({
-      name: `Agent${agentFields.length + 1}`,
+  const [stopThreshold, setStopThreshold] = useState(0.0001);
+  const [iterationLimit, setIterationLimit] = useState(100);
+  const [saveMode, setSaveMode] = useState(1);
+  const [networkName, setNetworkName] = useState("Custom Network");
+  const [agents, setAgents] = useState<Agent[]>([
+    {
+      id: crypto.randomUUID(),
+      name: "Agent 1",
       initialBelief: 0.5,
-      toleranceRadius: 0.1,
-      toleranceOffset: 0,
-      silenceStrategy: "0",
-      silenceEffect: "0"
-    });
+      toleranceRadius: 0.3,
+      toleranceOffset: 0.1,
+      silenceStrategy: 0,
+      silenceEffect: 0,
+      thresholdValue: 0.5,
+      confidenceValue: 0.5,
+      updateValue: 1
+    }
+  ]);
+  const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Helper function to convert string to UTF-8 bytes
+  const stringToBytes = (str: string): Uint8Array => {
+    return new TextEncoder().encode(str);
   };
 
+  // Helper function to write float32 to buffer
+  const writeFloat32 = (buffer: ArrayBuffer, offset: number, value: number): void => {
+    new DataView(buffer).setFloat32(offset, value, true); // Little endian
+  };
 
-  //let selectedAgents = new Map<string, number[]>();
-  // Add a new neighbor with default values
-  const handleAddNeighbor = () => {
-    if (agents.length < 2) {
-      alert("You need at least two agents to create a neighbor relationship");
-      return;
+  // Helper function to write uint32 to buffer
+  const writeUint32 = (buffer: ArrayBuffer, offset: number, value: number): void => {
+    new DataView(buffer).setUint32(offset, value, true); // Little endian
+  };
+
+  // Calculate total buffer size needed
+  const calculateBufferSize = (): number => {
+    let size = 9; // stopThreshold(4) + saveMode(1)
+    const networkNameBytes = stringToBytes(networkName);
+    size += 1 + networkNameBytes.length; // length byte + name
+
+    // Align to 4 bytes
+    size = Math.ceil(size / 4) * 4;
+
+    size += 4; // numberOfAgents
+    size += agents.length * 4 * 3; // initialBeliefs, toleranceRadii, toleranceOffset
+    size += agents.length * 2; // silenceStrategies, silenceEffects
+
+    // Agent names
+    agents.forEach(agent => {
+      const nameBytes = stringToBytes(agent.name);
+      size += 1 + nameBytes.length;
+    });
+
+    // Align to 4 bytes
+    size = Math.ceil(size / 4) * 4;
+
+    size += 4; // numberOfNeighbors
+    size += neighbors.length * 4; // influences
+    size += neighbors.length; // biases
+
+    // Source and target names
+    neighbors.forEach(neighbor => {
+      const sourceBytes = stringToBytes(neighbor.source);
+      const targetBytes = stringToBytes(neighbor.target);
+      size += 2 + sourceBytes.length + targetBytes.length;
+    });
+
+    return size;
+  };
+
+  // Build the binary buffer
+  const buildBuffer = (): ArrayBuffer => {
+    const bufferSize = calculateBufferSize();
+    const buffer = new ArrayBuffer(bufferSize);
+    //const view = new DataView(buffer);
+    const uint8View = new Uint8Array(buffer);
+
+    let offset = 0;
+
+    // Header
+    writeFloat32(buffer, offset, stopThreshold);
+    offset += 4;
+
+    writeUint32(buffer, offset, iterationLimit);
+    offset += 4;
+
+    uint8View[offset] = saveMode;
+    offset += 1;
+
+    // Network name
+    const networkNameBytes = stringToBytes(networkName);
+    uint8View[offset] = networkNameBytes.length;
+    offset += 1;
+    uint8View.set(networkNameBytes, offset);
+    offset += networkNameBytes.length;
+
+    // Align to 4 bytes
+    while (offset % 4 !== 0) offset++;
+
+    // Number of agents
+    writeUint32(buffer, offset, agents.length);
+    offset += 4;
+
+    // Agent data arrays
+    agents.forEach((agent, i) => {
+      writeFloat32(buffer, offset + i * 4, agent.initialBelief);
+    });
+    offset += agents.length * 4;
+
+    agents.forEach((agent, i) => {
+      writeFloat32(buffer, offset + i * 4, agent.toleranceRadius);
+    });
+    offset += agents.length * 4;
+
+    agents.forEach((agent, i) => {
+      writeFloat32(buffer, offset + i * 4, agent.toleranceOffset);
+    });
+    offset += agents.length * 4;
+
+    agents.forEach((agent, i) => {
+      uint8View[offset + i] = agent.silenceStrategy;
+    });
+    offset += agents.length;
+
+    agents.forEach((agent, i) => {
+      uint8View[offset + i] = agent.silenceEffect;
+    });
+    offset += agents.length;
+
+    // Agent names
+    agents.forEach(agent => {
+      const nameBytes = stringToBytes(agent.name);
+      uint8View[offset] = nameBytes.length;
+      offset += 1;
+      uint8View.set(nameBytes, offset);
+      offset += nameBytes.length;
+    });
+
+    // Align to 4 bytes
+    while (offset % 4 !== 0) offset++;
+
+    // Number of neighbors
+    writeUint32(buffer, offset, neighbors.length);
+    offset += 4;
+
+    // Neighbor data
+    neighbors.forEach((neighbor, i) => {
+      writeFloat32(buffer, offset + i * 4, neighbor.influence);
+    });
+    offset += neighbors.length * 4;
+
+    neighbors.forEach((neighbor, i) => {
+      uint8View[offset + i] = neighbor.bias;
+    });
+    offset += neighbors.length;
+
+    // Source names
+    neighbors.forEach(neighbor => {
+      const sourceBytes = stringToBytes(neighbor.source);
+      uint8View[offset] = sourceBytes.length;
+      offset += 1;
+      uint8View.set(sourceBytes, offset);
+      offset += sourceBytes.length;
+    });
+
+    // Target names
+    neighbors.forEach(neighbor => {
+      const targetBytes = stringToBytes(neighbor.target);
+      uint8View[offset] = targetBytes.length;
+      offset += 1;
+      uint8View.set(targetBytes, offset);
+      offset += targetBytes.length;
+    });
+    console.log(buffer)
+    return buffer;
+  };
+
+  // Add agent handler
+  const handleAddAgent = useCallback(() => {
+    const newAgent: Agent = {
+      id: crypto.randomUUID(),
+      name: `Agent ${agents.length + 1}`,
+      initialBelief: 0.5,
+      toleranceRadius: 0.3,
+      toleranceOffset: 0.1,
+      silenceStrategy: 0,
+      silenceEffect: 0,
+      thresholdValue: 0.5,
+      confidenceValue: 0.5,
+      updateValue: 1
+    };
+    setAgents(prev => [...prev, newAgent]);
+  }, [agents.length]);
+
+  // Remove agent handler
+  const handleRemoveAgent = useCallback((agentId: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) return;
+
+    // Remove agent
+    setAgents(prev => prev.filter(a => a.id !== agentId));
+
+    // Remove neighbors that reference this agent
+    setNeighbors(prev => prev.filter(n => n.source !== agent.name && n.target !== agent.name));
+  }, [agents]);
+
+  // Update agent handler
+  const handleUpdateAgent = useCallback((agentId: string, updates: Partial<Agent>) => {
+    setAgents(prev => prev.map(agent => {
+      if (agent.id === agentId) {
+        const oldName = agent.name;
+        const updatedAgent = { ...agent, ...updates };
+
+        // If name changed, update neighbors
+        if (updates.name && updates.name !== oldName) {
+          const newName = updates.name; // Store in variable to ensure it's not undefined
+          setNeighbors(prevNeighbors => prevNeighbors.map(n => ({
+            ...n,
+            source: n.source === oldName ? newName : n.source,
+            target: n.target === oldName ? newName : n.target
+          })));
+        }
+
+        return updatedAgent;
+      }
+      return agent;
+    }));
+  }, []);
+
+  // Add neighbor handler
+  const handleAddNeighbor = useCallback(() => {
+    if (agents.length < 2) return;
+
+    // Count how many times each agent is used as source
+    const sourceCounts: Record<string, number> = {};
+    neighbors.forEach(n => {
+      sourceCounts[n.source] = (sourceCounts[n.source] || 0) + 1;
+    });
+
+    const maxSourceCount = agents.length - 1;
+    const usedPairs = new Set(neighbors.map(n => `${n.source}-${n.target}`));
+
+    let source = '';
+    let target = '';
+
+    // Try to find an unused pair with a source that hasn't reached its limit
+    for (const sourceAgent of agents) {
+      // Skip if this source has reached its limit
+      if ((sourceCounts[sourceAgent.name] || 0) >= maxSourceCount) continue;
+
+      for (const targetAgent of agents) {
+        if (sourceAgent.id !== targetAgent.id) {
+          const pair = `${sourceAgent.name}-${targetAgent.name}`;
+          if (!usedPairs.has(pair)) {
+            source = sourceAgent.name;
+            target = targetAgent.name;
+            break;
+          }
+        }
+      }
+      if (source && target) break;
     }
 
-    // Check if we've reached the maximum number of possible connections
-    const maxConnections = agents.length * (agents.length - 1);
-    if (neighborFields.length >= maxConnections) {
-      alert(`Maximum number of connections (${maxConnections}) reached`);
-      return;
-    }
+    // If no available pair found, don't add
+    if (!source || !target) return;
 
-    // Find a valid source-target pair that doesn't already exist
-    const source = agents[0]?.name || "";
-    const target = agents[0]?.name || "";
-    //selectedAgents.get(source)
-
-    appendNeighbor({
+    const newNeighbor: Neighbor = {
+      id: crypto.randomUUID(),
       source,
       target,
       influence: 0.5,
-      cognitiveBias: "0"
+      bias: 0
+    };
+    setNeighbors(prev => [...prev, newNeighbor]);
+  }, [agents, neighbors]);
+
+  // Remove neighbor handler
+  const handleRemoveNeighbor = useCallback((neighborId: string) => {
+    setNeighbors(prev => prev.filter(n => n.id !== neighborId));
+  }, []);
+
+  // Update neighbor handler
+  const handleUpdateNeighbor = useCallback((neighborId: string, updates: Partial<Neighbor>) => {
+    setNeighbors(prev => prev.map(n => n.id === neighborId ? { ...n, ...updates } : n));
+  }, []);
+
+  // Get available sources (sources that haven't reached their limit)
+  const getAvailableSources = useCallback((currentNeighborId: string) => {
+    const currentNeighbor = neighbors.find(n => n.id === currentNeighborId);
+    const sourceCounts: Record<string, number> = {};
+
+    // Count how many times each agent is used as source
+    neighbors.forEach(n => {
+      if (n.id !== currentNeighborId) {
+        sourceCounts[n.source] = (sourceCounts[n.source] || 0) + 1;
+      }
     });
+
+    // An agent can be source at most (n-1) times
+    const maxSourceCount = agents.length - 1;
+
+    return agents
+      .map(a => a.name)
+      .filter(name => {
+        // Always include the current source (for editing)
+        if (currentNeighbor && name === currentNeighbor.source) return true;
+        // Otherwise check if under the limit
+        return (sourceCounts[name] || 0) < maxSourceCount;
+      });
+  }, [agents, neighbors]);
+
+  // Get available targets for a source
+  const getAvailableTargets = useCallback((source: string, currentNeighborId: string) => {
+    const usedPairs = neighbors
+      .filter(n => n.id !== currentNeighborId)
+      .map(n => `${n.source}-${n.target}`);
+
+    return agents
+      .map(a => a.name)
+      .filter(name => {
+        if (name === source) return false; // Can't target self
+        const pair = `${source}-${name}`;
+        return !usedPairs.includes(pair);
+      });
+  }, [agents, neighbors]);
+
+  // Submit handler
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+
+    try {
+      const buffer = buildBuffer();
+
+      const response = await fetch('http://localhost:8080/custom', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/octet-stream'
+        },
+        body: buffer
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+      }
+
+      // Success
+      setSubmitSuccess(true);
+      // Reset form after a delay if desired
+      setTimeout(() => setSubmitSuccess(false), 3000);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // Validation
+  const maxNeighbors = agents.length * (agents.length - 1);
+  const isValid = agents.length > 0 &&
+      agents.every(a => a.name.trim().length > 0) &&
+      neighbors.every(n => n.source !== n.target) &&
+      networkName.trim().length > 0 &&
+      stringToBytes(networkName).length <= 255;
+
   return (
-    <Card className="w-full max-w-4xl mx-auto bg-gray-950">
-      <CardHeader className="pb-2">
-        <CardTitle>Custom Simulation</CardTitle>
-        <CardDescription>Configure a custom simulation with precise agent parameters and network topology.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-          {/* Header Section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-2">General Parameters</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="stopThreshold" className="text-sm">Stop Threshold</Label>
-                <Input
-                  id="stopThreshold"
-                  type="number"
-                  step="0.00000001"
-                  min="0"
-                  max="1"
-                  className="h-8 text-sm"
-                  {...register("stopThreshold")}
-                />
-                {errors.stopThreshold && (
-                  <p className="text-red-500 text-xs mt-1">{errors.stopThreshold.message}</p>
-                )}
+    <TooltipProvider>
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle>Custom Simulation Run</CardTitle>
+          <CardDescription>Configure and run a custom simulation with specific agents and network topology</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Basic Parameters */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Basic Parameters</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stopThreshold" className="text-sm font-medium">Stop Threshold</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="stopThreshold"
+                      type="number"
+                      min={0}
+                      step={0.0001}
+                      value={stopThreshold}
+                      onChange={(e) => setStopThreshold(parseFloat(e.target.value) || 0)}
+                      className="h-9"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Convergence threshold for stopping iterations</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <div>
-                <Label htmlFor="iterationLimit" className="text-sm">Iteration Limit</Label>
-                <Input
-                  id="iterationLimit"
-                  type="number"
-                  min="0"
-                  step="1"
-                  className="h-8 text-sm"
-                  {...register("iterationLimit")}
-                />
-                {errors.iterationLimit && (
-                  <p className="text-red-500 text-xs mt-1">{errors.iterationLimit.message}</p>
-                )}
+
+              <div className="space-y-2">
+                <Label htmlFor="iterationLimit" className="text-sm font-medium">Iteration Limit</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="iterationLimit"
+                      type="number"
+                      min={1}
+                      value={iterationLimit}
+                      onChange={(e) => setIterationLimit(parseInt(e.target.value) || 1)}
+                      className="h-9"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Maximum number of simulation iterations</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <div>
-                <Label htmlFor="networkName" className="text-sm">Network Name (no spaces)</Label>
-                <Input
-                  id="networkName"
-                  className="h-8 text-sm"
-                  maxLength={31}
-                  {...register("networkName")}
-                />
-                {errors.networkName && (
-                  <p className="text-red-500 text-xs mt-1">{errors.networkName.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="saveMode" className="text-sm">Save Mode</Label>
-                <Select
-                  onValueChange={(value) => setValue("saveMode", value)}
-                  defaultValue={watch("saveMode")}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder="Select save mode" />
+
+              <div className="space-y-2">
+                <Label htmlFor="saveMode" className="text-sm font-medium">Save Mode</Label>
+                <Select value={saveMode.toString()} onValueChange={(v) => setSaveMode(parseInt(v))}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectGroup>
-                      {SAVE_MODES.map((mode) => (
-                        <SelectItem key={mode.value} value={mode.value}>
-                          {mode.label} ({mode.value})
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
+                    {Object.entries(SAVE_MODES).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {errors.saveMode && (
-                  <p className="text-red-500 text-xs mt-1">{errors.saveMode.message}</p>
-                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="networkName" className="text-sm font-medium">Network Name</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="networkName"
+                      value={networkName}
+                      onChange={(e) => setNetworkName(e.target.value)}
+                      maxLength={255}
+                      className="h-9"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Max 255 bytes (UTF-8)</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
 
-          <Separator className="my-2" />
+          <Separator />
 
           {/* Agents Section */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold">Agents</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 bg-green-800 hover:bg-green-700 text-white border-green-600"
-                onClick={handleAddAgent}
-              >
-                <PlusCircle className="w-3.5 h-3.5 mr-1" />
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Agents <span className="text-muted-foreground font-normal">({agents.length})</span></h3>
+              <Button onClick={handleAddAgent} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
                 Add Agent
               </Button>
             </div>
 
-            {agentFields.length === 0 ? (
-              <Alert className="mb-2 py-2">
-                <AlertTitle className="text-sm">No agents defined</AlertTitle>
-                <AlertDescription className="text-xs">
-                  Add at least one agent to configure the simulation.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="space-y-2">
-                {agentFields.map((field, index) => (
-                  <Card key={field.id} className="p-3 border bg-gray-900">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-medium text-sm">Agent {index + 1}</h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-400 hover:bg-red-950"
-                        onClick={() => removeAgent(index)}
-                        disabled={agentFields.length <= 1}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+            <div className="space-y-4">
+              {agents.map((agent) => (
+                <Card key={agent.id} className="relative overflow-hidden">
+                  {/* Delete button - absolute positioned */}
+                  {agents.length > 1 && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleRemoveAgent(agent.id)}
+                      className="absolute top-3 right-3 h-8 w-8 z-10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  <div className="p-4 pr-14">
+                    {/* First row: Name, Strategy, Effect */}
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Agent Name</Label>
+                        <Input
+                            value={agent.name}
+                            onChange={(e) => handleUpdateAgent(agent.id, {name: e.target.value})}
+                            placeholder="Agent name"
+                            className="h-9"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Silence Strategy</Label>
+                        <Select
+                            value={agent.silenceStrategy.toString()}
+                            onValueChange={(v) => handleUpdateAgent(agent.id, {silenceStrategy: parseInt(v)})}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue/>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(SILENCE_STRATEGIES).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Silence Effect</Label>
+                        <Select
+                            value={agent.silenceEffect.toString()}
+                            onValueChange={(v) => handleUpdateAgent(agent.id, {silenceEffect: parseInt(v)})}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue/>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(SILENCE_EFFECTS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-x-3 gap-y-2">
-                      <div className="col-span-1">
-                        <Label htmlFor={`agents.${index}.name`} className="text-xs">Name (no spaces)</Label>
-                        <Input
-                            id={`agents.${index}.name`}
-                            maxLength={31}
-                            className="h-8 text-sm"
-                            {...register(`agents.${index}.name`)}
-                        />
-                        {errors.agents?.[index]?.name && (
-                            <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.name?.message}</p>
-                        )}
-                      </div>
+                    <Separator className="my-3"/>
 
-                      <div>
-                        <Label htmlFor={`agents.${index}.initialBelief`} className="text-xs">Initial Belief</Label>
-                        <Input
-                            id={`agents.${index}.initialBelief`}
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="1"
-                            className="h-8 text-sm"
-                            {...register(`agents.${index}.initialBelief`)}
-                        />
-                        {errors.agents?.[index]?.initialBelief && (
-                            <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.initialBelief?.message}</p>
-                        )}
-                      </div>
+                    {/* Second row: Belief, Radius, Offset */}
+                    {(() => {
+                      let totalCols = 3;
+                      if (agent.silenceStrategy === 2) totalCols += 1;
+                      if (agent.silenceStrategy === 3) totalCols += 2;
 
-                      <div>
-                        <Label htmlFor={`agents.${index}.toleranceRadius`} className="text-xs">Tolerance Radius</Label>
-                        <Input
-                            id={`agents.${index}.toleranceRadius`}
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="1"
-                            className="h-8 text-sm"
-                            {...register(`agents.${index}.toleranceRadius`)}
-                        />
-                        {errors.agents?.[index]?.toleranceRadius && (
-                            <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.toleranceRadius?.message}</p>
-                        )}
-                      </div>
+                      const gridClass = `grid gap-4 grid-cols-${totalCols}`;
 
-                      <div>
-                        <Label htmlFor={`agents.${index}.toleranceOffset`} className="text-xs">Tolerance Offset</Label>
-                        <Input
-                            id={`agents.${index}.toleranceOffset`}
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="1"
-                            className="h-8 text-sm"
-                            {...register(`agents.${index}.toleranceOffset`)}
-                        />
-                        {errors.agents?.[index]?.toleranceOffset && (
-                            <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.toleranceOffset?.message}</p>
-                        )}
-                      </div>
-
-                      <div className="col-span-1">
-                        <Label htmlFor={`agents.${index}.silenceEffect`} className="text-xs">Silence Effect</Label>
-                        <Select
-                            onValueChange={(value) => setValue(`agents.${index}.silenceEffect`, value)}
-                            defaultValue={watchedAgents[index]?.silenceEffect}
-                        >
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select effect"/>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {SILENCE_EFFECTS.map((effect) => (
-                                  <SelectItem key={effect.value} value={effect.value}>
-                                    {effect.label}
-                                  </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        {errors.agents?.[index]?.silenceEffect && (
-                            <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.silenceEffect?.message}</p>
-                        )}
-                      </div>
-
-                      <div className="col-span-1">
-                        <Label htmlFor={`agents.${index}.silenceStrategy`} className="text-xs">Silence Strategy</Label>
-                        <Select
-                            onValueChange={(value) => setValue(`agents.${index}.silenceStrategy`, value)}
-                            defaultValue={watchedAgents[index]?.silenceStrategy}
-                        >
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select strategy"/>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {SILENCE_STRATEGIES.map((strategy) => (
-                                  <SelectItem key={strategy.value} value={strategy.value}>
-                                    {strategy.label}
-                                  </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        {errors.agents?.[index]?.silenceStrategy && (
-                            <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.silenceStrategy?.message}</p>
-                        )}
-                      </div>
-
-                      {/* Conditional fields based on silence strategy */}
-                      {watchedAgents[index]?.silenceStrategy === "2" && (
-                          <div className="col-span-1">
-                            <Label htmlFor={`agents.${index}.silenceStrategyThreshold`} className="text-xs">Threshold
-                              Value</Label>
-                            <Input
-                                id={`agents.${index}.silenceStrategyThreshold`}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max="1"
-                                defaultValue="0.5"
-                                className="h-8 text-sm"
-                                {...register(`agents.${index}.silenceStrategyThreshold`)}
+                      return (
+                          <div className={gridClass}>
+                            <AgentInput
+                                label="Belief"
+                                value={agent.initialBelief}
+                                onChange={(val) => handleUpdateAgent(agent.id, {initialBelief: val})}
+                                placeholder={0}
                             />
-                            {errors.agents?.[index]?.silenceStrategyThreshold && (
-                                <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.silenceStrategyThreshold?.message}</p>
+                            <AgentInput
+                                label="Radius"
+                                value={agent.toleranceRadius}
+                                onChange={(val) => handleUpdateAgent(agent.id, {toleranceRadius: val})}
+                                placeholder={0}
+                            />
+                            <AgentInput
+                                label="Offset"
+                                value={agent.toleranceOffset}
+                                onChange={(val) => handleUpdateAgent(agent.id, {toleranceOffset: val})}
+                                placeholder={0}
+                            />
+                            {agent.silenceStrategy === 2 && (
+                                <AgentInput
+                                    label="Threshold Value"
+                                    value={agent.thresholdValue}
+                                    onChange={(val) => handleUpdateAgent(agent.id, {thresholdValue: val})}
+                                    placeholder={0}
+                                />
+                            )}
+
+                            {agent.silenceStrategy === 3 && (
+                                <>
+                                  <AgentInput
+                                      label="Confidence Value"
+                                      value={agent.confidenceValue}
+                                      onChange={(val) => handleUpdateAgent(agent.id, {confidenceValue: val})}
+                                      placeholder={0}
+                                  />
+                                  <AgentInput
+                                      label="Update Value"
+                                      type="int"
+                                      min={0}
+                                      step={1}
+                                      value={agent.updateValue}
+                                      placeholder={0}
+                                      onChange={(val) => handleUpdateAgent(agent.id, {updateValue: val})}
+                                  />
+                                </>
                             )}
                           </div>
-                      )}
-
-                      {watchedAgents[index]?.silenceStrategy === "3" && (
-                          <>
-                            <div>
-                              <Label htmlFor={`agents.${index}.silenceStrategyConfidence`} className="text-xs">Confidence
-                                Value</Label>
-                              <Input
-                                  id={`agents.${index}.silenceStrategyConfidence`}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max="1"
-                                  defaultValue="0.5"
-                                  className="h-8 text-sm"
-                                  {...register(`agents.${index}.silenceStrategyConfidence`)}
-                              />
-                              {errors.agents?.[index]?.silenceStrategyConfidence && (
-                                  <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.silenceStrategyConfidence?.message}</p>
-                              )}
-                            </div>
-                            <div className="col-span-1">
-                              <Label htmlFor={`agents.${index}.silenceStrategyUpdate`} className="text-xs">Update
-                                Value</Label>
-                              <Input
-                                  id={`agents.${index}.silenceStrategyUpdate`}
-                                  type="number"
-                                  step="1"
-                                  min="1"
-                                  defaultValue="1"
-                                  className="h-8 text-sm"
-                                  {...register(`agents.${index}.silenceStrategyUpdate`)}
-                              />
-                              {errors.agents?.[index]?.silenceStrategyUpdate && (
-                                  <p className="text-red-500 text-xs mt-1">{errors.agents[index]?.silenceStrategyUpdate?.message}</p>
-                              )}
-                            </div>
-                          </>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {errors.agents && !Array.isArray(errors.agents) && (
-                <Alert variant="destructive" className="mt-2 py-2">
-                  <ExclamationTriangleIcon className="h-3.5 w-3.5"/>
-                  <AlertTitle className="text-sm">Agent Configuration Error</AlertTitle>
-                  <AlertDescription className="text-xs">{errors.agents.message}</AlertDescription>
-                </Alert>
-            )}
+                      );
+                    })()}
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
 
-          <Separator className="my-2"/>
+          <Separator/>
 
           {/* Neighbors Section */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold">Connections</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Neighbors <span
+                  className="text-muted-foreground font-normal">({neighbors.length}/{maxNeighbors})</span></h3>
               <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 bg-green-800 hover:bg-green-700 text-white border-green-600"
                   onClick={handleAddNeighbor}
-                  disabled={agentFields.length < 2}
+                  size="sm"
+                  variant="outline"
+                  disabled={agents.length < 2 || neighbors.length >= maxNeighbors}
               >
-                <PlusCircle className="w-3.5 h-3.5 mr-1"/>
-                Add Connection
+                <Plus className="w-4 h-4 mr-2"/>
+                Add Neighbor
               </Button>
             </div>
 
-            {neighborFields.length === 0 ? (
-                <Alert className="mb-2 py-2">
-                  <AlertTitle className="text-sm">No connections defined</AlertTitle>
-                  <AlertDescription className="text-xs">
-                    Add connections between agents to define the network topology.
+            {agents.length < 2 && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4"/>
+                  <AlertDescription>
+                    You need at least 2 agents to create neighbor relationships.
                   </AlertDescription>
                 </Alert>
-            ) : (
-                <div className="space-y-2">
-                  {neighborFields.map((field, index) => (
-                      <Card key={field.id} className="p-3 border bg-gray-900 relative">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeNeighbor(index)}
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-400 hover:bg-red-950 absolute top-2 right-2"
-                        >
-                          <Trash2 className="w-3.5 h-3.5"/>
-                        </Button>
-                        <div className="grid grid-cols-4 gap-x-3 gap-y-2">
-                          <div>
-                            <Label htmlFor={`neighbors.${index}.source`} className="text-xs">Source Agent</Label>
-                            <Select
-                                onValueChange={(value) => setValue(`neighbors.${index}.source`, value)}
-                                defaultValue={watch(`neighbors.${index}.source`)}
-                            >
-                              <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select source"/>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  {agentOptions.map((agent) => (
-                                      <SelectItem key={`source-${agent.value}`} value={agent.value}>
-                                        {agent.label}
-                                      </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            {errors.neighbors?.[index]?.source && (
-                                <p className="text-red-500 text-xs mt-1">{errors.neighbors[index]?.source?.message}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label htmlFor={`neighbors.${index}.target`} className="text-xs">Target Agent</Label>
-                            <Select
-                                onValueChange={(value) => setValue(`neighbors.${index}.target`, value)}
-                                defaultValue={watch(`neighbors.${index}.target`)}
-                            >
-                              <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select target"/>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  {agentOptions
-                                      .filter(agent => agent.value !== watch(`neighbors.${index}.source`))
-                                      .map((agent) => (
-                                          <SelectItem key={`target-${agent.value}`} value={agent.value}>
-                                            {agent.label}
-                                          </SelectItem>
-                                      ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            {errors.neighbors?.[index]?.target && (
-                                <p className="text-red-500 text-xs mt-1">{errors.neighbors[index]?.target?.message}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label htmlFor={`neighbors.${index}.influence`} className="text-xs">Influence</Label>
-                            <Input
-                                id={`neighbors.${index}.influence`}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max="1"
-                                className="h-8 text-sm"
-                                {...register(`neighbors.${index}.influence`)}
-                            />
-                            {errors.neighbors?.[index]?.influence && (
-                                <p className="text-red-500 text-xs mt-1">{errors.neighbors[index]?.influence?.message}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label htmlFor={`neighbors.${index}.cognitiveBias`} className="text-xs">Cognitive
-                              Bias</Label>
-                            <Select
-                                onValueChange={(value) => setValue(`neighbors.${index}.cognitiveBias`, value)}
-                                defaultValue={watch(`neighbors.${index}.cognitiveBias`)}
-                            >
-                              <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select bias"/>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  {COGNITIVE_BIASES.map((bias) => (
-                                      <SelectItem key={bias.value} value={bias.value}>
-                                        {bias.label}
-                                      </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            {errors.neighbors?.[index]?.cognitiveBias && (
-                                <p className="text-red-500 text-xs mt-1">{errors.neighbors[index]?.cognitiveBias?.message}</p>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                  ))}
-                </div>
             )}
+
+            {neighbors.length >= maxNeighbors && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4"/>
+                  <AlertDescription>
+                    Maximum number of neighbors reached. Each agent can connect to every other agent at most once.
+                  </AlertDescription>
+                </Alert>
+            )}
+
+            <div className="space-y-3">
+              {neighbors.map((neighbor) => (
+                  <Card key={neighbor.id} className="overflow-hidden">
+                    <div className="p-3">
+                      {/* Header with source/target selection and delete */}
+                      <div className="flex justify-between items-center gap-3 mb-3">
+                        <div className="flex gap-2 items-center flex-1">
+                          <Select
+                              value={neighbor.source}
+                              onValueChange={(v) => handleUpdateNeighbor(neighbor.id, {source: v})}
+                          >
+                            <SelectTrigger className="h-9 w-[130px]">
+                              <SelectValue placeholder="Source"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getAvailableSources(neighbor.id).map(name => (
+                                  <SelectItem key={name} value={name}>
+                                    {name}
+                                  </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <span className="text-muted-foreground">→</span>
+
+                          <Select
+                              value={neighbor.target}
+                              onValueChange={(v) => handleUpdateNeighbor(neighbor.id, {target: v})}
+                          >
+                            <SelectTrigger className="h-9 w-[130px]">
+                            <SelectValue placeholder="Target" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableTargets(neighbor.source, neighbor.id).map(name => (
+                              <SelectItem key={name} value={name}>
+                                {name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveNeighbor(neighbor.id)}
+                        className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <Separator className="mb-3" />
+
+                    {/* Controls row */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-muted-foreground">Influence</Label>
+                          <span className="text-xs font-medium">{neighbor.influence.toFixed(2)}</span>
+                        </div>
+                        <Slider
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          value={[neighbor.influence]}
+                          onValueChange={(v) => handleUpdateNeighbor(neighbor.id, { influence: v[0] })}
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Bias Type</Label>
+                        <Select
+                          value={neighbor.bias.toString()}
+                          onValueChange={(v) => handleUpdateNeighbor(neighbor.id, { bias: parseInt(v) })}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(BIASES).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end pt-2">
-            <Button type="submit" className="bg-blue-700 hover:bg-blue-600">
-              Run Custom Simulation
+          {submitSuccess && (
+            <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
+              <Check className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                Simulation started successfully!
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {submitError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex justify-end items-center gap-4 pt-6 border-t">
+            {!isValid && (
+              <p className="text-sm text-muted-foreground">
+                Please ensure all fields are valid
+              </p>
+            )}
+            <Button
+              onClick={handleSubmit}
+              disabled={!isValid || isSubmitting}
+              size="lg"
+              className="min-w-[150px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Submitting...
+                </>
+              ) : (
+                "Run Simulation"
+              )}
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }

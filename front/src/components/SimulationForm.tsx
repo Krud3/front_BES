@@ -24,6 +24,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+const SAVE_MODES = {
+  0: "Full",
+  1: "Standard",
+  2: "Standard Light",
+  3: "Standard Light",
+  4: "Roundless",
+  5: "Agentless Typed",
+  6: "Agentless Typed",
+  7: "Agentless",
+  8: "Performance",
+  9: "Debug"
+};
+
 // --- Zod Schema for Basic Validation ---
 // We'll handle complex inter-field validation manually for now
 const formSchema = z.object({
@@ -33,7 +46,7 @@ const formSchema = z.object({
   density: z.coerce.number().min(0),
   iterationLimit: z.coerce.number().int().positive("Must be positive"),
   stopThreshold: z.coerce.number().min(0),
-  saveMode: z.string().min(1, "Required"),
+  saveMode: z.string().min(1, "Required")
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,16 +54,16 @@ type FormValues = z.infer<typeof formSchema>;
 export function SimulationForm() {
   const [thresholdValue, setThresholdValue] = useState<number>(0);
   const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(1);
-  const [openMindedness, setopenMindedness] = useState<number>(2);
+  const [openMindedness, setOpenMindedness] = useState<number>(2);
   // === Basic Parameters State ===
   const { register, handleSubmit, watch, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       numNetworks: 1,
       numAgents: 100, // Default example value
-      density: 10, // Default example value
+      density: 16, // Default example value
       iterationLimit: 100,
-      stopThreshold: 1e-8, // From your example 0.00000001
+      stopThreshold: 0.001, // From your example 0.00000001
       saveMode: 'Debug', // From your example
     },
   });
@@ -327,49 +340,149 @@ export function SimulationForm() {
 
 
   // --- Form Submission ---
+  function calculateBufferSize(config: SimulationConfig) {
+    const agentTypes = document.getElementsByClassName('agent-type');
+    const biasCount = document.getElementsByClassName('bias').length;
+
+    // Fixed header: 28 bytes
+    let bufferSize = 28;
+
+    // Calculate agent data size with variable length
+    for (let i = 0; i < agentTypes.length; i++) {
+      const agentType = agentTypes[i];
+      const strategyType = parseInt(agentType.querySelector('.silence-strategy').value);
+
+      // Base size: 6 bytes (agent count + strategy type + effect type)
+      let agentEntrySize = 6;
+
+      // Add extra parameters based on strategy type
+      if (strategyType === 2) {
+        // Add 4 bytes for the extra float parameter
+        agentEntrySize += 4;
+      } else if (strategyType === 3) {
+        // Add 8 bytes for the two extra parameters (float + int)
+        agentEntrySize += 8;
+      }
+
+      bufferSize += agentEntrySize;
+    }
+
+    // Bias data: 5 bytes per bias
+    bufferSize += biasCount * 5;
+
+    return bufferSize;
+  }
+
   const onFormSubmit = (data: FormValues) => {
     if (!isFormValid) {
       console.error("Form is invalid. Submission prevented.");
       return;
     }
 
-    const config: SimulationConfig = {
-      ...data,
-      agentTypeDistribution: agentConfigs.reduce((acc, config) => {
-        if (!acc[config.type]) acc[config.type] = 0;
-        acc[config.type] += config.count;
-        return acc;
-      }, {} as Record<AgentType, number>),
-      cognitiveBiasDistribution: biasConfigs.reduce((acc, config) => {
-        acc[config.bias] = config.count;
-        return acc;
-      }, {} as Record<CognitiveBias, number>),
-    };
+      const config: SimulationConfig = {
+          ...data,
+          agentTypeDistribution: agentConfigs.reduce((acc, config) => {
+              if (!acc[config.type]) acc[config.type] = 0;
+              acc[config.type] += config.count;
+              return acc;
+          }, {} as Record<AgentType, number>),
+          cognitiveBiasDistribution: biasConfigs.reduce((acc, config) => {
+              acc[config.bias] = config.count;
+              return acc;
+          }, {} as Record<CognitiveBias, number>),
+      };
 
-    console.log("Simulation Configuration:", config);
-    const payload = {
-      seed: data.seed ? data.seed.toString() : undefined, // Convert BigInt to string
-      numNetworks: data.numNetworks,
-      density: data.density,
-      iterationLimit: data.iterationLimit,
-      stopThreshold: data.stopThreshold,
-      saveMode: data.saveMode,
-      degreeDistribution: 2.5,
-      agentTypeDistribution: agentConfigs.map(config => ({
-        strategy: config.type,
-        effect: config.effect,
-        count: config.count
-      })),
-      cognitiveBiasDistribution: biasConfigs.map(config => ({
-        bias: config.bias,
-        count: config.count
-      }))
-    };
+      // const agentTypes = document.getElementsByClassName('agent-type');
+      // const biasCount = document.getElementsByClassName('bias').length;
+      //
+      // // Calculate buffer size
+      // const bufferSize = calculateBufferSize();
+      //
+      // // Create buffer and DataView
+      // const buffer = new ArrayBuffer(bufferSize);
+      // const view = new DataView(buffer);
+      //
+      // let offset = 0;
+      //
+      // // Write fixed fields
+      // view.setInt8(offset++, 0);
+      // view.setInt8(offset++, parseInt(data.saveMode));
+      // view.setInt8(offset++, agentTypes.length);
+      // view.setInt8(offset++, biasCount);
+      // view.setInt32(offset, parseInt(document.getElementById('numberOfNetworks').value), true);
+      // offset += 4;
+      // view.setInt32(offset, parseInt(document.getElementById('density').value), true);
+      // offset += 4;
+      // view.setInt32(offset, parseInt(document.getElementById('iterLimit').value), true);
+      // offset += 4;
+      // view.setFloat32(offset, parseFloat(document.getElementById('stopThreshold').value), true);
+      // offset += 4;
+      // const seedValue = document.getElementById('seed').value;
+      // view.setBigInt64(offset, BigInt(seedValue === "" ? -1 : seedValue), true);
+      // offset += 8;
+      //
+      // // Write agent data with variable length
+      // for (let i = 0; i < agentTypes.length; i++) {
+      //     const agentType = agentTypes[i];
+      //     const agentCount = parseInt(agentType.querySelector('.agent-count').value);
+      //     const strategyType = parseInt(agentType.querySelector('.silence-strategy').value);
+      //     const effectType = parseInt(agentType.querySelector('.silence-effect').value);
+      //
+      //     view.setInt32(offset, agentCount, true);
+      //     offset += 4;
+      //     view.setInt8(offset++, strategyType);
+      //     view.setInt8(offset++, effectType);
+      //
+      //     // Add extra parameters based on strategy type
+      //     if (strategyType === 2) {
+      //         const threshold = parseFloat(agentType.querySelector('.extra-param1').value);
+      //         view.setFloat32(offset, threshold, true);
+      //         offset += 4;
+      //     } else if (strategyType === 3) {
+      //         const confidenceThreshold = parseFloat(agentType.querySelector('.extra-param1').value);
+      //         const updateValue = parseInt(agentType.querySelector('.extra-param2').value);
+      //         view.setFloat32(offset, confidenceThreshold, true);
+      //         offset += 4;
+      //         view.setInt32(offset, updateValue, true);
+      //         offset += 4;
+      //     }
+      // }
+      //
+      // // Write bias data
+      // const biases = document.getElementsByClassName('bias');
+      // for (let i = 0; i < biases.length; i++) {
+      //     const bias = biases[i];
+      //     const neighborCount = parseInt(bias.querySelector('.neighbor-count').value);
+      //     const biasType = parseInt(bias.querySelector('.bias-type').value);
+      //
+      //     view.setInt32(offset, neighborCount, true);
+      //     offset += 4;
+      //     view.setInt8(offset++, biasType);
+      // }
+
+      console.log("Simulation Configuration:", config);
+      const payload = {
+          seed: data.seed ? data.seed.toString() : undefined, // Convert BigInt to string
+          numNetworks: data.numNetworks,
+          density: data.density,
+          iterationLimit: data.iterationLimit,
+          stopThreshold: data.stopThreshold,
+          saveMode: data.saveMode,
+          degreeDistribution: 2.5,
+          agentTypeDistribution: agentConfigs.map(config => ({
+              strategy: config.type,
+              effect: config.effect,
+              count: config.count
+          })),
+          cognitiveBiasDistribution: biasConfigs.map(config => ({
+              bias: config.bias,
+              count: config.count
+          }))
+      };
   
     ws.send(JSON.stringify(payload));
     alert("Configuración enviada al servidor via WebSocket");
   };
-
 
   // === Rendering ===
   return (
@@ -615,7 +728,7 @@ export function SimulationForm() {
                                     onChange={(e) => {
                                       let v = parseInt(e.target.value, 10) || 1;
                                       if (v < 1) v = 1;
-                                      setopenMindedness(v);
+                                      setOpenMindedness(v);
                                     }}
                                     className="w-32"
                                   />
