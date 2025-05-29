@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form"; // Added Controller
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
-import { AgentType, AgentConfig, CognitiveBias, BiasConfig, ALL_AGENT_TYPES, ALL_COGNITIVE_BIASES, SimulationConfig } from '@/lib/types'; // Adjust path if needed
+import {
+  AgentStrategyType, // Updated name
+  AgentEffectType,
+  AgentConfig,
+  CognitiveBias,
+  BiasConfig,
+  ALL_AGENT_STRATEGY_TYPES, // Updated name
+  ALL_AGENT_EFFECT_TYPES,
+  ALL_COGNITIVE_BIASES,
+  SimulationConfig, // Using the interface from types.ts
+  SAVE_MODES_MAP,
+  SaveModeString
+} from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -24,21 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const SAVE_MODES = {
-  0: "Full",
-  1: "Standard",
-  2: "Standard Light",
-  3: "Standard Light",
-  4: "Roundless",
-  5: "Agentless Typed",
-  6: "Agentless Typed",
-  7: "Agentless",
-  8: "Performance",
-  9: "Debug"
-};
-
 // --- Zod Schema for Basic Validation ---
-// We'll handle complex inter-field validation manually for now
 const formSchema = z.object({
   seed: z.coerce.bigint().nonnegative("Must be 0 or positive").optional(),
   numNetworks: z.coerce.number().int().positive("Must be positive"),
@@ -46,257 +44,211 @@ const formSchema = z.object({
   density: z.coerce.number().min(0),
   iterationLimit: z.coerce.number().int().positive("Must be positive"),
   stopThreshold: z.coerce.number().min(0),
-  saveMode: z.string().min(1, "Required")
+  saveMode: z.string().min(1, "Required"), // Will be one of SaveModeString
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Helper to map string strategy/effect/bias to byte codes
+const strategyToByte = (strategy: AgentStrategyType): number => {
+  switch (strategy) {
+    case 'DeGroot': return 0;
+    case 'Majority': return 1;
+    case 'Threshold': return 2;
+    case 'Confidence': return 3;
+    default: return 1; // Default to Majority/Standard
+  }
+};
+
+const effectToByte = (effect: AgentEffectType): number => {
+  switch (effect) {
+    case 'DeGroot': return 0;
+    case 'Memory': return 1;
+    case 'Memoryless': return 2;
+    default: return 0;
+  }
+};
+
+const biasToByte = (bias: CognitiveBias): number => {
+  switch (bias) {
+    case 'DeGroot': return 0;
+    case 'Confirmation': return 1;
+    case 'Backfire': return 2;
+    case 'Authority': return 3;
+    case 'Insular': return 4;
+    default: return 0;
+  }
+};
+
+
 export function SimulationForm() {
-  const [thresholdValue, setThresholdValue] = useState<number>(0);
-  const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(1);
-  const [openMindedness, setOpenMindedness] = useState<number>(2);
-  // === Basic Parameters State ===
-  const { register, handleSubmit, watch, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
+  const [thresholdValue, setThresholdValue] = useState<number>(0.5); // Default from HTML
+  const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(0.5); // Default from HTML
+  const [openMindedness, setOpenMindedness] = useState<number>(100); // Default from HTML
+
+  const { register, handleSubmit, watch, control, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       numNetworks: 1,
-      numAgents: 100, // Default example value
-      density: 16, // Default example value
+      numAgents: 10,      // Adjusted for quicker testing
+      density: 5,        // Adjusted
       iterationLimit: 100,
-      stopThreshold: 0.001, // From your example 0.00000001
-      saveMode: 'Debug', // From your example
+      stopThreshold: 0.01, // From your HTML example
+      saveMode: 'Debug' as SaveModeString, // Default from your example
     },
   });
 
-  const ws = useMemo(() => new WebSocket("ws://localhost:8080/ws"), []);
   const numAgents = watch('numAgents');
   const density = watch('density');
 
-  // === Agent Type Distribution State ===
   const [agentConfigs, setAgentConfigs] = useState<AgentConfig[]>([
-    // Start with one default configuration
     {
-      id: "default",
-      type: "DeGroot",
-      effect: "Memory",
-      count: 0
+      id: "default-agent",
+      type: "Majority", // More common default
+      effect: "Memoryless",
+      count: numAgents || 10 // Initialize with numAgents
     }
   ]);
 
+  const [biasConfigs, setBiasConfigs] = useState<BiasConfig[]>([
+    {
+      id: "default-bias",
+      bias: "DeGroot",
+      count: 0 // Default to 0 initially
+    }
+  ]);
+  
+  // Update default agent config count when numAgents changes
   React.useEffect(() => {
-    // This empty dependency array ensures it only runs once on mount
-  }, []);
+    setAgentConfigs(prev => {
+      if (prev.length === 1 && prev[0].id === "default-agent") {
+        return [{ ...prev[0], count: numAgents || 0 }];
+      }
+      // If user has added more configs, let them manage counts
+      // Or, you could implement logic to redistribute/cap counts
+      return prev;
+    });
+  }, [numAgents]);
+
 
   // Track used Type-Effect combinations
   const usedTypeEffectCombinations = useMemo(() => {
     const combinations: Record<string, string[]> = {};
-    
-    // Initialize all agent types with empty arrays
-    ALL_AGENT_TYPES.forEach(type => {
-      combinations[type] = [];
-    });
-    
-    // Fill with used effects - handle consistently
+    ALL_AGENT_STRATEGY_TYPES.forEach(type => { combinations[type] = []; });
     agentConfigs.forEach(config => {
-      if (config.type && config.effect) { // Only track if both are set
-        if (!combinations[config.type]) {
-          combinations[config.type] = [];
-        }
-        
-        // Avoid duplicates
+      if (config.type && config.effect) {
+        if (!combinations[config.type]) combinations[config.type] = [];
         if (!combinations[config.type].includes(config.effect)) {
           combinations[config.type].push(config.effect);
         }
       }
     });
-    
     return combinations;
   }, [agentConfigs]);
 
-  // Get available types (those that don't have all effects used)
   const getAvailableTypes = useCallback((currentConfig: AgentConfig) => {
-    const allEffects = ["DeGroot", "Memory", "Memoryless"];
-    
-    // Filter types that don't have all effects used yet
-    return ALL_AGENT_TYPES.filter(type => {
-      // If this is the current type being edited, always include it
+    return ALL_AGENT_STRATEGY_TYPES.filter(type => {
       if (currentConfig.type === type) return true;
-      
-      // Check if all possible effects are already used for this type
       const usedEffects = usedTypeEffectCombinations[type] || [];
-      return usedEffects.length < allEffects.length;
+      return usedEffects.length < ALL_AGENT_EFFECT_TYPES.length;
     });
   }, [usedTypeEffectCombinations]);
 
-  // Get available effects for a specific type
   const getAvailableEffects = useCallback((type: string, currentConfig: AgentConfig) => {
-    if (!type) return []; // Return empty if no type selected
-    
-    const allEffects = ["DeGroot", "Memory", "Memoryless"] as const;
+    if (!type) return [];
     const usedEffects = usedTypeEffectCombinations[type] || [];
-    
-    return allEffects.filter(effect => {
-      // If this is the current effect being edited, include it
+    return ALL_AGENT_EFFECT_TYPES.filter(effect => {
       if (currentConfig.effect === effect && currentConfig.type === type) return true;
-      
-      // Otherwise, only include effects not yet used for this type
       return !usedEffects.includes(effect);
     });
   }, [usedTypeEffectCombinations]);
 
-  // === Cognitive Bias Distribution State ===
-  const [biasConfigs, setBiasConfigs] = useState<BiasConfig[]>([
-    {
-      id: "default-bias",
-      bias: "DeGroot",
-      count: 0
-    }
-  ]);
-
-  const usedBiases = useMemo(() => {
-    return biasConfigs.map(config => config.bias);
-  }, [biasConfigs]);
+  const usedBiases = useMemo(() => biasConfigs.map(config => config.bias), [biasConfigs]);
 
   const getAvailableBiases = useCallback((currentConfig: BiasConfig) => {
     return ALL_COGNITIVE_BIASES.filter(bias => {
-      // Include current bias
       if (currentConfig.bias === bias) return true;
-      
-      // Only include biases that aren't already used
       return !usedBiases.includes(bias);
     });
   }, [usedBiases]);
 
+  const totalAssignedAgents = useMemo(() => agentConfigs.reduce((sum, config) => sum + config.count, 0), [agentConfigs]);
+  const remainingAgents = useMemo(() => (numAgents || 0) - totalAssignedAgents, [numAgents, totalAssignedAgents]);
 
-  // === Derived Values ===
-  const totalAssignedAgents = useMemo(() => {
-    return agentConfigs.reduce((sum, config) => sum + config.count, 0);
-  }, [agentConfigs]);
-
-  const remainingAgents = useMemo(() => {
-    return (numAgents || 0) - totalAssignedAgents;
-  }, [numAgents, totalAssignedAgents]);
-
-  // Approximate Max Edges (for a directed graph where density is proportion of N*(N-1))
-  // Adjust if your density definition or graph type (undirected) is different
   const maxEdges = useMemo(() => {
     const n = numAgents || 0;
     const d = density || 0;
-    if (n <= 1) return 0;
-    // Use Math.floor to ensure integer count
-    return d * (d - 1) + ((n - d) * 2 * d);
+    if (n <= 1 || d === 0) return 0; // if density is 0, no edges.
+     //This formula d * (d - 1) + ((n - d) * 2 * d) is specific and might not represent generic max edges (N*(N-1) for directed)
+     //Using your specific formula:
+    if (d > n) return n * (n-1); // Density cannot be greater than N. Cap at N*(N-1)
+    return Math.floor(d * (d - 1) + ((n - d) * 2 * d));
   }, [numAgents, density]);
 
-  const totalAssignedBiases = useMemo(() => {
-    return biasConfigs.reduce((sum, config) => sum + config.count, 0);
-  }, [biasConfigs]);
+  const totalAssignedBiases = useMemo(() => biasConfigs.reduce((sum, config) => sum + config.count, 0), [biasConfigs]);
+  const remainingBiases = useMemo(() => maxEdges - totalAssignedBiases, [maxEdges, totalAssignedBiases]);
 
-  const remainingBiases = useMemo(() => {
-    return maxEdges - totalAssignedBiases;
-  }, [maxEdges, totalAssignedBiases]);
-
-
-  // === Validation Flags ===
   const isAgentDistributionValid = remainingAgents === 0 && (numAgents || 0) > 0;
-  const isBiasDistributionValid = remainingBiases >= 0; // Can have fewer biased edges than maxEdges
+  const isBiasDistributionValid = remainingBiases >= 0;
   const isFormValid = !Object.keys(errors).length && isAgentDistributionValid && isBiasDistributionValid;
 
-  // === Handlers ===
-  // Handler for adding a new agent configuration
   const handleAddAgentConfig = useCallback(() => {
-    // Find an available type-effect combination
-    const availableTypeEffect = ALL_AGENT_TYPES.reduce((found, type) => {
+    const availableTypeEffect = ALL_AGENT_STRATEGY_TYPES.reduce((found, type) => {
       if (found) return found;
-      
-      const usedEffects = usedTypeEffectCombinations[type] || [];
-      const allEffects = ["DeGroot", "Memory", "Memoryless"];
-      
-      const availableEffect = allEffects.find(effect => 
-        !usedEffects.includes(effect)
-      );
-      
-      if (availableEffect) {
-        return { type, effect: availableEffect };
-      }
-      
+      const availableEffect = ALL_AGENT_EFFECT_TYPES.find(effect => !(usedTypeEffectCombinations[type] || []).includes(effect));
+      if (availableEffect) return { type, effect: availableEffect };
       return null;
-    }, null as { type: string, effect: string } | null);
-    
-    // Only add if there's an available combination
+    }, null as { type: AgentStrategyType, effect: AgentEffectType } | null);
+
     if (availableTypeEffect) {
-      setAgentConfigs(prev => [
-        ...prev, 
-        {
-          id: `agent-${Date.now()}`,
-          type: availableTypeEffect.type as AgentType,
-          effect: availableTypeEffect.effect as "DeGroot" | "Memory" | "Memoryless",
-          count: 0
-        }
-      ]);
+      setAgentConfigs(prev => [...prev, {
+        id: `agent-${Date.now()}`,
+        type: availableTypeEffect.type,
+        effect: availableTypeEffect.effect,
+        count: 0
+      }]);
     }
   }, [usedTypeEffectCombinations]);
 
-  // Handler for removing an agent configuration
   const handleRemoveAgentConfig = useCallback((configId: string) => {
     setAgentConfigs(prev => prev.filter(config => config.id !== configId));
   }, []);
 
-  // Handler for changing agent count for a configuration
   const handleAgentCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
     const currentNumAgents = numAgents || 0;
     if (currentNumAgents <= 0) return;
-
     let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
-    if (isNaN(newCount) || newCount < 0) {
-      newCount = 0;
-    }
+    if (isNaN(newCount) || newCount < 0) newCount = 0;
 
     setAgentConfigs(prev => {
       const currentConfig = prev.find(c => c.id === configId);
       if (!currentConfig) return prev;
-
-      const otherConfigsTotal = prev.reduce((sum, c) => 
-        c.id === configId ? sum : sum + c.count, 0);
+      const otherConfigsTotal = prev.reduce((sum, c) => c.id === configId ? sum : sum + c.count, 0);
       const maxAllowed = currentNumAgents - otherConfigsTotal;
       const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
-
       if (clampedCount !== currentConfig.count || source === 'input') {
-        return prev.map(c => 
-          c.id === configId ? {...c, count: clampedCount} : c
-        );
+        return prev.map(c => c.id === configId ? { ...c, count: clampedCount } : c);
       }
       return prev;
     });
   }, [numAgents]);
 
-  // Handler for changing agent type for a configuration
-  const handleAgentTypeChange = useCallback((configId: string, type: AgentType) => {
-    setAgentConfigs(prev => 
-      prev.map(c => c.id === configId ? {...c, type} : c)
-    );
+  const handleAgentTypeChange = useCallback((configId: string, type: AgentStrategyType) => {
+    setAgentConfigs(prev => prev.map(c => c.id === configId ? { ...c, type } : c));
   }, []);
 
-  // Handler for changing effect for a configuration
-  const handleEffectChange = useCallback((configId: string, effect: "DeGroot" | "Memory" | "Memoryless") => {
-    setAgentConfigs(prev => 
-      prev.map(c => c.id === configId ? {...c, effect} : c)
-    );
+  const handleEffectChange = useCallback((configId: string, effect: AgentEffectType) => {
+    setAgentConfigs(prev => prev.map(c => c.id === configId ? { ...c, effect } : c));
   }, []);
 
-
-  // --- Cognitive Bias Handlers ---
   const handleAddBiasConfig = useCallback(() => {
     const availableBias = ALL_COGNITIVE_BIASES.find(bias => !usedBiases.includes(bias));
-    
     if (availableBias) {
-      setBiasConfigs(prev => [
-        ...prev,
-        {
-          id: `bias-${Date.now()}`,
-          bias: availableBias,
-          count: 0
-        }
-      ]);
+      setBiasConfigs(prev => [...prev, {
+        id: `bias-${Date.now()}`,
+        bias: availableBias,
+        count: 0
+      }]);
     }
   }, [usedBiases]);
 
@@ -304,187 +256,121 @@ export function SimulationForm() {
     setBiasConfigs(prev => prev.filter(config => config.id !== configId));
   }, []);
 
-  // Handler for changing bias value
   const handleBiasChange = useCallback((configId: string, bias: CognitiveBias) => {
-    setBiasConfigs(prev => 
-      prev.map(c => c.id === configId ? {...c, bias} : c)
-    );
+    setBiasConfigs(prev => prev.map(c => c.id === configId ? { ...c, bias } : c));
   }, []);
 
-  // Handler for changing bias count
   const handleBiasCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
-    if (maxEdges <= 0) return;
-
+    if (maxEdges <= 0 && totalAssignedBiases ===0 ) return; // Allow setting to 0 if maxEdges is 0.
     let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
-    if (isNaN(newCount) || newCount < 0) {
-      newCount = 0;
-    }
+    if (isNaN(newCount) || newCount < 0) newCount = 0;
 
     setBiasConfigs(prev => {
       const currentConfig = prev.find(c => c.id === configId);
       if (!currentConfig) return prev;
-
-      const otherConfigsTotal = prev.reduce((sum, c) => 
-        c.id === configId ? sum : sum + c.count, 0);
-      const maxAllowed = maxEdges - otherConfigsTotal;
-      const clampedCount = Math.max(0, Math.min(newCount, maxAllowed));
+      const otherConfigsTotal = prev.reduce((sum, c) => c.id === configId ? sum : sum + c.count, 0);
+      const maxAllowedForThis = maxEdges - otherConfigsTotal; // Max this slider can take
+      const clampedCount = Math.max(0, Math.min(newCount, maxAllowedForThis));
 
       if (clampedCount !== currentConfig.count || source === 'input') {
-        return prev.map(c => 
-          c.id === configId ? {...c, count: clampedCount} : c
-        );
+        return prev.map(c => c.id === configId ? { ...c, count: clampedCount } : c);
       }
       return prev;
     });
-  }, [maxEdges]);
+  }, [maxEdges, totalAssignedBiases]);
 
 
   // --- Form Submission ---
-  function calculateBufferSize(config: SimulationConfig) {
-    const agentTypes = document.getElementsByClassName('agent-type');
-    const biasCount = document.getElementsByClassName('bias').length;
-
-    // Fixed header: 28 bytes
-    let bufferSize = 28;
-
-    // Calculate agent data size with variable length
-    for (let i = 0; i < agentTypes.length; i++) {
-      const agentType = agentTypes[i];
-      const strategyType = parseInt(agentType.querySelector('.silence-strategy').value);
-
-      // Base size: 6 bytes (agent count + strategy type + effect type)
-      let agentEntrySize = 6;
-
-      // Add extra parameters based on strategy type
-      if (strategyType === 2) {
-        // Add 4 bytes for the extra float parameter
-        agentEntrySize += 4;
-      } else if (strategyType === 3) {
-        // Add 8 bytes for the two extra parameters (float + int)
-        agentEntrySize += 8;
-      }
-
-      bufferSize += agentEntrySize;
-    }
-
-    // Bias data: 5 bytes per bias
-    bufferSize += biasCount * 5;
-
+  function calculateBufferSizeLocal() {
+    let bufferSize = 28; // Fixed header
+    agentConfigs.forEach(config => {
+      bufferSize += 6; // agentCount (4), strategyType (1), effectType (1)
+      if (config.type === 'Threshold') bufferSize += 4; // thresholdValue (float32)
+      else if (config.type === 'Confidence') bufferSize += 8; // confidenceThreshold (float32) + updateValue (int32)
+    });
+    bufferSize += biasConfigs.length * 5; // neighborCount (4) + biasType (1) for each bias config
     return bufferSize;
   }
 
-  const onFormSubmit = (data: FormValues) => {
+  const onFormSubmit = async (data: FormValues) => {
     if (!isFormValid) {
       console.error("Form is invalid. Submission prevented.");
+      // You might want to show a user-facing error message here
+      alert("Form is invalid. Please check agent and bias distributions.");
       return;
     }
 
-      const config: SimulationConfig = {
-          ...data,
-          agentTypeDistribution: agentConfigs.reduce((acc, config) => {
-              if (!acc[config.type]) acc[config.type] = 0;
-              acc[config.type] += config.count;
-              return acc;
-          }, {} as Record<AgentType, number>),
-          cognitiveBiasDistribution: biasConfigs.reduce((acc, config) => {
-              acc[config.bias] = config.count;
-              return acc;
-          }, {} as Record<CognitiveBias, number>),
-      };
+    const bufferSize = calculateBufferSizeLocal();
+    const buffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(buffer);
+    let offset = 0;
 
-      // const agentTypes = document.getElementsByClassName('agent-type');
-      // const biasCount = document.getElementsByClassName('bias').length;
-      //
-      // // Calculate buffer size
-      // const bufferSize = calculateBufferSize();
-      //
-      // // Create buffer and DataView
-      // const buffer = new ArrayBuffer(bufferSize);
-      // const view = new DataView(buffer);
-      //
-      // let offset = 0;
-      //
-      // // Write fixed fields
-      // view.setInt8(offset++, 0);
-      // view.setInt8(offset++, parseInt(data.saveMode));
-      // view.setInt8(offset++, agentTypes.length);
-      // view.setInt8(offset++, biasCount);
-      // view.setInt32(offset, parseInt(document.getElementById('numberOfNetworks').value), true);
-      // offset += 4;
-      // view.setInt32(offset, parseInt(document.getElementById('density').value), true);
-      // offset += 4;
-      // view.setInt32(offset, parseInt(document.getElementById('iterLimit').value), true);
-      // offset += 4;
-      // view.setFloat32(offset, parseFloat(document.getElementById('stopThreshold').value), true);
-      // offset += 4;
-      // const seedValue = document.getElementById('seed').value;
-      // view.setBigInt64(offset, BigInt(seedValue === "" ? -1 : seedValue), true);
-      // offset += 8;
-      //
-      // // Write agent data with variable length
-      // for (let i = 0; i < agentTypes.length; i++) {
-      //     const agentType = agentTypes[i];
-      //     const agentCount = parseInt(agentType.querySelector('.agent-count').value);
-      //     const strategyType = parseInt(agentType.querySelector('.silence-strategy').value);
-      //     const effectType = parseInt(agentType.querySelector('.silence-effect').value);
-      //
-      //     view.setInt32(offset, agentCount, true);
-      //     offset += 4;
-      //     view.setInt8(offset++, strategyType);
-      //     view.setInt8(offset++, effectType);
-      //
-      //     // Add extra parameters based on strategy type
-      //     if (strategyType === 2) {
-      //         const threshold = parseFloat(agentType.querySelector('.extra-param1').value);
-      //         view.setFloat32(offset, threshold, true);
-      //         offset += 4;
-      //     } else if (strategyType === 3) {
-      //         const confidenceThreshold = parseFloat(agentType.querySelector('.extra-param1').value);
-      //         const updateValue = parseInt(agentType.querySelector('.extra-param2').value);
-      //         view.setFloat32(offset, confidenceThreshold, true);
-      //         offset += 4;
-      //         view.setInt32(offset, updateValue, true);
-      //         offset += 4;
-      //     }
-      // }
-      //
-      // // Write bias data
-      // const biases = document.getElementsByClassName('bias');
-      // for (let i = 0; i < biases.length; i++) {
-      //     const bias = biases[i];
-      //     const neighborCount = parseInt(bias.querySelector('.neighbor-count').value);
-      //     const biasType = parseInt(bias.querySelector('.bias-type').value);
-      //
-      //     view.setInt32(offset, neighborCount, true);
-      //     offset += 4;
-      //     view.setInt8(offset++, biasType);
-      // }
+    // Write fixed fields (matching message.txt structure)
+    view.setInt8(offset++, 0); // runType, assumed 0 for generated run [cite: 46]
+    
+    const saveModeValue = SAVE_MODES_MAP[data.saveMode as SaveModeString];
+    view.setInt8(offset++, saveModeValue);
+    
+    view.setInt8(offset++, agentConfigs.length);
+    view.setInt8(offset++, biasConfigs.length);
+    
+    view.setInt32(offset, data.numNetworks, true); offset += 4;
+    view.setInt32(offset, data.density, true); offset += 4;
+    view.setInt32(offset, data.iterationLimit, true); offset += 4;
+    view.setFloat32(offset, data.stopThreshold, true); offset += 4;
+    
+    const seedBigInt = data.seed !== undefined ? data.seed : BigInt(-1);
+    view.setBigInt64(offset, seedBigInt, true); offset += 8;
 
-      console.log("Simulation Configuration:", config);
-      const payload = {
-          seed: data.seed ? data.seed.toString() : undefined, // Convert BigInt to string
-          numNetworks: data.numNetworks,
-          density: data.density,
-          iterationLimit: data.iterationLimit,
-          stopThreshold: data.stopThreshold,
-          saveMode: data.saveMode,
-          degreeDistribution: 2.5,
-          agentTypeDistribution: agentConfigs.map(config => ({
-              strategy: config.type,
-              effect: config.effect,
-              count: config.count
-          })),
-          cognitiveBiasDistribution: biasConfigs.map(config => ({
-              bias: config.bias,
-              count: config.count
-          }))
-      };
-  
-    ws.send(JSON.stringify(payload));
-    alert("Configuración enviada al servidor via WebSocket");
+    // Write agent data
+    agentConfigs.forEach(config => {
+      view.setInt32(offset, config.count, true); offset += 4;
+      view.setInt8(offset++, strategyToByte(config.type));
+      view.setInt8(offset++, effectToByte(config.effect));
+
+      if (config.type === 'Threshold') {
+        view.setFloat32(offset, thresholdValue, true); offset += 4;
+      } else if (config.type === 'Confidence') {
+        view.setFloat32(offset, thresholdValueConfidence, true); offset += 4;
+        view.setInt32(offset, openMindedness, true); offset += 4;
+      }
+    });
+
+    // Write bias data
+    biasConfigs.forEach(config => {
+      view.setInt32(offset, config.count, true); offset += 4; // This is 'neighborCount' in HTML, but represents count of edges for this bias
+      view.setInt8(offset++, biasToByte(config.bias));
+    });
+
+    // For debugging: Display binary data as hex
+    const hexView = new Uint8Array(buffer);
+    let hexString = '';
+    for (let i = 0; i < hexView.length; i++) {
+        hexString += hexView[i].toString(16).padStart(2, '0') + ' ';
+        if ((i + 1) % 16 === 0) hexString += '\n';
+    }
+    console.log("Binary Payload (Hex):\n", hexString);
+
+
+    try {
+      const response = await fetch('http://localhost:8080/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/octet-stream'
+        },
+        body: buffer
+      });
+      const responseText = await response.text();
+      console.log("Server Response:", responseText);
+      alert(`Server Response: ${responseText}`);
+      // You can update some state here to show the response in the UI if needed
+    } catch (error) {
+      console.error("Error sending request:", error);
+      alert(`Error sending request: ${error}`);
+      // Update UI to show error
+    }
   };
 
-  // === Rendering ===
   return (
     <TooltipProvider>
       <Card className="w-full max-w-3xl mx-auto">
@@ -504,11 +390,9 @@ export function SimulationForm() {
               </div>
               <div>
                 <Label htmlFor="numAgents">Number of Agents (N)</Label>
-                <Input id="numAgents" type="number" min="1" {...register("numAgents")}
+                <Input id="numAgents" type="number" min="1" {...register("numAgents", { valueAsNumber: true })}
                        onChange={(e) => {
                            setFormValue('numAgents', parseInt(e.target.value) || 0);
-                           // Reset distributions on N change? Or just validate? Let's validate for now.
-                           // Consider adding logic here if distributions should reset/scale.
                        }}
                 />
                 {errors.numAgents && <p className="text-red-500 text-sm mt-1">{errors.numAgents.message}</p>}
@@ -517,44 +401,61 @@ export function SimulationForm() {
                 <Label htmlFor="density">Density</Label>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                      <Input id="density" type="number" min="0" max={numAgents-1} step="1" {...register("density")}
+                      <Input id="density" type="number" min="0" max={numAgents ? numAgents -1 : undefined} step="1" {...register("density", { valueAsNumber: true })}
                             onChange={(e) => {
                                 setFormValue('density', parseFloat(e.target.value) || 0);
-                               // Recalculates maxEdges implicitly due to watch()
                            }}
                        />
                     </TooltipTrigger>
                     <TooltipContent>
-                       <p>Proportion of possible edges (0 to 1). Max edges: {maxEdges}</p>
+                       <p>Number of connections for certain agent types. Max edges: {maxEdges}</p>
                     </TooltipContent>
                 </Tooltip>
                 {errors.density && <p className="text-red-500 text-sm mt-1">{errors.density.message}</p>}
               </div>
               <div>
                 <Label htmlFor="iterationLimit">Iteration Limit</Label>
-                <Input id="iterationLimit" type="number" min="1" {...register("iterationLimit")} />
+                <Input id="iterationLimit" type="number" min="1" {...register("iterationLimit", { valueAsNumber: true })} />
                 {errors.iterationLimit && <p className="text-red-500 text-sm mt-1">{errors.iterationLimit.message}</p>}
               </div>
               <div>
                 <Label htmlFor="stopThreshold">Stop Threshold</Label>
-                <Input id="stopThreshold" type="number" min="0" step="0.00000001" {...register("stopThreshold")} />
+                <Input id="stopThreshold" type="number" min="0" step="any" {...register("stopThreshold", { valueAsNumber: true })} />
                  {errors.stopThreshold && <p className="text-red-500 text-sm mt-1">{errors.stopThreshold.message}</p>}
              </div>
-              <div>
+             
+            <div>
                 <Label htmlFor="saveMode">Save Mode</Label>
-                <Input id="saveMode" {...register("saveMode")} />
-                 {errors.saveMode && <p className="text-red-500 text-sm mt-1">{errors.saveMode.message}</p>}
-             </div>
+                <Controller
+                    control={control}
+                    name="saveMode"
+                    render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select save mode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Save Modes</SelectLabel>
+                                    {Object.entries(SAVE_MODES_MAP).map(([key, value]) => (
+                                        <SelectItem key={value} value={key as string}>{key}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+                {errors.saveMode && <p className="text-red-500 text-sm mt-1">{errors.saveMode.message}</p>}
+            </div>
+
              <div>
                 <Label htmlFor="seed">Seed (Optional)</Label>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input 
                       id="seed" 
-                      type="number" 
-                      min="0" 
-                      step="1" 
-                      {...register("seed")} 
+                      type="text" // Changed to text to handle BigInt correctly
+                      {...register("seed", {setValueAs: (v) => v === "" ? undefined : BigInt(v)})}
                       placeholder="Random if not provided"
                     />
                   </TooltipTrigger>
@@ -591,18 +492,17 @@ export function SimulationForm() {
                         <Card key={config.id} className="w-full">
                           <CardHeader className="pb-2 flex flex-row items-center justify-between">
                             <div className="flex flex-col gap-0">
-                              {/* <CardTitle>Agent Configuration</CardTitle> */}
                               <div className="flex items-center gap-2">
                                 <Select 
                                   value={config.type} 
-                                  onValueChange={(val) => handleAgentTypeChange(config.id, val as AgentType)}
+                                  onValueChange={(val) => handleAgentTypeChange(config.id, val as AgentStrategyType)}
                                 >
                                   <SelectTrigger className="w-[140px]">
                                     <SelectValue placeholder="Type" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectGroup>
-                                      <SelectLabel>Agent Type</SelectLabel>
+                                      <SelectLabel>Agent Strategy</SelectLabel>
                                       {availableTypes.map(type => (
                                         <SelectItem key={type} value={type}>{type}</SelectItem>
                                       ))}
@@ -612,17 +512,14 @@ export function SimulationForm() {
                                 
                                 <Select
                                   value={config.effect}
-                                  onValueChange={(val) => handleEffectChange(
-                                    config.id, 
-                                    val as "DeGroot" | "Memory" | "Memoryless"
-                                  )}
+                                  onValueChange={(val) => handleEffectChange(config.id, val as AgentEffectType)}
                                 >
                                   <SelectTrigger className="w-[140px]">
                                     <SelectValue placeholder="Effect" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectGroup>
-                                      <SelectLabel>Effects</SelectLabel>
+                                      <SelectLabel>Silence Effect</SelectLabel>
                                       {availableEffects.map(effect => (
                                         <SelectItem key={effect} value={effect}>{effect}</SelectItem>
                                       ))}
@@ -641,7 +538,6 @@ export function SimulationForm() {
                               ✕
                               </Button>
                             )}
-
                           </CardHeader>
                           
                           <CardContent>
@@ -654,10 +550,9 @@ export function SimulationForm() {
                                 onValueChange={(v) => handleAgentCountChange(config.id, v[0], "slider")}
                                 className="col-start-1 w-full"
                               />
-
                               <div className="relative w-24 mt-2">
                                 <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
-                                  {numAgents > 0
+                                  {numAgents && numAgents > 0
                                     ? ((config.count / numAgents) * 100).toFixed(1)
                                     : "0.0"}
                                   %
@@ -675,20 +570,12 @@ export function SimulationForm() {
 
                             {config.type === "Threshold" && (
                               <div className="mt-2 flex flex-col space-y-1">
-                                <Label htmlFor={`threshold-${config.id}`}>Threshold (0–1)</Label>
+                                <Label htmlFor={`threshold-${config.id}`}>Threshold Value (0–1)</Label>
                                 <Input
                                   id={`threshold-${config.id}`}
-                                  type="number"
-                                  min={0}
-                                  max={1}
-                                  step={0.01}
+                                  type="number" min={0} max={1} step={0.01}
                                   value={thresholdValue}
-                                  onChange={(e) => {
-                                    let v = parseFloat(e.target.value) || 0;
-                                    if (v < 0) v = 0;
-                                    if (v > 1) v = 1;
-                                    setThresholdValue(v);
-                                  }}
+                                  onChange={(e) => setThresholdValue(parseFloat(e.target.value) || 0)}
                                   className="w-32"
                                 />
                               </div>
@@ -696,40 +583,23 @@ export function SimulationForm() {
                             
                             {config.type === "Confidence" && (
                               <div className="mt-2 flex items-start gap-x-6">
-                                {/* Threshold */}
                                 <div className="flex flex-col space-y-1">
-                                  <Label htmlFor={`thresconf-${config.id}`}>Threshold (0–1)</Label>
+                                  <Label htmlFor={`thresconf-${config.id}`}>Confidence Threshold (0–1)</Label>
                                   <Input
                                     id={`thresconf-${config.id}`}
-                                    type="number"
-                                    min={0}
-                                    max={1}
-                                    step={0.01}
+                                    type="number" min={0} max={1} step={0.01}
                                     value={thresholdValueConfidence}
-                                    onChange={(e) => {
-                                      let v = parseFloat(e.target.value) || 0;
-                                      if (v < 0) v = 0;
-                                      if (v > 1) v = 1;
-                                      setThresholdValueConfidence(v);
-                                    }}
+                                    onChange={(e) => setThresholdValueConfidence(parseFloat(e.target.value) || 0)}
                                     className="w-32"
                                   />
                                 </div>
-                                
-                                {/* Open Mindedness */}
                                 <div className="flex flex-col space-y-1">
-                                  <Label htmlFor={`openm-${config.id}`}>Open Mindedness (≥1)</Label>
+                                  <Label htmlFor={`openm-${config.id}`}>Update Value (Open Mindedness, ≥1)</Label>
                                   <Input
                                     id={`openm-${config.id}`}
-                                    type="number"
-                                    min={1}
-                                    step={1}
+                                    type="number" min={1} step={1}
                                     value={openMindedness}
-                                    onChange={(e) => {
-                                      let v = parseInt(e.target.value, 10) || 1;
-                                      if (v < 1) v = 1;
-                                      setOpenMindedness(v);
-                                    }}
+                                    onChange={(e) => setOpenMindedness(parseInt(e.target.value, 10) || 1)}
                                     className="w-32"
                                   />
                                 </div>
@@ -744,10 +614,9 @@ export function SimulationForm() {
                       onClick={handleAddAgentConfig}
                       variant="outline"
                       className="w-full"
-                      // Disable the button if all possible combinations are already used
-                      disabled={Object.entries(usedTypeEffectCombinations).every(
-                        ([type, effects]) => effects.length >= 3
-                      )}
+                      disabled={Object.values(usedTypeEffectCombinations).every(effects => effects.length >= ALL_AGENT_EFFECT_TYPES.length) &&
+                                agentConfigs.length >= ALL_AGENT_STRATEGY_TYPES.length * ALL_AGENT_EFFECT_TYPES.length
+                               }
                     >
                       + Add Agent Type Configuration
                     </Button>
@@ -761,8 +630,10 @@ export function SimulationForm() {
             {/* --- Cognitive Bias Distribution --- */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
-              {(maxEdges <= 0) ? (
-                <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
+              {(maxEdges <= 0 && numAgents > 0 && density > 0)  ? ( // Show if N and D are set but result in 0 edges
+                <p className="text-muted-foreground text-sm">Max Edges is {maxEdges}. Cannot assign biases.</p>
+              ): (maxEdges <= 0) ? (
+                 <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
               ) : (
                 <>
                   <div className={`mb-4 p-3 rounded-md ${remainingBiases < 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
@@ -816,13 +687,13 @@ export function SimulationForm() {
                             <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
                               <Slider
                                 min={0}
-                                max={maxEdges}
+                                max={maxEdges} // Max for this slider should be remainingBiases + current count of this slider.
                                 step={1}
                                 value={[config.count]}
                                 onValueChange={(v) => handleBiasCountChange(config.id, v[0], "slider")}
                                 className="col-start-1 w-full"
+                                disabled={maxEdges === 0}
                               />
-
                               <div className="relative w-24 mt-2">
                                 <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
                                   {maxEdges > 0
@@ -837,6 +708,7 @@ export function SimulationForm() {
                                   value={config.count}
                                   onChange={(e) => handleBiasCountChange(config.id, e.target.value, "input")}
                                   className="w-full"
+                                  disabled={maxEdges === 0}
                                 />
                               </div>
                             </div>
@@ -849,7 +721,7 @@ export function SimulationForm() {
                       onClick={handleAddBiasConfig}
                       variant="outline"
                       className="w-full"
-                      disabled={usedBiases.length >= ALL_COGNITIVE_BIASES.length}
+                      disabled={usedBiases.length >= ALL_COGNITIVE_BIASES.length || maxEdges === 0}
                     >
                       + Add Cognitive Bias
                     </Button>
@@ -868,11 +740,10 @@ export function SimulationForm() {
                         <ul className="list-disc list-inside">
                              {!isAgentDistributionValid && <li>Agent type distribution must sum exactly to the total Number of Agents ({numAgents || 0}).</li>}
                              {!isBiasDistributionValid && <li>The total number of biased edges cannot exceed the calculated maximum ({maxEdges}).</li>}
-                         </ul>
+                         </ul>eee
                     </AlertDescription>
                 </Alert>
             )}
-
 
              {/* --- Submit Button --- */}
              <div className="flex justify-end pt-4">
@@ -882,10 +753,6 @@ export function SimulationForm() {
              </div>
           </form>
         </CardContent>
-         {/* Optional Footer */}
-         {/* <CardFooter>
-             <p>Footer information if needed.</p>
-         </CardFooter> */}
       </Card>
     </TooltipProvider>
   );
