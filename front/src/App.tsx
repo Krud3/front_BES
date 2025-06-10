@@ -8,7 +8,7 @@ import SimulationPage from '@/pages/board/SimulationPage';
 import Display from '@/pages/Display';
 import Home from '@/pages/landing/Home';
 import NotFound from '@/pages/not-found';
-import OnConstruction from './pages/on-construction';
+import OnConstruction from '@/pages/on-construction';
 import { useTheme } from '@/components/theme-provider';
 import AdminPage from '@/pages/admin/AdminPage';
 import { ReactNode } from 'react';
@@ -17,6 +17,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import LoginPage from '@/pages/landing/LoginPage';
 import CustomSimulationPage from "@/pages/board/CustomSimulationPage.tsx";
+import { SimulationWebSocketProvider } from '@/contexts/WebSocketContext';
+import { SimulationChart } from '@/components/SimulationChart';
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -68,9 +70,11 @@ const App: React.FC = () => {
             <Route
               path="/board"
               element={
-                <ProtectedRoute> {/* Protect the Board route */}
+                <ProtectedRoute>
                   <CosmographProvider nodes={nodes} links={links}>
-                    <Board setNodes={setNodes} setLinks={setLinks} />
+                    <SimulationWebSocketProvider>
+                      <Board setNodes={setNodes} setLinks={setLinks} />
+                    </SimulationWebSocketProvider>
                   </CosmographProvider>
                 </ProtectedRoute>
               }
@@ -79,6 +83,7 @@ const App: React.FC = () => {
               <Route path="simulation" element={<ProtectedRoute><SimulationPage /></ProtectedRoute>} />
               <Route path="cosmograph" element={<ProtectedRoute><Display /></ProtectedRoute>} />
               <Route path="table-data" element={<ProtectedRoute><TableData /></ProtectedRoute>} />
+              <Route path="test-grafica" element={<ProtectedRoute><SimulationChart /></ProtectedRoute>} />
             </Route>
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
