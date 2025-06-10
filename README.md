@@ -4,7 +4,6 @@
 front_BES
 ├─ docker-compose.yml
 ├─ front
-│  ├─ .env
 │  ├─ components.json
 │  ├─ Dockerfile
 │  ├─ eslint.config.js
@@ -14,25 +13,7 @@ front_BES
 │  ├─ postcss.config.js
 │  ├─ public
 │  │  ├─ csv
-│  │  │  ├─ graph_data.csv
-│  │  │  ├─ graph_data_10000_1.csv
-│  │  │  ├─ graph_data_10000_3.csv
-│  │  │  ├─ graph_data_1000_10.csv
-│  │  │  ├─ graph_data_100_1.csv
-│  │  │  ├─ graph_data_100_10.csv
-│  │  │  ├─ graph_data_100_90.csv
-│  │  │  ├─ graph_data_10_5.csv
-│  │  │  ├─ graph_data_2000_10.csv
-│  │  │  ├─ graph_data_500000_2.csv
-│  │  │  ├─ graph_data_50000_1.csv
-│  │  │  ├─ graph_data_50000_3.csv
-│  │  │  ├─ graph_data_5000_10.csv
-│  │  │  ├─ graph_data_500_10.csv
-│  │  │  ├─ graph_data_distribution_500000_2.csv
-│  │  │  ├─ graph_data_distribution_50000_3.csv
-│  │  │  ├─ graph_data_links_10000_1.csv
-│  │  │  ├─ graph_data_links_100_1.csv
-│  │  │  └─ graph_data_pd.csv
+│  │  │  └─ graph_data.csv
 │  │  ├─ simulations.json
 │  │  └─ vite.svg
 │  ├─ README.md
@@ -56,11 +37,14 @@ front_BES
 │  │  ├─ components
 │  │  │  ├─ AuthProvider.tsx
 │  │  │  ├─ Container.tsx
+│  │  │  ├─ CustomSimulationForm.tsx
 │  │  │  ├─ LoginButton.tsx
 │  │  │  ├─ Logo.tsx
 │  │  │  ├─ LogoutButton.tsx
 │  │  │  ├─ mode-toggle.tsx
 │  │  │  ├─ NodeInfoTable.tsx
+│  │  │  ├─ SimulationChart.tsx
+│  │  │  ├─ SimulationForm.tsx
 │  │  │  ├─ SlimLayout.tsx
 │  │  │  ├─ TableData.tsx
 │  │  │  ├─ theme-provider.tsx
@@ -78,19 +62,24 @@ front_BES
 │  │  │     ├─ menubar.tsx
 │  │  │     ├─ navigation-menu.tsx
 │  │  │     ├─ pagination.tsx
+│  │  │     ├─ select.tsx
 │  │  │     ├─ separator.tsx
 │  │  │     ├─ sheet.tsx
 │  │  │     ├─ sidebar.tsx
 │  │  │     ├─ skeleton.tsx
+│  │  │     ├─ slider.tsx
 │  │  │     ├─ switch.tsx
 │  │  │     ├─ table.tsx
 │  │  │     ├─ tabs.tsx
 │  │  │     └─ tooltip.tsx
+│  │  ├─ contexts
+│  │  │  └─ WebSocketContext.tsx
 │  │  ├─ firebaseConfig.ts
 │  │  ├─ hooks
 │  │  │  ├─ use-mobile.tsx
 │  │  │  ├─ useAuth.ts
-│  │  │  └─ usePermissions.ts
+│  │  │  ├─ usePermissions.ts
+│  │  │  └─ useSimulationHistory.ts
 │  │  ├─ index.css
 │  │  ├─ lib
 │  │  │  ├─ authStore.ts
@@ -105,8 +94,10 @@ front_BES
 │  │  │  ├─ board
 │  │  │  │  ├─ Board.tsx
 │  │  │  │  ├─ CSSheet.tsx
+│  │  │  │  ├─ CustomSimulationPage.tsx
 │  │  │  │  ├─ Navbar.tsx
 │  │  │  │  ├─ PRSheet.tsx
+│  │  │  │  ├─ SimulationPage.tsx
 │  │  │  │  ├─ UploadDialog.tsx
 │  │  │  │  └─ UploadSheet.tsx
 │  │  │  ├─ Display.tsx
@@ -127,14 +118,15 @@ front_BES
 │  └─ vite.config.ts
 ├─ pol_measures_server
 │  ├─ csv
-│  │  ├─ graph_data_50_10.csv
-│  │  └─ graph_data_distribution_50_10.csv
+│  │  └─ graph_data_50_10.csv
 │  ├─ data_generator.py
 │  ├─ Dockerfile
+│  ├─ example.json
 │  ├─ process_nodes.py
 │  ├─ proper_dates.py
 │  ├─ requirements.txt
 │  ├─ server.py
+│  ├─ serverjson.py
 │  └─ to_csv.py
 ├─ README.md
 └─ scripts
