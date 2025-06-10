@@ -362,7 +362,7 @@ export function SimulationForm() {
       });
       const responseText = await response.text();
       console.log("Server Response:", responseText);
-      alert(`Server Response: ${responseText}`);
+      //alert(`Server Response: ${responseText}`);
       // You can update some state here to show the response in the UI if needed
     } catch (error) {
       console.error("Error sending request:", error);
