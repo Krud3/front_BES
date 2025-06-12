@@ -169,7 +169,7 @@ export const SimulationDashboard: React.FC = () => {
                 variant={connected ? "destructive" : "default"}
                 size="sm"
               >
-                {connected ? 'Disconnect' : 'Connect'}
+                {connected ? '⏹ Disconnect' : '▶ Connect'}
               </Button>
               
               <Button
@@ -179,7 +179,7 @@ export const SimulationDashboard: React.FC = () => {
                 disabled={history.length === 0 && !simulationData}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Clear Data
+                🗑️ Clear Data
               </Button>
             </div>
           </div>
