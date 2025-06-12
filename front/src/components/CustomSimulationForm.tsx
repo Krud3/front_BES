@@ -634,63 +634,68 @@ export function CustomSimulationForm() {
 
                     {/* Second row: Belief, Radius, Offset */}
                     {(() => {
-                      let totalCols = 3;
-                      if (agent.silenceStrategy === 2) totalCols += 1;
-                      if (agent.silenceStrategy === 3) totalCols += 2;
+                      // Determinar cuántas columnas necesitamos
+                      const needsThreshold = agent.silenceStrategy === 2;
+                      const needsConfidence = agent.silenceStrategy === 3;
 
-                      const gridClass = `grid gap-4 grid-cols-${totalCols}`;
+                      // Usar clases completas de Tailwind en lugar de template strings
+                      const gridClass = needsConfidence 
+                        ? "grid gap-4 grid-cols-5" 
+                        : needsThreshold 
+                        ? "grid gap-4 grid-cols-4" 
+                        : "grid gap-4 grid-cols-3";
 
                       return (
-                          <div className={gridClass}>
+                        <div className={gridClass}>
+                          <AgentInput
+                            label="Belief"
+                            value={agent.initialBelief}
+                            onChange={(val) => handleUpdateAgent(agent.id, {initialBelief: val})}
+                            placeholder={0}
+                          />
+                          <AgentInput
+                            label="Radius"
+                            value={agent.toleranceRadius}
+                            onChange={(val) => handleUpdateAgent(agent.id, {toleranceRadius: val})}
+                            placeholder={0}
+                          />
+                          <AgentInput
+                            label="Offset"
+                            value={agent.toleranceOffset}
+                            onChange={(val) => handleUpdateAgent(agent.id, {toleranceOffset: val})}
+                            placeholder={0}
+                          />
+                          {needsThreshold && (
                             <AgentInput
-                                label="Belief"
-                                value={agent.initialBelief}
-                                onChange={(val) => handleUpdateAgent(agent.id, {initialBelief: val})}
-                                placeholder={0}
+                              label="Threshold Value"
+                              value={agent.thresholdValue}
+                              onChange={(val) => handleUpdateAgent(agent.id, {thresholdValue: val})}
+                              placeholder={0}
                             />
-                            <AgentInput
-                                label="Radius"
-                                value={agent.toleranceRadius}
-                                onChange={(val) => handleUpdateAgent(agent.id, {toleranceRadius: val})}
+                          )}
+                          {needsConfidence && (
+                            <>
+                              <AgentInput
+                                label="Confidence Value"
+                                value={agent.confidenceValue}
+                                onChange={(val) => handleUpdateAgent(agent.id, {confidenceValue: val})}
                                 placeholder={0}
-                            />
-                            <AgentInput
-                                label="Offset"
-                                value={agent.toleranceOffset}
-                                onChange={(val) => handleUpdateAgent(agent.id, {toleranceOffset: val})}
+                              />
+                              <AgentInput
+                                label="Update Value"
+                                type="int"
+                                min={0}
+                                step={1}
+                                value={agent.updateValue}
                                 placeholder={0}
-                            />
-                            {agent.silenceStrategy === 2 && (
-                                <AgentInput
-                                    label="Threshold Value"
-                                    value={agent.thresholdValue}
-                                    onChange={(val) => handleUpdateAgent(agent.id, {thresholdValue: val})}
-                                    placeholder={0}
-                                />
-                            )}
-
-                            {agent.silenceStrategy === 3 && (
-                                <>
-                                  <AgentInput
-                                      label="Confidence Value"
-                                      value={agent.confidenceValue}
-                                      onChange={(val) => handleUpdateAgent(agent.id, {confidenceValue: val})}
-                                      placeholder={0}
-                                  />
-                                  <AgentInput
-                                      label="Update Value"
-                                      type="int"
-                                      min={0}
-                                      step={1}
-                                      value={agent.updateValue}
-                                      placeholder={0}
-                                      onChange={(val) => handleUpdateAgent(agent.id, {updateValue: val})}
-                                  />
-                                </>
-                            )}
-                          </div>
+                                onChange={(val) => handleUpdateAgent(agent.id, {updateValue: val})}
+                              />
+                            </>
+                          )}
+                        </div>
                       );
                     })()}
+
                   </div>
                 </Card>
               ))}
