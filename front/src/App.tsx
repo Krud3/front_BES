@@ -19,6 +19,7 @@ import LoginPage from '@/pages/landing/LoginPage';
 import CustomSimulationPage from "@/pages/board/CustomSimulationPage.tsx";
 import { SimulationWebSocketProvider } from '@/contexts/WebSocketContext';
 import { SimulationChart } from '@/components/SimulationChart';
+import { SimulationDashboard } from './components/SimulationDashboard';
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -84,6 +85,7 @@ const App: React.FC = () => {
               <Route path="cosmograph" element={<ProtectedRoute><Display /></ProtectedRoute>} />
               <Route path="table-data" element={<ProtectedRoute><TableData /></ProtectedRoute>} />
               <Route path="test-grafica" element={<ProtectedRoute><SimulationChart /></ProtectedRoute>} />
+              <Route path="test-panel" element={<ProtectedRoute><SimulationDashboard /></ProtectedRoute>} />
             </Route>
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
