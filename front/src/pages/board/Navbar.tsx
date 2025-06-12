@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Node, Links } from '@/lib/types';
 import { Logo } from '@/components/Logo';
 import UploadDialog from '@/pages/board/UploadDialog';
-import CSSHeet from '@/pages/board/CSSheet';
+import CreateSimulationSheet from '@/pages/board/CSSheet'; // Renamed for clarity
 import PRSheet from '@/pages/board/PRSheet';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
@@ -29,17 +29,15 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
   const { user } = useAuth();
   const [showAlert, setShowAlert] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
-
       setShowAlert(true);
       setAlertVisible(true);
-
       setTimeout(() => setShowAlert(false), 5000);
       setTimeout(() => setAlertVisible(false), 4000);
     } catch (error: any) {
@@ -59,14 +57,14 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
             <span className="sr-only">BES</span>
           </Link>
           <PRSheet setNodes={setNodes} setLinks={setLinks} />
-          <CSSHeet />
+          <CreateSimulationSheet />
           <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} />
           <Link to="/user-management" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
             User's Management
           </Link>
         </nav>
 
-        {/* Sheet para el menú móvil (hamburguesa) */}
+        {/* Sheet for mobile menu */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -86,7 +84,7 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
               </Link>
 
               <PRSheet setNodes={setNodes} setLinks={setLinks} />
-              <CSSHeet />
+              <CreateSimulationSheet />
               <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} />
               <Link
                 to="/user-management"

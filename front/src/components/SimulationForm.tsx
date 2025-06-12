@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form"; // Added Controller
+import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -14,15 +14,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
 import {
-  AgentStrategyType, // Updated name
+  AgentStrategyType,
   AgentEffectType,
   AgentConfig,
   CognitiveBias,
   BiasConfig,
-  ALL_AGENT_STRATEGY_TYPES, // Updated name
+  ALL_AGENT_STRATEGY_TYPES,
   ALL_AGENT_EFFECT_TYPES,
   ALL_COGNITIVE_BIASES,
-  SimulationConfig, // Using the interface from types.ts
+  SimulationConfig,
   SAVE_MODES_MAP,
   SaveModeString
 } from '@/lib/types';
@@ -44,7 +44,7 @@ const formSchema = z.object({
   density: z.coerce.number().min(0),
   iterationLimit: z.coerce.number().int().positive("Must be positive"),
   stopThreshold: z.coerce.number().min(0),
-  saveMode: z.string().min(1, "Required"), // Will be one of SaveModeString
+  saveMode: z.string().min(1, "Required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -56,7 +56,7 @@ const strategyToByte = (strategy: AgentStrategyType): number => {
     case 'Majority': return 1;
     case 'Threshold': return 2;
     case 'Confidence': return 3;
-    default: return 1; // Default to Majority/Standard
+    default: return 1;
   }
 };
 
@@ -82,19 +82,19 @@ const biasToByte = (bias: CognitiveBias): number => {
 
 
 export function SimulationForm() {
-  const [thresholdValue, setThresholdValue] = useState<number>(0.5); // Default from HTML
-  const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(0.5); // Default from HTML
-  const [openMindedness, setOpenMindedness] = useState<number>(100); // Default from HTML
+  const [thresholdValue, setThresholdValue] = useState<number>(0.5);
+  const [thresholdValueConfidence, setThresholdValueConfidence] = useState<number>(0.5);
+  const [openMindedness, setOpenMindedness] = useState<number>(100);
 
   const { register, handleSubmit, watch, control, formState: { errors }, setValue: setFormValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       numNetworks: 1,
-      numAgents: 10,      // Adjusted for quicker testing
-      density: 5,        // Adjusted
+      numAgents: 10,
+      density: 5,
       iterationLimit: 100,
-      stopThreshold: 0.01, // From your HTML example
-      saveMode: 'Debug' as SaveModeString, // Default from your example
+      stopThreshold: 0.01,
+      saveMode: 'Debug' as SaveModeString,
     },
   });
 
@@ -104,9 +104,9 @@ export function SimulationForm() {
   const [agentConfigs, setAgentConfigs] = useState<AgentConfig[]>([
     {
       id: "default-agent",
-      type: "Majority", // More common default
+      type: "Majority",
       effect: "Memoryless",
-      count: numAgents || 10 // Initialize with numAgents
+      count: numAgents || 10
     }
   ]);
 
@@ -114,19 +114,17 @@ export function SimulationForm() {
     {
       id: "default-bias",
       bias: "DeGroot",
-      count: 0 // Default to 0 initially
+      count: 0
     }
   ]);
   
   // Update default agent config count when numAgents changes
-  React.useEffect(() => {
+  useEffect(() => {
     setAgentConfigs(prev => {
       if (prev.length === 1 && prev[0].id === "default-agent") {
         return [{ ...prev[0], count: numAgents || 0 }];
       }
-      // If user has added more configs, let them manage counts
-      // Or, you could implement logic to redistribute/cap counts
-      return prev;
+      return prev.map(config => ({...config, count: 0}));
     });
   }, [numAgents]);
 
@@ -178,19 +176,27 @@ export function SimulationForm() {
   const maxEdges = useMemo(() => {
     const n = numAgents || 0;
     const d = density || 0;
-    if (n <= 1 || d === 0) return 0; // if density is 0, no edges.
-     //This formula d * (d - 1) + ((n - d) * 2 * d) is specific and might not represent generic max edges (N*(N-1) for directed)
-     //Using your specific formula:
-    if (d > n) return n * (n-1); // Density cannot be greater than N. Cap at N*(N-1)
+    if (n <= 1 || d === 0) return 0;
+    if (d > n) return n * (n-1); 
     return Math.floor(d * (d - 1) + ((n - d) * 2 * d));
   }, [numAgents, density]);
 
   const totalAssignedBiases = useMemo(() => biasConfigs.reduce((sum, config) => sum + config.count, 0), [biasConfigs]);
   const remainingBiases = useMemo(() => maxEdges - totalAssignedBiases, [maxEdges, totalAssignedBiases]);
 
+  // IMPROVEMENT: Stricter validation for both agent and bias distributions
   const isAgentDistributionValid = remainingAgents === 0 && (numAgents || 0) > 0;
-  const isBiasDistributionValid = remainingBiases >= 0;
+  const isBiasDistributionValid = remainingBiases === 0 && maxEdges > 0 || maxEdges === 0; // Must be exactly 0 unless maxEdges is 0
   const isFormValid = !Object.keys(errors).length && isAgentDistributionValid && isBiasDistributionValid;
+
+  // IMPROVEMENT: Effect to reset bias counts if maxEdges changes and totals become invalid
+  useEffect(() => {
+      const currentTotal = biasConfigs.reduce((sum, config) => sum + config.count, 0);
+      if (currentTotal > maxEdges) {
+          setBiasConfigs(prev => prev.map(config => ({ ...config, count: 0 })));
+      }
+  }, [maxEdges, biasConfigs]);
+
 
   const handleAddAgentConfig = useCallback(() => {
     const availableTypeEffect = ALL_AGENT_STRATEGY_TYPES.reduce((found, type) => {
@@ -261,7 +267,7 @@ export function SimulationForm() {
   }, []);
 
   const handleBiasCountChange = useCallback((configId: string, value: string | number, source: 'input' | 'slider') => {
-    if (maxEdges <= 0 && totalAssignedBiases ===0 ) return; // Allow setting to 0 if maxEdges is 0.
+    if (maxEdges <= 0) return;
     let newCount = typeof value === 'string' ? parseInt(value, 10) : Math.round(value);
     if (isNaN(newCount) || newCount < 0) newCount = 0;
 
@@ -269,7 +275,7 @@ export function SimulationForm() {
       const currentConfig = prev.find(c => c.id === configId);
       if (!currentConfig) return prev;
       const otherConfigsTotal = prev.reduce((sum, c) => c.id === configId ? sum : sum + c.count, 0);
-      const maxAllowedForThis = maxEdges - otherConfigsTotal; // Max this slider can take
+      const maxAllowedForThis = maxEdges - otherConfigsTotal;
       const clampedCount = Math.max(0, Math.min(newCount, maxAllowedForThis));
 
       if (clampedCount !== currentConfig.count || source === 'input') {
@@ -277,26 +283,23 @@ export function SimulationForm() {
       }
       return prev;
     });
-  }, [maxEdges, totalAssignedBiases]);
+  }, [maxEdges]);
 
-
-  // --- Form Submission ---
   function calculateBufferSizeLocal() {
-    let bufferSize = 28; // Fixed header
+    let bufferSize = 28;
     agentConfigs.forEach(config => {
-      bufferSize += 6; // agentCount (4), strategyType (1), effectType (1)
-      if (config.type === 'Threshold') bufferSize += 4; // thresholdValue (float32)
-      else if (config.type === 'Confidence') bufferSize += 8; // confidenceThreshold (float32) + updateValue (int32)
+      bufferSize += 6;
+      if (config.type === 'Threshold') bufferSize += 4;
+      else if (config.type === 'Confidence') bufferSize += 8;
     });
-    bufferSize += biasConfigs.length * 5; // neighborCount (4) + biasType (1) for each bias config
+    bufferSize += biasConfigs.length * 5;
     return bufferSize;
   }
 
   const onFormSubmit = async (data: FormValues) => {
     if (!isFormValid) {
       console.error("Form is invalid. Submission prevented.");
-      // You might want to show a user-facing error message here
-      alert("Form is invalid. Please check agent and bias distributions.");
+      alert("Form is invalid. Please ensure agent and bias distributions are fully and correctly assigned.");
       return;
     }
 
@@ -305,29 +308,22 @@ export function SimulationForm() {
     const view = new DataView(buffer);
     let offset = 0;
 
-    // Write fixed fields (matching message.txt structure)
-    view.setInt8(offset++, 0); // runType, assumed 0 for generated run [cite: 46]
-    
+    view.setInt8(offset++, 0);
     const saveModeValue = SAVE_MODES_MAP[data.saveMode as SaveModeString];
     view.setInt8(offset++, saveModeValue);
-    
     view.setInt8(offset++, agentConfigs.length);
     view.setInt8(offset++, biasConfigs.length);
-    
     view.setInt32(offset, data.numNetworks, true); offset += 4;
     view.setInt32(offset, data.density, true); offset += 4;
     view.setInt32(offset, data.iterationLimit, true); offset += 4;
     view.setFloat32(offset, data.stopThreshold, true); offset += 4;
-    
     const seedBigInt = data.seed !== undefined ? data.seed : BigInt(-1);
     view.setBigInt64(offset, seedBigInt, true); offset += 8;
 
-    // Write agent data
     agentConfigs.forEach(config => {
       view.setInt32(offset, config.count, true); offset += 4;
       view.setInt8(offset++, strategyToByte(config.type));
       view.setInt8(offset++, effectToByte(config.effect));
-
       if (config.type === 'Threshold') {
         view.setFloat32(offset, thresholdValue, true); offset += 4;
       } else if (config.type === 'Confidence') {
@@ -336,13 +332,11 @@ export function SimulationForm() {
       }
     });
 
-    // Write bias data
     biasConfigs.forEach(config => {
-      view.setInt32(offset, config.count, true); offset += 4; // This is 'neighborCount' in HTML, but represents count of edges for this bias
+      view.setInt32(offset, config.count, true); offset += 4;
       view.setInt8(offset++, biasToByte(config.bias));
     });
 
-    // For debugging: Display binary data as hex
     const hexView = new Uint8Array(buffer);
     let hexString = '';
     for (let i = 0; i < hexView.length; i++) {
@@ -351,23 +345,17 @@ export function SimulationForm() {
     }
     console.log("Binary Payload (Hex):\n", hexString);
 
-
     try {
       const response = await fetch('http://localhost:8080/run', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/octet-stream'
-        },
+        headers: { 'Content-Type': 'application/octet-stream' },
         body: buffer
       });
       const responseText = await response.text();
       console.log("Server Response:", responseText);
-      //alert(`Server Response: ${responseText}`);
-      // You can update some state here to show the response in the UI if needed
     } catch (error) {
       console.error("Error sending request:", error);
       alert(`Error sending request: ${error}`);
-      // Update UI to show error
     }
   };
 
@@ -454,7 +442,7 @@ export function SimulationForm() {
                   <TooltipTrigger asChild>
                     <Input 
                       id="seed" 
-                      type="text" // Changed to text to handle BigInt correctly
+                      type="text" 
                       {...register("seed", {setValueAs: (v) => v === "" ? undefined : BigInt(v)})}
                       placeholder="Random if not provided"
                     />
@@ -630,18 +618,16 @@ export function SimulationForm() {
             {/* --- Cognitive Bias Distribution --- */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
-              {(maxEdges <= 0 && numAgents > 0 && density > 0)  ? ( // Show if N and D are set but result in 0 edges
-                <p className="text-muted-foreground text-sm">Max Edges is {maxEdges}. Cannot assign biases.</p>
-              ): (maxEdges <= 0) ? (
+              {(maxEdges <= 0) ? (
                  <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
               ) : (
                 <>
-                  <div className={`mb-4 p-3 rounded-md ${remainingBiases < 0 ? 'bg-destructive/10 border border-destructive' : 'bg-accent'}`}>
-                    <p className={`font-medium ${remainingBiases < 0 ? 'text-destructive' : ''}`}>
-                      Biased Edges Assigned: {totalAssignedBiases} / {maxEdges} (Max Possible)
-                    </p>
-                    <p className="text-sm text-muted-foreground">Remaining edges that can be assigned a bias: {remainingBiases}</p>
-                    {remainingBiases < 0 && <p className="text-destructive font-semibold">Too many biases assigned!</p>}
+                  <div className={`mb-4 p-3 rounded-md ${remainingBiases !== 0 ? 'bg-destructive/10 border border-destructive' : 'bg-green-100 dark:bg-green-900/30 border border-green-500'}`}>
+                      <p className={`font-medium ${remainingBiases !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
+                          Edges to Assign a Bias: {remainingBiases} / {maxEdges}
+                          {remainingBiases !== 0 && " (Must be exactly 0)"}
+                      </p>
+                      {totalAssignedBiases > maxEdges && <p className="text-destructive font-semibold">Assigned biases exceed maximum edges! Counts have been reset.</p>}
                   </div>
 
                   <div className="space-y-6 w-full">
@@ -687,7 +673,7 @@ export function SimulationForm() {
                             <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
                               <Slider
                                 min={0}
-                                max={maxEdges} // Max for this slider should be remainingBiases + current count of this slider.
+                                max={maxEdges}
                                 step={1}
                                 value={[config.count]}
                                 onValueChange={(v) => handleBiasCountChange(config.id, v[0], "slider")}
@@ -739,8 +725,8 @@ export function SimulationForm() {
                         Please resolve the following before submitting:
                         <ul className="list-disc list-inside">
                              {!isAgentDistributionValid && <li>Agent type distribution must sum exactly to the total Number of Agents ({numAgents || 0}).</li>}
-                             {!isBiasDistributionValid && <li>The total number of biased edges cannot exceed the calculated maximum ({maxEdges}).</li>}
-                         </ul>eee
+                             {!isBiasDistributionValid && <li>Biased edge distribution must sum exactly to the calculated Max Edges ({maxEdges}).</li>}
+                         </ul>
                     </AlertDescription>
                 </Alert>
             )}
