@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, Se
 import { AgentConfig, BiasConfig, SaveModeString, CustomAgent, Neighbor } from '@/lib/types'; 
 
 // --- State Definitions ---
+
+// State for the Standard Simulation Form
 interface StandardFormState {
     formValues: {
         seed?: bigint;
@@ -19,6 +21,7 @@ interface StandardFormState {
     openMindedness: number;
 }
 
+// State for the Custom Simulation Form
 interface CustomFormState {
     stopThreshold: number;
     iterationLimit: number;
@@ -28,82 +31,113 @@ interface CustomFormState {
     neighbors: Neighbor[];
 }
 
-// --- Combined State and Context ---
+// Combined state for the entire context
 interface SimulationState {
   standardForm: StandardFormState;
   customForm: CustomFormState;
-  lastOpenedForm: 'standard' | 'custom'; // ADDED: To track the last active tab
   
   // Setters
   setStandardForm: Dispatch<SetStateAction<StandardFormState>>;
   setCustomForm: Dispatch<SetStateAction<CustomFormState>>;
-  setLastOpenedForm: Dispatch<SetStateAction<'standard' | 'custom'>>; // ADDED
   resetState: () => void;
 }
+
+// --- Context and Provider ---
 
 const SimulationStateContext = createContext<SimulationState | undefined>(undefined);
 const LOCAL_STORAGE_KEY = 'simulationFormState';
 
-const getDefaultState = (): Omit<SimulationState, 'setStandardForm' | 'setCustomForm' | 'setLastOpenedForm' | 'resetState'> => ({
+// Define the default empty/initial state
+const getDefaultState = (): { standardForm: StandardFormState, customForm: CustomFormState } => ({
   standardForm: {
     formValues: {
-        numNetworks: 1, numAgents: 10, density: 5, iterationLimit: 100, stopThreshold: 0.01,
-        saveMode: 'Debug' as SaveModeString, seed: undefined,
+        numNetworks: 1,
+        numAgents: 10,
+        density: 5,
+        iterationLimit: 100,
+        stopThreshold: 0.01,
+        saveMode: 'Debug' as SaveModeString,
+        seed: undefined,
     },
     agentConfigs: [{ id: "default-agent", type: "Majority", effect: "Memoryless", count: 10 }],
     biasConfigs: [{ id: "default-bias", bias: "DeGroot", count: 0 }],
-    thresholdValue: 0.5, thresholdValueConfidence: 0.5, openMindedness: 100,
+    thresholdValue: 0.5,
+    thresholdValueConfidence: 0.5,
+    openMindedness: 100,
   },
   customForm: {
-    stopThreshold: 0.0001, iterationLimit: 100, saveMode: 1, networkName: "Custom Network",
+    stopThreshold: 0.0001,
+    iterationLimit: 100,
+    saveMode: 1,
+    networkName: "Custom Network",
     agents: [{
-        id: crypto.randomUUID(), name: "Agent 1", initialBelief: 0.5, toleranceRadius: 0.3,
-        toleranceOffset: 0.1, silenceStrategy: 0, silenceEffect: 0,
-        thresholdValue: 0.5, confidenceValue: 0.5, updateValue: 1
+        id: crypto.randomUUID(),
+        name: "Agent 1",
+        initialBelief: 0.5,
+        toleranceRadius: 0.3,
+        toleranceOffset: 0.1,
+        silenceStrategy: 0,
+        silenceEffect: 0,
+        thresholdValue: 0.5,
+        confidenceValue: 0.5,
+        updateValue: 1
     }],
     neighbors: [],
-  },
-  lastOpenedForm: 'standard', // ADDED: Default to standard form
+  }
 });
 
+// Create the Provider Component
 export const SimulationStateProvider = ({ children }: { children: ReactNode }) => {
   const loadState = () => {
     try {
       const storedState = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (storedState) {
-        const parsed = JSON.parse(storedState, (key, value) => (key === 'seed' && value ? BigInt(value) : value));
+        const parsed = JSON.parse(storedState, (key, value) => {
+          if (key === 'seed' && value !== null && value !== undefined) {
+            return BigInt(value);
+          }
+          return value;
+        });
         const defaults = getDefaultState();
+        // Deep merge to prevent crashes if the stored shape is outdated
         return {
-            standardForm: { ...defaults.standardForm, ...(parsed.standardForm || {}), formValues: { ...defaults.standardForm.formValues, ...(parsed.standardForm?.formValues || {}) } },
-            customForm: { ...defaults.customForm, ...(parsed.customForm || {}) },
-            lastOpenedForm: parsed.lastOpenedForm || defaults.lastOpenedForm // ADDED
+            standardForm: { 
+                ...defaults.standardForm, 
+                ...parsed.standardForm, 
+                formValues: { ...defaults.standardForm.formValues, ...(parsed.standardForm?.formValues || {}) } 
+            },
+            customForm: { ...defaults.customForm, ...(parsed.customForm || {}) }
         };
       }
-    } catch (error) { console.error("Failed to parse state from localStorage", error); }
+    } catch (error) {
+      console.error("Failed to parse state from localStorage", error);
+    }
     return getDefaultState();
   };
 
   const [standardForm, setStandardForm] = useState(loadState().standardForm);
   const [customForm, setCustomForm] = useState(loadState().customForm);
-  const [lastOpenedForm, setLastOpenedForm] = useState(loadState().lastOpenedForm); // ADDED
 
   useEffect(() => {
-    const stateToStore = { standardForm, customForm, lastOpenedForm }; // ADDED
-    const serializedState = JSON.stringify(stateToStore, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
+    const stateToStore = { standardForm, customForm };
+    const serializedState = JSON.stringify(stateToStore, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+    );
     localStorage.setItem(LOCAL_STORAGE_KEY, serializedState);
-  }, [standardForm, customForm, lastOpenedForm]); // ADDED
+  }, [standardForm, customForm]);
 
   const resetState = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     const defaults = getDefaultState();
     setStandardForm(defaults.standardForm);
     setCustomForm(defaults.customForm);
-    setLastOpenedForm(defaults.lastOpenedForm); // ADDED
   };
 
   const value = {
-    standardForm, customForm, lastOpenedForm, // ADDED
-    setStandardForm, setCustomForm, setLastOpenedForm, // ADDED
+    standardForm,
+    customForm,
+    setStandardForm,
+    setCustomForm,
     resetState,
   };
 
@@ -114,8 +148,11 @@ export const SimulationStateProvider = ({ children }: { children: ReactNode }) =
   );
 };
 
+// Create the custom hook for easy consumption
 export const useSimulationState = () => {
   const context = useContext(SimulationStateContext);
-  if (context === undefined) { throw new Error('useSimulationState must be used within a SimulationStateProvider'); }
+  if (context === undefined) {
+    throw new Error('useSimulationState must be used within a SimulationStateProvider');
+  }
   return context;
 };

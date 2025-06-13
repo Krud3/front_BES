@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -31,7 +31,9 @@ import { CustomSimulationForm } from '@/components/CustomSimulationForm';
 import { useSimulationState } from '@/hooks/useSimulationState';
 
 const CreateSimulationSheet: React.FC = () => {
-  const { lastOpenedForm, setLastOpenedForm, resetState } = useSimulationState();
+  const { resetState } = useSimulationState();
+
+  const [lastOpenedForm, setLastOpenedForm] = useState<'standard' | 'custom'>('standard');
 
   return (
     <Sheet>
@@ -44,9 +46,6 @@ const CreateSimulationSheet: React.FC = () => {
         <Tabs defaultValue="new" className="w-full">
           <SheetHeader>
             <SheetTitle>Create Simulation</SheetTitle>
-            <Button variant="outline" size="sm" onClick={resetState}>
-                Reset Form
-            </Button>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="new">New simulation</TabsTrigger>
               <TabsTrigger value="previous">From previous results</TabsTrigger>
@@ -72,12 +71,12 @@ const CreateSimulationSheet: React.FC = () => {
           </TabsContent>
         </Tabs>
         <SheetFooter>
-            <Button variant="outline" className="mt-4">
-                Close
-            </Button>
-            <SheetClose asChild>
-            </SheetClose>
-          </SheetFooter>
+          <Button variant="outline" size="sm" onClick={resetState}>
+              Reset Form
+          </Button>
+          <SheetClose asChild>
+          </SheetClose>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
