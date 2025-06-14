@@ -1,10 +1,5 @@
-// CSSHeet.tsx
-
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetClose,
@@ -30,49 +25,20 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-const CSSHeet: React.FC = () => {
-  const [nodesInput, setNodesInput] = useState<number>(50);
-  const [roundsInput, setRoundsInput] = useState<number>(10);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [simulationMessage, setSimulationMessage] = useState<string>('');
+// Import the actual form components
+import { SimulationForm } from '@/components/SimulationForm';
+import { CustomSimulationForm } from '@/components/CustomSimulationForm';
 
-  const handleCreateSimulation = async () => {
-    setLoading(true);
-    setSimulationMessage('');
-    try {
-      const response = await fetch('http://127.0.0.1:5000/generate_simulation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nodes: nodesInput,
-          rounds: roundsInput,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to generate simulation.');
-      }
-
-      setSimulationMessage(result.message || 'Simulation generated successfully.');
-    } catch (error: any) {
-      setSimulationMessage(`Error: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+const CreateSimulationSheet: React.FC = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Link to="#" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
+        <Button variant="link" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap px-0">
           Create Simulation
-        </Link>
+        </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[400px]">
+      {/* Increased the width to better accommodate the forms */}
+      <SheetContent side="left" className="w-full sm:w-3/4 md:w-2/3 lg:max-w-screen-md overflow-y-auto">
         <Tabs defaultValue="new" className="w-full">
           <SheetHeader>
             <SheetTitle>Create Simulation</SheetTitle>
@@ -82,54 +48,26 @@ const CSSHeet: React.FC = () => {
             </TabsList>
           </SheetHeader>
 
+          {/* Content for the "New simulation" tab */}
           <TabsContent value="new">
-            <div className="py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>New Simulation</CardTitle>
-                  <CardDescription>
-                    Make a new simulation here. Click "Create" when you're done.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="nodes">Nodes</Label>
-                    <Input
-                      id="nodes"
-                      type="number"
-                      min="1"
-                      value={nodesInput}
-                      onChange={(e) => setNodesInput(parseInt(e.target.value) || 1)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="rounds">Rounds</Label>
-                    <Input
-                      id="rounds"
-                      type="number"
-                      min="1"
-                      value={roundsInput}
-                      onChange={(e) => setRoundsInput(parseInt(e.target.value) || 1)}
-                    />
-                  </div>
-                  {simulationMessage && (
-                    <div className={`mt-2 text-sm ${simulationMessage.startsWith('Error') ? 'text-red-500' : 'text-green-500'}`}>
-                      {simulationMessage}
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    onClick={handleCreateSimulation}
-                    disabled={loading}
-                  >
-                    {loading ? 'Creating...' : 'Create'}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
+            {/* A second, nested Tabs component to switch between the two forms */}
+            <Tabs defaultValue="standard" className="w-full mt-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="standard">Standard Form</TabsTrigger>
+                <TabsTrigger value="custom">Custom Form</TabsTrigger>
+              </TabsList>
+              <TabsContent value="standard" className="py-4">
+                {/* Embed the standard SimulationForm */}
+                <SimulationForm />
+              </TabsContent>
+              <TabsContent value="custom" className="py-4">
+                {/* Embed the CustomSimulationForm */}
+                <CustomSimulationForm />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
+          {/* Content for the "From previous results" tab remains unchanged */}
           <TabsContent value="previous">
             <div className="py-4">
               <Card>
@@ -140,7 +78,6 @@ const CSSHeet: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Implementar funcionalidad para cargar simulaciones previas si es necesario */}
                   <p>No implemented yet.</p>
                 </CardContent>
                 <CardFooter>
@@ -149,18 +86,17 @@ const CSSHeet: React.FC = () => {
               </Card>
             </div>
           </TabsContent>
-
-          <SheetFooter>
+        </Tabs>
+        <SheetFooter>
             <SheetClose asChild>
-              <Button variant="ghost" className="mt-4">
+              <Button variant="outline" className="mt-4">
                 Close
               </Button>
             </SheetClose>
           </SheetFooter>
-        </Tabs>
       </SheetContent>
     </Sheet>
   );
 };
 
-export default CSSHeet;
+export default CreateSimulationSheet;
