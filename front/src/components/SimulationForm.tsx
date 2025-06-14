@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,7 +22,7 @@ import {
   ALL_AGENT_STRATEGY_TYPES, // Updated name
   ALL_AGENT_EFFECT_TYPES,
   ALL_COGNITIVE_BIASES,
-  SimulationConfig, // Using the interface from types.ts
+  // SimulationConfig, // Using the interface from types.ts
   SAVE_MODES_MAP,
   SaveModeString
 } from '@/lib/types';
@@ -353,7 +353,7 @@ export function SimulationForm() {
 
 
     try {
-      const response = await fetch('http://localhost:8080/run', {
+      const response = await fetch('http://localhost:9000/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/octet-stream'
