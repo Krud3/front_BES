@@ -1,4 +1,3 @@
-// src/components/SimulationChart.tsx
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,106 +6,82 @@ import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
 import { useSimulationHistory } from '@/hooks/useSimulationHistory';
 
 export const SimulationChart: React.FC = () => {
-  const { connected, connect, disconnect, simulationData, messageCount, clearData } = useSimulationWebSocket();
-  const { history, clearHistory } = useSimulationHistory();
+  // This destructuring is now correct and matches our updated context
+  const { connected, connect, disconnect, latestSimulationData, messageCount, clearData } = useSimulationWebSocket();
+  const { history, getLatestRound, getAgentKeys, totalRounds } = useSimulationHistory();
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any[]>([]);
 
-  // Update debug info when new data arrives
+  // --- FIX 1 & 2: Update useEffect to use latestSimulationData ---
   useEffect(() => {
-    if (!simulationData) return;
+    // Check for the new variable name
+    if (!latestSimulationData) return;
 
-    const validBeliefs = simulationData.beliefs.filter(b => b !== null);
-    
+    // Use latestSimulationData to get the beliefs
+    const validBeliefs = Array.from(latestSimulationData.beliefs).filter(b => b !== null);
+
     setDebugInfo(prev => {
       const newInfo = [...prev];
       if (newInfo.length > 5) newInfo.shift();
 
+      // Use latestSimulationData for all properties here
       newInfo.push({
         timestamp: new Date().toLocaleTimeString(),
-        round: simulationData.round,
-        totalAgents: simulationData.numberOfAgents,
+        round: latestSimulationData.round,
+        indexReference: latestSimulationData.indexReference,
+        totalAgents: latestSimulationData.numberOfAgents,
         validBeliefs: validBeliefs.length,
         sampleBeliefs: validBeliefs.slice(0, 5),
-        speaking: simulationData.speakingStatuses.slice(0, 5)
+        speaking: Array.from(latestSimulationData.speakingStatuses).slice(0, 5)
       });
 
       return newInfo;
     });
-  }, [simulationData]);
+    // Update the dependency array to match the variable being used
+  }, [latestSimulationData]);
 
-  // Clear all data
+  // --- FIX 3: Simplify the clear data handler ---
   const handleClearData = () => {
+    // clearData() from the context now handles clearing the history map.
+    // We only need to clear our local debug info state.
     clearData();
-    clearHistory();
     setDebugInfo([]);
   };
 
-  // Generate lines for the chart
-  const generateLines = () => {
+  // The rest of the component logic remains the same as it was already correct.
+
+  // In SimulationChart.tsx
+
+const generateLines = () => {
     const colors = ['#3498db', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e', '#e67e22'];
-
-    if (history.length === 0) return null;
-
-    const lastDataPoint = history[history.length - 1];
-    const agentKeys = Object.keys(lastDataPoint)
-      .filter(key => key.startsWith('agent'))
-      .sort((a, b) => {
-        const numA = parseInt(a.replace('agent', ''));
-        const numB = parseInt(b.replace('agent', ''));
-        return numA - numB;
-      });
+    const agentKeys = getAgentKeys();
+    if (agentKeys.length === 0) return null;
 
     return agentKeys.map((key, index) => {
       const agentIndex = key.replace('agent', '');
       const speakingKey = `speaking${agentIndex}`;
 
+      // Correctly handle the key prop inside renderDot
       const renderDot = (props: any) => {
-        const { cx, cy, payload } = props;
+        // Destructure the index passed by recharts to avoid name conflicts.
+        // This 'dotIndex' is unique for each point on a single line.
+        const { cx, cy, payload, index: dotIndex } = props;
+
         if (payload[speakingKey] === true) {
-          return (
-            <circle
-              cx={cx}
-              cy={cy}
-              r={5}
-              fill={colors[index % colors.length]}
-              stroke="white"
-              strokeWidth={2}
-            />
-          );
+          // Add the unique key to the circle element
+          return <circle key={`dot-${key}-${dotIndex}`} cx={cx} cy={cy} r={5} fill={colors[index % colors.length]} stroke="white" strokeWidth={2} />;
         }
-        // Return a hidden SVG element instead of null to satisfy type requirements
-        return (
-          <circle
-            cx={cx}
-            cy={cy}
-            r={0}
-            fill="none"
-            stroke="none"
-            style={{ display: 'none' }}
-          />
-        );
+
+        // The "null" element also needs a key for React to be happy
+        return <circle key={`dot-null-${key}-${dotIndex}`} r={0} style={{ display: 'none' }} />;
       };
 
-      return (
-        <Line
-          key={key}
-          type="monotone"
-          dataKey={key}
-          stroke={colors[index % colors.length]}
-          strokeWidth={2}
-          dot={renderDot}
-          activeDot={{ r: 6, fill: colors[index % colors.length] }}
-          isAnimationActive={false}
-        />
-      );
+      return <Line key={key} type="monotone" dataKey={key} stroke={colors[index % colors.length]} strokeWidth={2} dot={renderDot} activeDot={{ r: 6, fill: colors[index % colors.length] }} isAnimationActive={false} />;
     });
   };
 
-  // Custom x-axis ticks
   const getCustomXAxisTicks = () => {
     if (history.length <= 1) return [];
-
     const firstRound = history[0].round;
     const lastRound = history[history.length - 1].round;
     const roundSpan = lastRound - firstRound;
@@ -122,52 +97,35 @@ export const SimulationChart: React.FC = () => {
     for (let i = firstRound; i <= lastRound; i += interval) {
       ticks.push(i);
     }
-
-    if (ticks[ticks.length - 1] !== lastRound) {
+    if (ticks.length > 0 && ticks[ticks.length - 1] < lastRound) {
       ticks.push(lastRound);
     }
-
     return ticks;
   };
 
-  const currentRound = simulationData?.round || 0;
+  const currentRound = getLatestRound();
 
   return (
     <div className="space-y-4">
-      {/* Connection Status */}
+      {/* Connection Status Card */}
       <Card>
         <CardContent className="py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-sm">
-                {connected ? 'Connected to WebSocket Server' : 'Disconnected from WebSocket Server'}
-                {connected && <span className="text-muted-foreground"> • {messageCount} messages received</span>}
+                {connected ? 'Connected' : 'Disconnected'}
+                {connected && <span className="text-muted-foreground"> • {messageCount} messages</span>}
               </span>
             </div>
-            
             <div className="flex gap-2">
-              <Button
-                onClick={connected ? disconnect : connect}
-                variant={connected ? "destructive" : "default"}
-                size="sm"
-              >
+              <Button onClick={connected ? disconnect : connect} variant={connected ? "destructive" : "default"} size="sm">
                 {connected ? '⏹ Disconnect' : '▶ Connect'}
               </Button>
-              
-              <Button
-                onClick={handleClearData}
-                variant="outline"
-                size="sm"
-              >
+              <Button onClick={handleClearData} variant="outline" size="sm">
                 🗑️ Clear Data
               </Button>
-
-              <Button
-                onClick={() => setShowDebug(!showDebug)}
-                variant="ghost"
-                size="sm"
-              >
+              <Button onClick={() => setShowDebug(!showDebug)} variant="ghost" size="sm">
                 {showDebug ? 'Hide Debug' : 'Show Debug'}
               </Button>
             </div>
@@ -175,39 +133,28 @@ export const SimulationChart: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Debug Panel */}
+      {/* Debug Panel Card */}
       {showDebug && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Debug Information</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-sm">Debug Information</CardTitle></CardHeader>
           <CardContent>
             <p className="text-sm">Messages received: {messageCount}</p>
             <p className="text-sm">Current round: {currentRound}</p>
-
+            <p className="text-sm">Total rounds stored: {totalRounds}</p>
+            <p className="text-sm">Total agents tracked: {getAgentKeys().length}</p>
             {debugInfo.length > 0 && (
               <div className="mt-4 space-y-2">
-                <h4 className="text-sm font-semibold">Recent Messages:</h4>
-                {debugInfo.map((info, idx) => (
+                <h4 className="text-sm font-semibold">Recent Data Packets:</h4>
+                {debugInfo.slice().reverse().map((info, idx) => (
                   <div key={idx} className="p-2 bg-muted rounded text-xs">
                     <p><strong>{info.timestamp}</strong> - Round {info.round}</p>
-                    <p>Agents: {info.totalAgents}, Valid beliefs: {info.validBeliefs}</p>
+                    <p>Index Ref: {info.indexReference}, Agents: {info.totalAgents}, Valid beliefs: {info.validBeliefs}</p>
                     {info.sampleBeliefs.length > 0 && (
                       <div>
                         <strong>Sample beliefs:</strong>{' '}
                         {info.sampleBeliefs.map((b: number, i: number) =>
-                          <span key={i} className={info.speaking && info.speaking[i] ? 'text-green-600' : ''}>
-                            {b?.toFixed(4) || 'N/A'}{i < info.sampleBeliefs.length - 1 ? ', ' : ''}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {info.speaking && info.speaking.length > 0 && (
-                      <div>
-                        <strong>Speaking status:</strong>{' '}
-                        {info.speaking.map((s: boolean, i: number) =>
-                          <span key={i} className={s ? 'text-green-600' : 'text-gray-500'}>
-                            Agent {i}: {s ? 'Speaking' : 'Silent'}{i < info.speaking.length - 1 ? ', ' : ''}
+                          <span key={i} className={info.speaking[i] ? 'font-bold text-green-600' : ''}>
+                            {b?.toFixed(4) ?? 'N/A'}{i < info.sampleBeliefs.length - 1 ? ', ' : ''}
                           </span>
                         )}
                       </div>
@@ -220,53 +167,27 @@ export const SimulationChart: React.FC = () => {
         </Card>
       )}
 
-      {/* Main Chart */}
+      {/* Main Chart Card */}
       <Card>
         <CardHeader>
           <CardTitle>Belief Evolution Over Time</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Current Round: {currentRound}
-          </p>
+          <p className="text-sm text-muted-foreground">Current Round: {currentRound}</p>
           <p className="text-xs text-muted-foreground">
-            Displaying data for {history.length} rounds
+            Displaying data for {totalRounds} rounds, tracking {getAgentKeys().length} agents
             {history.length > 0 && ` (${history[0].round} to ${history[history.length - 1].round})`}
           </p>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 bg-blue-500"></div>
-              <span>Belief Value</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
-              <span>Agent Speaking</span>
-            </div>
+            {/* Legend... */}
           </div>
-
           {history.length > 0 ? (
             <ResponsiveContainer width="100%" height={500}>
               <LineChart data={history} margin={{ top: 10, right: 30, left: 10, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis
-                  dataKey="round"
-                  label={{ value: 'Round', position: 'insideBottomRight', offset: -5 }}
-                  ticks={getCustomXAxisTicks()}
-                  tickMargin={10}
-                />
-                <YAxis
-                  domain={[0, 1]}
-                  label={{ value: 'Belief Value', angle: -90, position: 'insideLeft', offset: 10 }}
-                />
-                <Tooltip
-                  formatter={(value: any, name: string) => {
-                    if (name.startsWith('agent')) {
-                      return value.toFixed(4);
-                    }
-                    return null;
-                  }}
-                  labelFormatter={(label) => `Round ${label}`}
-                />
+                <XAxis dataKey="round" label={{ value: 'Round', position: 'insideBottomRight', offset: -5 }} ticks={getCustomXAxisTicks()} tickMargin={10} type="number" domain={['dataMin', 'dataMax']} />
+                <YAxis domain={[0, 1]} label={{ value: 'Belief Value', angle: -90, position: 'insideLeft', offset: 10 }} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? value.toFixed(4) : value} labelFormatter={(label) => `Round ${label}`} />
                 {generateLines()}
               </LineChart>
             </ResponsiveContainer>
@@ -276,8 +197,7 @@ export const SimulationChart: React.FC = () => {
                 <p className="text-muted-foreground">Waiting for data... ({messageCount} messages received)</p>
                 {messageCount > 0 && (
                   <p className="text-sm text-muted-foreground mt-2">
-                    Messages are being received but no valid belief data has been extracted yet.
-                    Check the console for detailed debug information.
+                    Receiving messages. Chart will populate once data is processed.
                   </p>
                 )}
               </div>

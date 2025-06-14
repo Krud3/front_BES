@@ -1,58 +1,35 @@
 // src/hooks/useSimulationHistory.ts
-import { useState, useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
 
-interface ChartDataPoint {
-  round: number;
-  [key: string]: number | boolean | null;
-}
-
 export const useSimulationHistory = () => {
-  const { simulationData } = useSimulationWebSocket();
-  const [history, setHistory] = useState<ChartDataPoint[]>([]);
-  
-  const pendingUpdates = useRef<ChartDataPoint[]>([]);
-  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const { historyMap, clearData } = useSimulationWebSocket();
 
-  useEffect(() => {
-    if (!simulationData) return;
+  const history = useMemo(() => {
+    console.log(`Memoizing history for ${historyMap.size} rounds.`);
+    return Array.from(historyMap.values()).sort((a, b) => a.round - b.round);
+  }, [historyMap]);
 
-    console.log('Processing simulation data:', {
-        round: simulationData.round,
-        beliefsLength: simulationData.beliefs.length,
-        validBeliefs: simulationData.beliefs.filter(b => b !== null).length,
-        speakingLength: simulationData.speakingStatuses.length
-    });
+  const getLatestRound = () => {
+    if (historyMap.size === 0) return 0;
+    return Math.max(...historyMap.keys());
+  };
 
-    const { round, beliefs, speakingStatuses } = simulationData;
+  const getAgentKeys = () => {
+    if (historyMap.size === 0) return [];
+    const latestRoundData = historyMap.get(getLatestRound());
+    if (!latestRoundData) return [];
+    return Object.keys(latestRoundData)
+      .filter(key => key.startsWith('agent'))
+      .sort((a, b) => parseInt(a.slice(5)) - parseInt(b.slice(5)));
+  };
 
-    // Create data point for this round
-    const roundData: ChartDataPoint = { round };
-
-    // Add beliefs and speaking status
-    beliefs.forEach((belief, index) => {
-      if (belief !== null) {
-        roundData[`agent${index}`] = belief;
-        roundData[`speaking${index}`] = speakingStatuses[index] || false;
-      }
-    });
-    console.log('Created roundData:', roundData);
-
-    // Update history
-    setHistory(prevHistory => {
-      const roundIndex = prevHistory.findIndex(d => d.round === round);
-
-      if (roundIndex >= 0) {
-        const newHistory = [...prevHistory];
-        newHistory[roundIndex] = roundData;
-        return newHistory.sort((a, b) => a.round - b.round);
-      } else {
-        return [...prevHistory, roundData].sort((a, b) => a.round - b.round);
-      }
-    });
-  }, [simulationData]);
-
-  const clearHistory = () => setHistory([]);
-
-  return { history, clearHistory };
+  return {
+    history,
+    totalRounds: historyMap.size,
+    clearHistory: clearData,
+    getLatestRound,
+    getAgentKeys,
+    getRoundData: (round: number) => historyMap.get(round) || null,
+  };
 };
