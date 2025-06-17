@@ -95,7 +95,9 @@ export function SimulationForm() {
   useEffect(() => {
     if (agentConfigs.length === 1 && agentConfigs[0].id === "default-agent") {
         setStandardForm(prev => {
-            if (prev.agentConfigs[0].count !== (numAgents || 0)) {
+            // Only auto-assign if the current count is 0 (initial state)
+            // Don't override manual user changes
+            if (prev.agentConfigs[0].count === 0 && (numAgents || 0) > 0) {
                 return {
                     ...prev,
                     agentConfigs: [{ ...prev.agentConfigs[0], count: numAgents || 0 }]
@@ -387,8 +389,8 @@ export function SimulationForm() {
                 <>
                   <div className={`mb-4 p-3 rounded-md ${remainingAgents !== 0 ? 'bg-destructive/10 border-destructive' : 'bg-green-100 dark:bg-green-900/30 border-green-500'}`}>
                     <p className={`font-medium ${remainingAgents !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
-                      Agents to Assign: {remainingAgents} / {numAgents || 0}
-                      {remainingAgents !== 0 && " (Must be exactly 0)"}
+                      Agents Assigned: {totalAssignedAgents} / {numAgents || 0}
+                      {remainingAgents !== 0 && " (Must assign all agents)"}
                     </p>
                   </div>
                   <div className="space-y-6 w-full">
@@ -426,60 +428,129 @@ export function SimulationForm() {
               )}
             </div>
             <Separator />
+
+            {/* --- Cognitive Bias Distribution --- */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Cognitive Bias Distribution (Edges)</h3>
-              {(maxEdges <= 0) ? (<p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases.</p>) : (
+              {(maxEdges <= 0) ? (
+                 <p className="text-muted-foreground text-sm">Set Number of Agents (&gt;1) and Density (&gt;0) to configure biases. Calculated Max Edges: {maxEdges}</p>
+              ) : (
                 <>
-                  <div className={`mb-4 p-3 rounded-md ${remainingBiases !== 0 ? 'bg-destructive/10 border-destructive' : 'bg-green-100 dark:bg-green-900/30 border-green-500'}`}>
-                    <p className={`font-medium ${remainingBiases !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
-                      Edges to Assign a Bias: {remainingBiases} / {maxEdges}
-                      {remainingBiases !== 0 && " (Must be exactly 0)"}
-                    </p>
+                  <div className={`mb-4 p-3 rounded-md ${remainingBiases !== 0 ? 'bg-destructive/10 border border-destructive' : 'bg-green-100 dark:bg-green-900/30 border border-green-500'}`}>
+                      <p className={`font-medium ${remainingBiases !== 0 ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
+                          Edges Assigned: {totalAssignedBiases} / {maxEdges}
+                          {remainingBiases !== 0 && " (Must assign all edges)"}
+                      </p>
+                      {totalAssignedBiases > maxEdges && <p className="text-destructive font-semibold">Assigned biases exceed maximum edges! Counts have been reset.</p>}
                   </div>
+
                   <div className="space-y-6 w-full">
-                    {biasConfigs.map((config) => (
-                       <Card key={config.id} className="w-full">
-                         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                             <Select value={config.bias} onValueChange={(val) => handleBiasChange(config.id, val as CognitiveBias)}>
-                               <SelectTrigger className="w-[180px]"><SelectValue placeholder="Cognitive Bias" /></SelectTrigger>
-                               <SelectContent><SelectGroup><SelectLabel>Cognitive Bias</SelectLabel>{getAvailableBiases(config).map(bias => (<SelectItem key={bias} value={bias}>{bias}</SelectItem>))}</SelectGroup></SelectContent>
-                             </Select>
-                             {biasConfigs.length > 1 && (<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-500/10 -mt-2 self-start" onClick={() => handleRemoveBiasConfig(config.id)}>✕</Button>)}
-                         </CardHeader>
-                         <CardContent>
-                            <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
-                                <Slider min={0} max={maxEdges} step={1} value={[config.count]} onValueChange={(v) => handleBiasCountChange(config.id, v[0], "slider")} disabled={maxEdges === 0} />
-                                <div className="relative w-24 mt-2">
-                                  <span className="absolute -top-6 right-0 text-sm text-muted-foreground">{maxEdges > 0 ? ((config.count / maxEdges) * 100).toFixed(1) : "0.0"}%</span>
-                                  <Input type="number" min={0} max={maxEdges} value={config.count} onChange={(e) => handleBiasCountChange(config.id, e.target.value, "input")} disabled={maxEdges === 0} />
-                                </div>
+                    {biasConfigs.map((config) => {
+                      const availableBiases = getAvailableBiases(config);
+
+                      return (
+                        <Card key={config.id} className="w-full">
+                          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <div className="flex flex-col gap-0">
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={config.bias}
+                                  onValueChange={(val) => handleBiasChange(config.id, val as CognitiveBias)}
+                                >
+                                  <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Cognitive Bias" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Cognitive Bias</SelectLabel>
+                                      {availableBiases.map(bias => (
+                                        <SelectItem key={bias} value={bias}>{bias}</SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
-                         </CardContent>
-                       </Card>
-                    ))}
-                    <Button onClick={handleAddBiasConfig} variant="outline" className="w-full" disabled={usedBiases.length >= ALL_COGNITIVE_BIASES.length || maxEdges === 0}>
+                            {biasConfigs.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveBiasConfig(config.id)}
+                                className="h-8 w-8 hover:bg-red-500/10 -mt-2 self-start"
+                              >
+                                ✕
+                              </Button>
+                            )}
+                          </CardHeader>
+
+                          <CardContent>
+                            <div className="grid grid-cols-[1fr_auto] items-center gap-4 w-full">
+                              <Slider
+                                min={0}
+                                max={maxEdges}
+                                step={1}
+                                value={[config.count]}
+                                onValueChange={(v) => handleBiasCountChange(config.id, v[0], "slider")}
+                                className="col-start-1 w-full"
+                                disabled={maxEdges === 0}
+                              />
+                              <div className="relative w-24 mt-2">
+                                <span className="absolute -top-6 right-0 text-sm text-muted-foreground">
+                                  {maxEdges > 0
+                                    ? ((config.count / maxEdges) * 100).toFixed(1)
+                                    : "0.0"}
+                                  %
+                                </span>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={maxEdges}
+                                  value={config.count}
+                                  onChange={(e) => handleBiasCountChange(config.id, e.target.value, "input")}
+                                  className="w-full"
+                                  disabled={maxEdges === 0}
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+
+                    <Button
+                      onClick={handleAddBiasConfig}
+                      variant="outline"
+                      className="w-full"
+                      disabled={usedBiases.length >= ALL_COGNITIVE_BIASES.length || maxEdges === 0}
+                    >
                       + Add Cognitive Bias
                     </Button>
                   </div>
                 </>
               )}
             </div>
-            {(!isFormValid && (numAgents || 0) > 0) && (
-              <Alert variant="destructive">
-                <ExclamationTriangleIcon className="h-4 w-4" />
-                <AlertTitle>Configuration Issues</AlertTitle>
-                <AlertDescription>
-                    Please resolve the following before submitting:
-                    <ul className="list-disc list-inside">
-                        {!isAgentDistributionValid && <li>Agent type distribution must sum exactly to the total Number of Agents ({numAgents || 0}).</li>}
-                        {!isBiasDistributionValid && <li>Biased edge distribution must sum exactly to the calculated Max Edges ({maxEdges}).</li>}
-                    </ul>
-                </AlertDescription>
-              </Alert>
+
+             {/* --- Validation Error Summary --- */}
+            {(!isAgentDistributionValid || !isBiasDistributionValid) && (numAgents || 0) > 0 && (
+                 <Alert variant="destructive">
+                    <ExclamationTriangleIcon className="h-4 w-4" />
+                    <AlertTitle>Configuration Issues</AlertTitle>
+                    <AlertDescription>
+                        Please resolve the following before submitting:
+                        <ul className="list-disc list-inside">
+                             {!isAgentDistributionValid && <li>Agent type distribution must sum exactly to the total Number of Agents ({numAgents || 0}).</li>}
+                             {!isBiasDistributionValid && <li>Biased edge distribution must sum exactly to the calculated Max Edges ({maxEdges}).</li>}
+                         </ul>
+                    </AlertDescription>
+                </Alert>
             )}
-            <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={!isFormValid}>Run Simulation</Button>
-            </div>
+
+             {/* --- Submit Button --- */}
+             <div className="flex justify-end pt-4">
+                 <Button type="submit" disabled={!isFormValid}>
+                     Run Simulation
+                 </Button>
+             </div>
           </form>
         </CardContent>
       </Card>
