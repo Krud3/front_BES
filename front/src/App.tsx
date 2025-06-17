@@ -20,6 +20,7 @@ import CustomSimulationPage from "@/pages/board/CustomSimulationPage.tsx";
 import { SimulationWebSocketProvider } from '@/contexts/WebSocketContext';
 import { SimulationChart } from '@/components/SimulationChart';
 import { SimulationDashboard } from './components/SimulationDashboard';
+import { SimulationStateProvider } from '@/hooks/useSimulationState';
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -74,7 +75,9 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <CosmographProvider nodes={nodes} links={links}>
                     <SimulationWebSocketProvider>
-                      <Board setNodes={setNodes} setLinks={setLinks} />
+                      <SimulationStateProvider>
+                        <Board setNodes={setNodes} setLinks={setLinks} />
+                      </SimulationStateProvider>
                     </SimulationWebSocketProvider>
                   </CosmographProvider>
                 </ProtectedRoute>

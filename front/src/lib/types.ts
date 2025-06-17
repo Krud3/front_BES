@@ -102,3 +102,24 @@ export interface SimulationConfig {
   agentConfigs: AgentConfig[]; // Changed from agentTypeDistribution
   biasConfigs: BiasConfig[]; // Changed from cognitiveBiasDistribution
 }
+
+export interface CustomAgent {
+  id: string;
+  name: string;
+  initialBelief: number;
+  toleranceRadius: number;
+  toleranceOffset: number;
+  silenceStrategy: number;
+  thresholdValue?: number;
+  confidenceValue?: number;
+  updateValue?: number;
+  silenceEffect: number;
+}
+
+export interface Neighbor {
+  id: string;
+  source: string;
+  target: string;
+  influence: number;
+  bias: number;
+}
