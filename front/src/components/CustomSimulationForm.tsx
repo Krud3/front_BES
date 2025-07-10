@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus, AlertCircle, Check } from "lucide-react";
 import { CustomAgent, Neighbor } from '@/lib/types';
 import { useSimulationState } from '@/hooks/useSimulationState.tsx';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const SAVE_MODES = { 0: "Full", 1: "Standard", 2: "Standard Light", 4: "Roundless", 5: "Agentless Typed", 7: "Agentless", 8: "Performance", 9: "Debug"};
 const SILENCE_STRATEGIES = { 0: "DeGroot", 1: "Majority", 2: "Threshold", 3: "Confidence" };
@@ -35,9 +36,17 @@ export function CustomSimulationForm() {
   const { customForm, setCustomForm } = useSimulationState();
   const { stopThreshold, iterationLimit, saveMode, networkName, agents, neighbors } = customForm;
 
+  const { limits, loadingPermissions } = usePermissions();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const agentsLimitExceeded = agents.length > limits.maxAgents;
+  const iterationsLimitExceeded = iterationLimit > limits.maxIterations;
+  const maxAllowedNeighbors = isFinite(limits.maxAgents) 
+      ? Math.floor(agents.length * (agents.length - 1) * limits.densityFactor) 
+      : agents.length * (agents.length - 1);
 
   const stringToBytes = (str: string): Uint8Array => new TextEncoder().encode(str);
   const writeFloat32 = (buffer: ArrayBuffer, offset: number, value: number): void => { new DataView(buffer).setFloat32(offset, value, true); };
@@ -230,7 +239,14 @@ export function CustomSimulationForm() {
   };
 
   const maxNeighbors = agents.length * (agents.length - 1);
-  const isValid = agents.length > 0 && agents.every(a => a.name.trim().length > 0) && neighbors.every(n => n.source && n.target && n.source !== n.target) && networkName.trim().length > 0 && stringToBytes(networkName).length <= 255;
+  // const isValid = agents.length > 0 && agents.every(a => a.name.trim().length > 0) && neighbors.every(n => n.source && n.target && n.source !== n.target) && networkName.trim().length > 0 && stringToBytes(networkName).length <= 255;
+  const isValid = agents.length > 0 && 
+                  agents.every(a => a.name.trim().length > 0) && 
+                  neighbors.every(n => n.source && n.target && n.source !== n.target) && 
+                  networkName.trim().length > 0 && 
+                  stringToBytes(networkName).length <= 255 &&
+                  !agentsLimitExceeded &&
+                  !iterationsLimitExceeded;
 
   return (
     <TooltipProvider>
@@ -250,6 +266,8 @@ export function CustomSimulationForm() {
               <div className="space-y-2">
                 <Label htmlFor="iterationLimit" className="text-sm font-medium">Iteration Limit</Label>
                 <Input id="iterationLimit" type="number" min={1} value={iterationLimit} onChange={(e) => setCustomForm(p => ({...p, iterationLimit: parseInt(e.target.value) || 1}))} className="h-9"/>
+                {iterationsLimitExceeded && <p className="text-destructive text-sm mt-1">You have exceeded your iteration limit of {limits.maxIterations}.</p>}
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="saveMode" className="text-sm font-medium">Save Mode</Label>
@@ -268,8 +286,16 @@ export function CustomSimulationForm() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Agents <span className="text-muted-foreground font-normal">({agents.length})</span></h3>
-              <Button onClick={handleAddAgent} size="sm" variant="outline"><Plus className="w-4 h-4 mr-2" />Add Agent</Button>
+              <Button onClick={handleAddAgent} size="sm" variant="outline" disabled={agents.length >= limits.maxAgents}>
+                <Plus className="w-4 h-4 mr-2" />Add Agent
+              </Button>            
             </div>
+            {agentsLimitExceeded && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4"/>
+                    <AlertDescription>You have exceeded your role's limit of {limits.maxAgents} agents.</AlertDescription>
+                </Alert>
+            )}
             <div className="space-y-4">
               {agents.map((agent) => (
                 <Card key={agent.id} className="relative overflow-hidden p-4 pr-14">
@@ -305,7 +331,9 @@ export function CustomSimulationForm() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Neighbors <span className="text-muted-foreground font-normal">({neighbors.length}/{maxNeighbors})</span></h3>
-                <Button onClick={handleAddNeighbor} size="sm" variant="outline" disabled={agents.length < 2 || neighbors.length >= maxNeighbors}><Plus className="w-4 h-4 mr-2"/>Add Neighbor</Button>
+                <Button onClick={handleAddNeighbor} size="sm" variant="outline" disabled={agents.length < 2 || neighbors.length >= maxAllowedNeighbors}>
+                    <Plus className="w-4 h-4 mr-2"/>Add Neighbor
+                </Button>            
             </div>
             {agents.length < 2 && (<Alert><AlertCircle className="h-4 w-4"/><AlertDescription>You need at least 2 agents to create neighbor relationships.</AlertDescription></Alert>)}
             {neighbors.length >= maxNeighbors && (<Alert><AlertCircle className="h-4 w-4"/><AlertDescription>Maximum number of neighbors reached.</AlertDescription></Alert>)}
