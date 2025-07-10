@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
-import { auth } from '../firebaseConfig';
+import { auth } from '@/config/firebaseConfig';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { useAuthStore } from '../lib/authStore'; // Adjust path if needed
-import UserDAO from '@/lib/UserDAO'; // Adjust the path as needed
+import { useAuthStore } from '@/features/auth/store/authStore'; 
+import UserDAO from '@/features/auth/services/UserDAO'; 
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const setUser = useAuthStore((state) => state.setUser);
-  const setLoading = useAuthStore((state) => state.setLoading);
+  const setUser = useAuthStore((state: any) => state.setUser);
+  const setLoading = useAuthStore((state: any) => state.setLoading);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {

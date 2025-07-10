@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
-import { useSimulationHistory } from '@/hooks/useSimulationHistory';
+import { useSimulationHistory } from '@/features/dataViews/hooks/useSimulationHistory';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Play, Pause, SkipBack, SkipForward, Trash2 } from 'lucide-react';
+import { SkipBack, SkipForward, Trash2 } from 'lucide-react';
+import { late } from 'zod';
 
 export const SimulationDashboard: React.FC = () => {
-  const { connected, connect, disconnect, simulationData, clearData } = useSimulationWebSocket();
+  const { connected, connect, disconnect, latestSimulationData, clearData } = useSimulationWebSocket();
   const { history, clearHistory } = useSimulationHistory();
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   
@@ -17,8 +18,8 @@ export const SimulationDashboard: React.FC = () => {
     if (selectedRound !== null && history.length > 0) {
       return history.find(h => h.round === selectedRound);
     }
-    return simulationData;
-  }, [selectedRound, simulationData, history]);
+    return latestSimulationData;
+  }, [selectedRound, latestSimulationData, history]);
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -79,9 +80,9 @@ export const SimulationDashboard: React.FC = () => {
 
   // Progress calculation
   const maxRound = useMemo(() => {
-    if (history.length === 0) return simulationData?.round || 100;
+    if (history.length === 0) return latestSimulationData?.round || 100;
     return Math.max(...history.map(h => h.round));
-  }, [history, simulationData]);
+  }, [history, latestSimulationData]);
 
   const progressPercentage = (metrics.round / maxRound) * 100;
 
@@ -176,7 +177,7 @@ export const SimulationDashboard: React.FC = () => {
                 onClick={handleClearData}
                 variant="outline"
                 size="sm"
-                disabled={history.length === 0 && !simulationData}
+                disabled={history.length === 0 && !latestSimulationData}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 🗑️ Clear Data

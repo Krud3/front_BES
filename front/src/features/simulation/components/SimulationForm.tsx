@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermissions } from "@/hooks/usePermissions"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import { useSimulationState } from '@/hooks/useSimulationState.tsx';
+import { useSimulationState } from '@/features/simulation/hooks/useSimulationState';
 
 import {
   AgentStrategyType,
@@ -343,7 +343,11 @@ export function SimulationForm() {
 
     } catch (error) {
       console.error("Error during form submission:", error);
-      alert(`An error occurred during submission: ${error.message}`);
+      let errorMessage = "An unknown error occurred during submission.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      alert(`An error occurred during submission: ${errorMessage}`);
     }
   };
 

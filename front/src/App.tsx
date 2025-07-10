@@ -5,24 +5,24 @@ import { CosmographProvider } from '@cosmograph/react';
 import { Node, Links } from '@/lib/types';
 import Board from '@/pages/board/Board';
 import SimulationPage from '@/pages/board/SimulationPage';
-import Display from '@/pages/Display';
+import Display from '@/features/dataViews/components/CosmoGraphDisplay';
 import Home from '@/pages/landing/Home';
 import NotFound from '@/pages/not-found';
 import OnConstruction from '@/pages/on-construction';
 import { useTheme } from '@/components/theme-provider';
 import AdminPage from '@/pages/admin/AdminPage';
 import { ReactNode } from 'react';
-import TableData from '@/components/TableData';
-import { useAuth } from '@/hooks/useAuth';
-import { usePermissions } from '@/hooks/usePermissions';
+import TableData from '@/features/dataViews/components/TableData';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions'
 import { Navigate } from 'react-router-dom';
 import LoginPage from '@/pages/landing/LoginPage';
 import CustomSimulationPage from "@/pages/board/CustomSimulationPage.tsx";
 import AccessDeniedPage from '@/pages/AccessDeniedPage';
 import { SimulationWebSocketProvider } from '@/contexts/WebSocketContext';
-import { SimulationChart } from '@/components/SimulationChart';
-import { SimulationDashboard } from './components/SimulationDashboard';
-import { SimulationStateProvider } from '@/hooks/useSimulationState';
+import { SimulationChart } from '@/features/dataViews/components/SimulationChart';
+import { SimulationDashboard } from '@/features/dataViews/components/SimulationDashboard';
+import { SimulationStateProvider } from '@/features/simulation/hooks/useSimulationState';
 
 
 interface ThemeManagerProps {

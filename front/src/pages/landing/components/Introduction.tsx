@@ -3,10 +3,9 @@ import {Container} from "@/components/Container";
 import {Button} from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import logoPromueva from '@/assets/logos/SVG/promueva.svg'
-import logoAvispa from '@/assets/logos/SVG/avispa.svg'
 import logoUnivalle from '@/assets/logos/SVG/univalle.svg'
 import logoAvispa2 from '@/assets/logos/JPG/AVISPA.jpg'
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 const Introduction: React.FC = () => {
   const { user } = useAuth();

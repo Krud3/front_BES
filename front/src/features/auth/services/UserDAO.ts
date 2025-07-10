@@ -1,7 +1,9 @@
 import { collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/firebaseConfig';
+import { db } from '@/config/firebaseConfig';
 
 class UserDAO {
+    private collectionRef;
+
     constructor() {
         this.collectionRef = collection(db, "users");
     }

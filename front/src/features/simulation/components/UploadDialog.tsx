@@ -13,7 +13,7 @@ import {
 
 import { useNavigate, Link } from 'react-router-dom';
 import { Node, Links } from '@/lib/types';
-import { parseCSVToNodes } from '@/lib/parseCSVToNodes';
+import { parseCSVToNodes } from '@/features/simulation/utils/parseCSVToNodes';
 
 
 interface UploadDialogProps {

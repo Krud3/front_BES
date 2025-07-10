@@ -1,5 +1,5 @@
 import React from 'react';
-import { SimulationForm } from '@/components/SimulationForm';
+import { SimulationForm } from '@/features/simulation/components/SimulationForm';
 
 const SimulationPage: React.FC = () => {
   return (

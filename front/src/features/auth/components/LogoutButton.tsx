@@ -1,7 +1,7 @@
 import React from 'react';
-import { auth } from '../firebaseConfig';
+import { auth } from '@/config/firebaseConfig';
 import { signOut } from 'firebase/auth';
-import { Button } from './ui/button'; // Assuming you are using Shadcn/UI Button
+import { Button } from '@/components/ui/button'; 
 
 export const LogoutButton: React.FC = () => {
   const handleLogout = async () => {

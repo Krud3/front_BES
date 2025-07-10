@@ -13,7 +13,7 @@ import {
   ContextMenuTrigger,
   ContextMenuShortcut,
 } from '@/components/ui/context-menu';
-import NodeInfoTable from '@/components/NodeInfoTable';
+import NodeInfoTable from '@/features/dataViews/components/NodeInfoTable';
 
 interface DisplayProps {
 }

@@ -1,5 +1,3 @@
-// src/components/NodeInfoTable.tsx
-
 import React from 'react';
 import {
   Table,

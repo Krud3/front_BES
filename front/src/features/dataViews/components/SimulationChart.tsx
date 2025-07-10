@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
-import { useSimulationHistory } from '@/hooks/useSimulationHistory';
+import { useSimulationHistory } from '@/features/dataViews/hooks/useSimulationHistory';
 
 export const SimulationChart: React.FC = () => {
   // This destructuring is now correct and matches our updated context
@@ -43,14 +43,9 @@ export const SimulationChart: React.FC = () => {
   // --- FIX 3: Simplify the clear data handler ---
   const handleClearData = () => {
     // clearData() from the context now handles clearing the history map.
-    // We only need to clear our local debug info state.
     clearData();
     setDebugInfo([]);
   };
-
-  // The rest of the component logic remains the same as it was already correct.
-
-  // In SimulationChart.tsx
 
 const generateLines = () => {
     const colors = ['#3498db', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e', '#e67e22'];

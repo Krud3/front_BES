@@ -1,8 +1,8 @@
 import React from 'react';
-import { auth } from '../firebaseConfig';
+import { auth } from '@/config/firebaseConfig';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { Button } from './ui/button'; // Assuming you are using Shadcn/UI Button
-import UserDAO from '@/lib/UserDAO'; // Adjust the path as needed
+import { Button } from '@/components/ui/button'; 
+import UserDAO from '@/features/auth/services/UserDAO'; 
 
 const googleAuthProvider = new GoogleAuthProvider();
 

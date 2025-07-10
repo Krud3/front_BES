@@ -6,8 +6,6 @@ import {
     Sheet,
     SheetClose,
     SheetContent,
-    SheetDescription,
-    SheetFooter,
     SheetHeader,
     SheetTitle,
     SheetTrigger,
@@ -38,7 +36,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Node, Links } from '@/lib/types';
-import { parseCSVToNodes } from '@/lib/parseCSVToNodes';
+import { parseCSVToNodes } from '@/features/simulation/utils/parseCSVToNodes';
 
 interface PRSheetProps {
     setNodes: React.Dispatch<React.SetStateAction<Node[]>>;

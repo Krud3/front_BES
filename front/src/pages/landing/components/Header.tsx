@@ -6,10 +6,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/Logo';
-import { ModeToggle } from '@/components/mode-toggle';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
-import { useAuth } from '@/hooks/useAuth';
+import { auth } from '@/config/firebaseConfig';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 
 const Header: React.FC = () => {

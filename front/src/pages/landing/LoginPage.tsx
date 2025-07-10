@@ -1,5 +1,5 @@
 import React from 'react';
-import { LoginButton } from '@/components/LoginButton';
+import { LoginButton } from '@/features/auth/components/LoginButton';
 import { Link } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
 import { SlimLayout } from '@/components/SlimLayout';

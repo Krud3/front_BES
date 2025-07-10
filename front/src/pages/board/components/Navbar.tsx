@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CircleUser, Menu, Package2 } from 'lucide-react';
+import { CircleUser, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,12 +13,12 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Node, Links } from '@/lib/types';
 import { Logo } from '@/components/Logo';
-import UploadDialog from '@/pages/board/UploadDialog';
-import CreateSimulationSheet from '@/pages/board/CSSheet'; // Renamed for clarity
-import PRSheet from '@/pages/board/PRSheet';
+import UploadDialog from '@/features/simulation/components/UploadDialog';
+import CreateSimulationSheet from '@/features/simulation/components/CSSheet'; // Renamed for clarity
+import PRSheet from '@/features/simulation/components/PRSheet';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
-import { useAuth } from '@/hooks/useAuth';
+import { auth } from '@/config/firebaseConfig';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 

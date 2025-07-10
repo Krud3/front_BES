@@ -1,17 +1,16 @@
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, db } from '@/firebaseConfig';
+import { auth } from '@/config/firebaseConfig';
 import { GoogleAuthProvider } from 'firebase/auth';
 import { create } from 'zustand';
-import { doc, setDoc } from 'firebase/firestore';
-import UserDAO from './UserDAO';
+import UserDAO from '@/features/auth/services/UserDAO';
 
 const provider = new GoogleAuthProvider();
 
 const useAuthStore = create((set) => ({
     user: null,
     loading: true,
-    setUser: (user) => set({ user }),
-    setLoading: (loading) => set({ loading }),
+    setUser: (user: any) => set({ user }),
+    setLoading: (loading: boolean) => set({ loading }),
     loginGoogleWithPopup: async () => {
         await signInWithPopup(auth, provider)
         .catch((error) => {

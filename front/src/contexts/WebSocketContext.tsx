@@ -172,9 +172,6 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     socketRef.current = socket;
-    // We remove `disconnect` from the dependency array because the linter is now smart enough
-    // to see it's defined outside the component render cycle scope (or is stable).
-    // However, it's good practice to keep it for clarity.
   }, [processAndQueueMessage, renderLoop, disconnect]);
 
   const clearData = useCallback(() => {

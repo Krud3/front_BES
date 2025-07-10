@@ -4,7 +4,6 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -16,19 +15,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+
 
 // Import the actual form components
-import { SimulationForm } from '@/components/SimulationForm';
-import { CustomSimulationForm } from '@/components/CustomSimulationForm';
-import { useSimulationState } from '@/hooks/useSimulationState';
+import { SimulationForm } from '@/features/simulation/components/SimulationForm';
+import { CustomSimulationForm } from '@/features/simulation/components/CustomSimulationForm';
+import { useSimulationState } from '@/features/simulation/hooks/useSimulationState';
 
 const CreateSimulationSheet: React.FC = () => {
   const { resetState } = useSimulationState();

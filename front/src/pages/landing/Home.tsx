@@ -1,8 +1,8 @@
 import React from "react";
-import Header from "@/pages/landing/Header";
-import Introduction from "@/pages/landing/Introduction";
-import Features from "@/pages/landing/Features";
-import Examples from "@/pages/landing/Examples";
+import Header from "@/pages/landing/components/Header";
+import Introduction from "@/pages/landing/components/Introduction";
+import Features from "@/pages/landing/components/Features";
+import Examples from "@/pages/landing/components/Examples";
 
 const Home: React.FC = () => {
   return (

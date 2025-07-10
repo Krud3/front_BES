@@ -1,4 +1,4 @@
-import { useAuth } from './useAuth';
+import { useAuth } from '../features/auth/hooks/useAuth';
 import { useMemo } from 'react';
 
 // Define an interface for the simulation limits
@@ -72,7 +72,7 @@ export const usePermissions = () => {
   // useMemo prevents recalculating the permission set on every render.
   const permissions = useMemo(() => {
     const userPermissions = new Set<string>();
-    roles.forEach(role => {
+    roles.forEach((role: string) => {
       const perms = getPermissionsForRole(role);
       perms.forEach(p => userPermissions.add(p));
     });
