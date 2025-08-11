@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
-
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,8 +59,44 @@ const biasToByte = (bias: CognitiveBias): number => {
   switch (bias) { case 'DeGroot': return 0; case 'Confirmation': return 1; case 'Backfire': return 2; case 'Authority': return 3; case 'Insular': return 4; default: return 0; }
 };
 
+const createFormSchema = (limits: { maxAgents: number; maxIterations: number; densityFactor: number; }) => {
+  return z.object({
+    seed: z.string()
+      .regex(/^[0-9]+$/, { message: "Seed must be a valid positive integer." })
+      .optional()
+      .or(z.literal('')),
+    numNetworks: z.coerce.number().int().positive("Must be positive"),
+    numAgents: z.coerce.number().int().positive("Must be positive")
+      .max(limits.maxAgents, `Your role limit is ${limits.maxAgents} agents.`),
+    density: z.coerce.number().min(0, "Density must be non-negative."),
+    iterationLimit: z.coerce.number().int().positive("Must be positive")
+      .max(limits.maxIterations, `Your role limit is ${limits.maxIterations} iterations.`),
+    stopThreshold: z.coerce.number().min(0),
+    saveMode: z.string().min(1, "Required"),
+  }).superRefine((data, ctx) => {
+    // 2. Use superRefine for cross-field validation (density based on numAgents)
+    if (isFinite(limits.maxAgents)) { // Don't check for Admin
+        const maxDensity = Math.floor(data.numAgents * limits.densityFactor);
+        if (data.density > maxDensity) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.too_big,
+                maximum: maxDensity,
+                type: "number",
+                inclusive: true,
+                message: `For ${data.numAgents} agents, your density limit is ${maxDensity}.`,
+                path: ["density"],
+            });
+        }
+    }
+  });
+};
+
 export function SimulationForm() {
   const { standardForm, setStandardForm } = useSimulationState();
+  const { limits, loadingPermissions } = usePermissions();
+
+  const formSchema = useMemo(() => createFormSchema(limits), [limits]);
+
   const {
     formValues,
     agentConfigs,
@@ -250,51 +286,52 @@ export function SimulationForm() {
       return;
     }
 
-    const bufferSize = calculateBufferSizeLocal();
-    const buffer = new ArrayBuffer(bufferSize);
-    const view = new DataView(buffer);
-    let offset = 0;
+      try {
+          const bufferSize = calculateBufferSizeLocal();
+          const buffer = new ArrayBuffer(bufferSize);
+          const view = new DataView(buffer);
+          let offset = 0;
 
-    const finalData = { ...formValues, ...data };
-    view.setInt8(offset++, 0);
-    view.setInt8(offset++, SAVE_MODES_MAP[finalData.saveMode as SaveModeString]);
-    view.setInt8(offset++, agentConfigs.length);
-    view.setInt8(offset++, biasConfigs.length);
-    view.setInt32(offset, finalData.numNetworks, true); offset += 4;
-    view.setInt32(offset, finalData.density, true); offset += 4;
-    view.setInt32(offset, finalData.iterationLimit, true); offset += 4;
-    view.setFloat32(offset, finalData.stopThreshold, true); offset += 4;
-    view.setBigInt64(offset, finalData.seed ? BigInt(finalData.seed) : BigInt(-1), true); offset += 8;
+          const finalData = {...formValues, ...data};
+          view.setInt8(offset++, 0);
+          view.setInt8(offset++, SAVE_MODES_MAP[finalData.saveMode as SaveModeString]);
+          view.setInt8(offset++, agentConfigs.length);
+          view.setInt8(offset++, biasConfigs.length);
+          view.setInt32(offset, finalData.numNetworks, true);
+          offset += 4;
+          view.setInt32(offset, finalData.density, true);
+          offset += 4;
+          view.setInt32(offset, finalData.iterationLimit, true);
+          offset += 4;
+          view.setFloat32(offset, finalData.stopThreshold, true);
+          offset += 4;
+          view.setBigInt64(offset, finalData.seed ? BigInt(finalData.seed) : BigInt(-1), true);
+          offset += 8;
 
-    agentConfigs.forEach(config => {
-      view.setInt32(offset, config.count, true); offset += 4;
-      view.setInt8(offset++, strategyToByte(config.type));
-      view.setInt8(offset++, effectToByte(config.effect));
-    });
+          biasConfigs.forEach(config => {
+              view.setInt32(offset, config.count, true);
+              offset += 4;
+              view.setInt8(offset++, biasToByte(config.bias));
+          });
 
-    biasConfigs.forEach(config => {
-      view.setInt32(offset, config.count, true); offset += 4;
-      view.setInt8(offset++, biasToByte(config.bias));
-    });
+          const response = await fetch('http://localhost:9000/run', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/octet-stream'},
+              body: buffer
+          });
 
-    try {
-      const response = await fetch('http://localhost:9000/run', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/octet-stream'},
-        body: buffer
-      });
+          if (response.ok) {
+              const channelId = await response.text();
+              setChannelId(channelId);
+              console.log("Channel ID:", channelId);
 
-      if (response.ok) {
-        const channelId = await response.text();
-        setChannelId(channelId);
-        console.log("Channel ID:", channelId);
-
-      } else {
-        console.error("Request failed with status:", response.status);
+          } else {
+              console.error("Request failed with status:", response.status);
+          }
+      } catch (error) {
+          console.error("Error during form submission:", error);
+          alert(`An error occurred during submission: ${error.message}`);
       }
-    } catch (error) {
-      console.error("Error sending request:", error);
-    }
   };
 
   const calculateBufferSizeLocal = () => {
@@ -334,6 +371,7 @@ export function SimulationForm() {
               <div>
                 <Label htmlFor="numAgents">Number of Agents (N)</Label>
                 <Input id="numAgents" type="number" min="1" {...register("numAgents")} />
+                {!loadingPermissions && isFinite(limits.maxAgents) && <p className="text-xs text-muted-foreground mt-1">Your limit: {limits.maxAgents} agents</p>}
                 {errors.numAgents && <p className="text-red-500 text-sm mt-1">{errors.numAgents.message}</p>}
               </div>
               <div>
@@ -344,11 +382,13 @@ export function SimulationForm() {
                     </TooltipTrigger>
                     <TooltipContent><p>Number of connections. Max edges: {maxEdges}</p></TooltipContent>
                 </Tooltip>
+                {!loadingPermissions && isFinite(limits.maxAgents) && <p className="text-xs text-muted-foreground mt-1">Your limit: ~{(limits.densityFactor * 100)}% of agents</p>}
                 {errors.density && <p className="text-red-500 text-sm mt-1">{errors.density.message}</p>}
               </div>
               <div>
                 <Label htmlFor="iterationLimit">Iteration Limit</Label>
                 <Input id="iterationLimit" type="number" min="1" {...register("iterationLimit")} />
+                {!loadingPermissions && isFinite(limits.maxIterations) && <p className="text-xs text-muted-foreground mt-1">Your limit: {limits.maxIterations} iterations</p>}
                 {errors.iterationLimit && <p className="text-red-500 text-sm mt-1">{errors.iterationLimit.message}</p>}
               </div>
               <div>
