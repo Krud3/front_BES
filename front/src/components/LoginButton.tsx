@@ -21,6 +21,26 @@ export const LoginButton: React.FC = () => {
         roles: ['Guest'], // Default role
         usageLimits: {}, // Default usage limits
       });
+
+      const response = await fetch('http://localhost:9000/api/users/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firebaseUid: user.uid,
+          email: user.email || '',
+          name: user.displayName || ''
+        })
+      });
+
+      if (response.ok) {
+        const message = await response.text();
+        console.log('Backend sync successful:', message);
+      } else {
+        console.error('Backend sync failed:', await response.text());
+      }
+
     } catch (error: any) { // Type as 'any' or Error for broader type coverage
       console.error("Login error:", error);
       alert(`Login failed: ${error.message}`); // Basic error feedback

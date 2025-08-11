@@ -12,19 +12,15 @@ export const SimulationChart: React.FC = () => {
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any[]>([]);
 
-  // --- FIX 1 & 2: Update useEffect to use latestSimulationData ---
   useEffect(() => {
-    // Check for the new variable name
     if (!latestSimulationData) return;
 
-    // Use latestSimulationData to get the beliefs
     const validBeliefs = Array.from(latestSimulationData.beliefs).filter(b => b !== null);
 
     setDebugInfo(prev => {
       const newInfo = [...prev];
       if (newInfo.length > 5) newInfo.shift();
 
-      // Use latestSimulationData for all properties here
       newInfo.push({
         timestamp: new Date().toLocaleTimeString(),
         round: latestSimulationData.round,
@@ -37,13 +33,10 @@ export const SimulationChart: React.FC = () => {
 
       return newInfo;
     });
-    // Update the dependency array to match the variable being used
+
   }, [latestSimulationData]);
 
-  // --- FIX 3: Simplify the clear data handler ---
   const handleClearData = () => {
-    // clearData() from the context now handles clearing the history map.
-    // We only need to clear our local debug info state.
     clearData();
     setDebugInfo([]);
   };

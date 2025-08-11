@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {setChannelId} from "@/lib/channelStore.ts";
 
 const formSchema = z.object({
   seed: z.string().optional(),
@@ -63,10 +64,7 @@ export function SimulationForm() {
   const {
     formValues,
     agentConfigs,
-    biasConfigs,
-    thresholdValue,
-    thresholdValueConfidence,
-    openMindedness,
+    biasConfigs
   } = standardForm;
 
   const { register, handleSubmit, watch, control, formState: { errors } } = useForm<FormValues>({
@@ -272,12 +270,6 @@ export function SimulationForm() {
       view.setInt32(offset, config.count, true); offset += 4;
       view.setInt8(offset++, strategyToByte(config.type));
       view.setInt8(offset++, effectToByte(config.effect));
-      if (config.type === 'Threshold') {
-        view.setFloat32(offset, thresholdValue, true); offset += 4;
-      } else if (config.type === 'Confidence') {
-        view.setFloat32(offset, thresholdValueConfidence, true); offset += 4;
-        view.setInt32(offset, openMindedness, true); offset += 4;
-      }
     });
 
     biasConfigs.forEach(config => {
@@ -286,11 +278,20 @@ export function SimulationForm() {
     });
 
     try {
-      await fetch('http://localhost:9000/run', {
+      const response = await fetch('http://localhost:9000/run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/octet-stream' },
+        headers: {'Content-Type': 'application/octet-stream'},
         body: buffer
       });
+
+      if (response.ok) {
+        const channelId = await response.text();
+        setChannelId(channelId);
+        console.log("Channel ID:", channelId);
+
+      } else {
+        console.error("Request failed with status:", response.status);
+      }
     } catch (error) {
       console.error("Error sending request:", error);
     }

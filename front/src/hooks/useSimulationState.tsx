@@ -18,7 +18,7 @@ interface StandardFormState {
     biasConfigs: BiasConfig[];
     thresholdValue: number;
     thresholdValueConfidence: number;
-    openMindedness: number;
+    initialConfidence: number;
 }
 
 // State for the Custom Simulation Form
@@ -63,7 +63,7 @@ const getDefaultState = (): { standardForm: StandardFormState, customForm: Custo
     biasConfigs: [{ id: "default-bias", bias: "DeGroot", count: 0 }],
     thresholdValue: 0.5,
     thresholdValueConfidence: 0.5,
-    openMindedness: 100,
+    initialConfidence: 100,
   },
   customForm: {
     stopThreshold: 0.0001,

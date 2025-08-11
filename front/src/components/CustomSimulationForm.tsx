@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus, AlertCircle, Check } from "lucide-react";
 import { CustomAgent, Neighbor } from '@/lib/types';
 import { useSimulationState } from '@/hooks/useSimulationState.tsx';
+import {setChannelId} from "@/lib/channelStore.ts";
 
 const SAVE_MODES = { 0: "Full", 1: "Standard", 2: "Standard Light", 4: "Roundless", 5: "Agentless Typed", 7: "Agentless", 8: "Performance", 9: "Debug"};
 const SILENCE_STRATEGIES = { 0: "DeGroot", 1: "Majority", 2: "Threshold", 3: "Confidence" };
@@ -61,6 +62,13 @@ export function CustomSimulationForm() {
     neighbors.forEach(neighbor => {
       size += 2 + stringToBytes(neighbor.source).length + stringToBytes(neighbor.target).length;
     });
+
+    agents.forEach((agent) => {
+      if (agent.silenceStrategy === 2 || agent.silenceStrategy === 3) {
+        size += 12
+      }
+    });
+
     return size;
   };
 
@@ -69,6 +77,7 @@ export function CustomSimulationForm() {
     const uint8View = new Uint8Array(buffer);
     let offset = 0;
 
+    // Headers
     writeFloat32(buffer, offset, stopThreshold); offset += 4;
     writeUint32(buffer, offset, iterationLimit); offset += 4;
     uint8View[offset] = saveMode; offset += 1;
@@ -79,6 +88,7 @@ export function CustomSimulationForm() {
     offset += networkNameBytes.length;
     while (offset % 4 !== 0) offset++;
 
+    // Agents data
     writeUint32(buffer, offset, agents.length); offset += 4;
 
     agents.forEach((agent, i) => writeFloat32(buffer, offset + i * 4, agent.initialBelief));
@@ -99,7 +109,9 @@ export function CustomSimulationForm() {
     });
     while (offset % 4 !== 0) offset++;
 
-    writeUint32(buffer, offset, neighbors.length); offset += 4;
+    // Neighbors data
+    writeUint32(buffer, offset, neighbors.length);
+    offset += 4;
 
     neighbors.forEach((neighbor, i) => writeFloat32(buffer, offset + i * 4, neighbor.influence));
     offset += neighbors.length * 4;
@@ -114,7 +126,24 @@ export function CustomSimulationForm() {
     neighbors.forEach(neighbor => {
       const targetBytes = stringToBytes(neighbor.target);
       uint8View[offset] = targetBytes.length; offset += 1;
-      uint8View.set(targetBytes, offset); offset += targetBytes.length;
+      uint8View.set(targetBytes, offset);
+      offset += targetBytes.length;
+    });
+
+    // Optional extra data
+    agents.forEach((agent, i) => {
+      uint8View[offset + i] = agent.silenceStrategy;
+      if (agent.silenceStrategy === 2) {
+        writeUint32(buffer, offset, i)
+        writeFloat32(buffer, offset + 4, agent.thresholdValue)
+        writeFloat32(buffer, offset + 8, 2.0) // This 2.0 value serves to indicate the type
+        offset += 12
+      } else if (agent.silenceStrategy === 3) {
+        writeUint32(buffer, offset, i)
+        writeFloat32(buffer, offset + 4, agent.updateValue)
+        writeFloat32(buffer, offset + 8, agent.confidenceValue)
+        offset += 12
+      }
     });
     return buffer;
   };
@@ -220,6 +249,9 @@ export function CustomSimulationForm() {
       }
 
       // Success
+      const channelId = await response.text();
+      setChannelId(channelId)
+      console.log("Channel ID:", channelId);
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (error) {

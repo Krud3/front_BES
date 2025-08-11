@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useRef, useState, useCallback, ReactNode, useEffect } from 'react';
+import { getChannelId } from '../lib/channelStore.ts';
 
 // This interface is used for the data points in our history map
 interface ChartDataPoint {
@@ -23,8 +24,8 @@ interface WebSocketContextType {
   connected: boolean;
   connect: () => void;
   disconnect: () => void;
-  latestSimulationData: SimulationData | null; // Changed from simulationData
-  historyMap: Map<number, ChartDataPoint>;     // Added historyMap
+  latestSimulationData: SimulationData | null;
+  historyMap: Map<number, ChartDataPoint>;
   messageCount: number;
   clearData: () => void;
 }
@@ -49,12 +50,12 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const dataView = new DataView(buffer);
       const runId = dataView.getInt32(16, true);
-      const numberOfAgents = dataView.getInt32(20, true);
-      const round = dataView.getInt32(24, true);
-      const indexReference = dataView.getInt32(28, true);
-      const offset = 32;
+      const numberOfAgents = dataView.getInt32(24, true);
+      const round = dataView.getInt32(28, true);
+      const indexReference = dataView.getInt32(32, true);
+      const offset = 36;
 
-       console.log(`Header: runId=${runId}, agents=${numberOfAgents}, round=${round}`);
+      console.log(`Header: runId=${runId}, agents=${numberOfAgents}, round=${round}`);
 
       const expectedMinSize = offset + (numberOfAgents * (4 + 4 + 1));
       if (buffer.byteLength < expectedMinSize) {
@@ -99,7 +100,6 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
         const { round, beliefs, speakingStatuses, indexReference } = data;
         const existingData = newMap.get(round) || { round };
 
-        // Initialize with existing values or sane defaults
         let roundMax = existingData.max as number | undefined;
         let roundMin = existingData.min as number | undefined;
 
@@ -129,7 +129,7 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
       socketRef.current.close();
       socketRef.current = null;
     }
-    // Stop the rendering loop on disconnect
+
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
     }
@@ -137,11 +137,11 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
 
    const connect = useCallback(() => {
     if (socketRef.current) {
-      // `disconnect` is now guaranteed to be initialized here.
       disconnect();
     }
 
-    const socket = new WebSocket('ws://localhost:9000/ws');
+    const channelId = getChannelId();
+    const socket = new WebSocket(`ws://localhost:9000/ws/${channelId}`);
 
     socket.onopen = () => {
       console.log('Connected to WebSocket');
