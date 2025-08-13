@@ -297,20 +297,22 @@ export function SimulationForm() {
           view.setInt8(offset++, SAVE_MODES_MAP[finalData.saveMode as SaveModeString]);
           view.setInt8(offset++, agentConfigs.length);
           view.setInt8(offset++, biasConfigs.length);
-          view.setInt32(offset, finalData.numNetworks, true);
-          offset += 4;
-          view.setInt32(offset, finalData.density, true);
-          offset += 4;
-          view.setInt32(offset, finalData.iterationLimit, true);
-          offset += 4;
-          view.setFloat32(offset, finalData.stopThreshold, true);
-          offset += 4;
+          view.setInt32(offset, finalData.numNetworks, true); offset += 4;
+          view.setInt32(offset, finalData.density, true); offset += 4;
+          view.setInt32(offset, finalData.iterationLimit, true); offset += 4;
+          view.setFloat32(offset, finalData.stopThreshold, true); offset += 4;
           view.setBigInt64(offset, finalData.seed ? BigInt(finalData.seed) : BigInt(-1), true);
           offset += 8;
 
+          agentConfigs.forEach(config => {
+              view.setInt32(offset, config.count, true); offset += 4;
+              view.setInt8(offset++, strategyToByte(config.type));
+              view.setInt8(offset++, effectToByte(config.effect));
+
+          });
+
           biasConfigs.forEach(config => {
-              view.setInt32(offset, config.count, true);
-              offset += 4;
+              view.setInt32(offset, config.count, true); offset += 4;
               view.setInt8(offset++, biasToByte(config.bias));
           });
 
