@@ -23,6 +23,7 @@ import { SimulationWebSocketProvider } from '@/contexts/WebSocketContext';
 import { SimulationChart } from '@/components/SimulationChart';
 import { SimulationDashboard } from './components/SimulationDashboard';
 import { SimulationStateProvider } from '@/hooks/useSimulationState';
+import { UnifiedDashboard } from './components/UnifiedDashboard';
 
 
 interface ThemeManagerProps {
@@ -103,6 +104,7 @@ const App: React.FC = () => {
               <Route path="table-data" element={<ProtectedRoute><TableData /></ProtectedRoute>} />
               <Route path="test-grafica" element={<ProtectedRoute><SimulationChart /></ProtectedRoute>} />
               <Route path="test-panel" element={<ProtectedRoute><SimulationDashboard /></ProtectedRoute>} />
+              <Route path="dashboard" element={<ProtectedRoute><UnifiedDashboard /></ProtectedRoute>} />
             </Route>
             <Route path="/admin" element={<ProtectedRoute requiredPermission="manageUsers"><AdminPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

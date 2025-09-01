@@ -8,7 +8,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Play, Pause, SkipBack, SkipForward, Trash2 } from 'lucide-react';
 
 export const SimulationDashboard: React.FC = () => {
-  const { connected, connect, disconnect, simulationData, clearData } = useSimulationWebSocket();
+  const { connected, connect, disconnect, latestSimulationData: simulationData, clearData } = useSimulationWebSocket();
+
   const { history, clearHistory } = useSimulationHistory();
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   

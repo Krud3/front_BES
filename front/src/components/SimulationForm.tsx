@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { useSimulationState } from '@/hooks/useSimulationState.tsx';
+import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
 
 import {
   AgentStrategyType,
@@ -36,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {setChannelId} from "@/lib/channelStore.ts";
+import { CheckCircleIcon } from 'lucide-react';
 
 const formSchema = z.object({
   seed: z.string().optional(),
@@ -107,6 +109,11 @@ export function SimulationForm() {
     resolver: zodResolver(formSchema),
     values: { ...formValues, seed: formValues.seed ? formValues.seed.toString() : '' },
   });
+
+  const { connect, disconnect, clearData, connected } = useSimulationWebSocket();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<'success' | 'error' | null>(null);
 
   useEffect(() => {
     const subscription = watch((value) => {
@@ -285,55 +292,68 @@ export function SimulationForm() {
       alert("Form is invalid. Please ensure agent and bias distributions are fully and correctly assigned.");
       return;
     }
+    
+    setIsSubmitting(true);
+    setSubmissionStatus(null);
 
-      try {
-          const bufferSize = calculateBufferSizeLocal();
-          const buffer = new ArrayBuffer(bufferSize);
-          const view = new DataView(buffer);
-          let offset = 0;
+    if (connected) {
+      disconnect();
+    }
+    clearData(); // Add this line to clear previous data
 
-          const finalData = {...formValues, ...data};
-          view.setInt8(offset++, 0);
-          view.setInt8(offset++, SAVE_MODES_MAP[finalData.saveMode as SaveModeString]);
-          view.setInt8(offset++, agentConfigs.length);
-          view.setInt8(offset++, biasConfigs.length);
-          view.setInt32(offset, finalData.numNetworks, true); offset += 4;
-          view.setInt32(offset, finalData.density, true); offset += 4;
-          view.setInt32(offset, finalData.iterationLimit, true); offset += 4;
-          view.setFloat32(offset, finalData.stopThreshold, true); offset += 4;
-          view.setBigInt64(offset, finalData.seed ? BigInt(finalData.seed) : BigInt(-1), true);
-          offset += 8;
+    try {
+      const bufferSize = calculateBufferSizeLocal();
+      const buffer = new ArrayBuffer(bufferSize);
+      const view = new DataView(buffer);
+      let offset = 0;
 
-          agentConfigs.forEach(config => {
-              view.setInt32(offset, config.count, true); offset += 4;
-              view.setInt8(offset++, strategyToByte(config.type));
-              view.setInt8(offset++, effectToByte(config.effect));
+      const finalData = {...formValues, ...data};
+      view.setInt8(offset++, 0);
+      view.setInt8(offset++, SAVE_MODES_MAP[finalData.saveMode as SaveModeString]);
+      view.setInt8(offset++, agentConfigs.length);
+      view.setInt8(offset++, biasConfigs.length);
+      view.setInt32(offset, finalData.numNetworks, true); offset += 4;
+      view.setInt32(offset, finalData.density, true); offset += 4;
+      view.setInt32(offset, finalData.iterationLimit, true); offset += 4;
+      view.setFloat32(offset, finalData.stopThreshold, true); offset += 4;
+      view.setBigInt64(offset, finalData.seed ? BigInt(finalData.seed) : BigInt(-1), true);
+      offset += 8;
 
-          });
+      agentConfigs.forEach(config => {
+        view.setInt32(offset, config.count, true); offset += 4;
+        view.setInt8(offset++, strategyToByte(config.type));
+        view.setInt8(offset++, effectToByte(config.effect));
+      });
 
-          biasConfigs.forEach(config => {
-              view.setInt32(offset, config.count, true); offset += 4;
-              view.setInt8(offset++, biasToByte(config.bias));
-          });
+      biasConfigs.forEach(config => {
+        view.setInt32(offset, config.count, true); offset += 4;
+        view.setInt8(offset++, biasToByte(config.bias));
+      });
 
-          const response = await fetch('http://localhost:9000/run', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/octet-stream'},
-              body: buffer
-          });
+      const response = await fetch('http://localhost:9000/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: buffer
+      });
 
-          if (response.ok) {
-              const channelId = await response.text();
-              setChannelId(channelId);
-              console.log("Channel ID:", channelId);
-
-          } else {
-              console.error("Request failed with status:", response.status);
-          }
-      } catch (error) {
-          console.error("Error during form submission:", error);
-          alert(`An error occurred during submission: ${error.message}`);
+      if (response.ok) {
+        const channelId = await response.text();
+        setChannelId(channelId); //
+        console.log("Successfully started simulation on Channel ID:", channelId);
+        setSubmissionStatus('success');
+        
+        connect(); 
+      } else {
+        const errorText = await response.text();
+        console.error("Request failed with status:", response.status, "Message:", errorText);
+        setSubmissionStatus('error');
       }
+    } catch (error) {
+      console.error("Error during form submission:", error);
+      setSubmissionStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const calculateBufferSizeLocal = () => {
@@ -588,6 +608,19 @@ export function SimulationForm() {
                 </Alert>
             )}
 
+            {/* --- Submission Status --- */}
+            {submissionStatus && (
+              <Alert variant={submissionStatus === 'success' ? 'default' : 'destructive'} className={submissionStatus === 'success' ? 'bg-green-100 dark:bg-green-900/30' : ''}>
+                {submissionStatus === 'success' ? <CheckCircleIcon className="h-4 w-4" /> : <ExclamationTriangleIcon className="h-4 w-4" />}
+                <AlertTitle>{submissionStatus === 'success' ? 'Success!' : 'Error!'}</AlertTitle>
+                <AlertDescription>
+                  {submissionStatus === 'success'
+                    ? "Simulation started! Connecting to the live data stream..."
+                    : "Failed to send simulation request. Please check the console for details."}
+                </AlertDescription>
+              </Alert>
+            )}
+  
              {/* --- Submit Button --- */}
              <div className="flex justify-end pt-4">
                  <Button type="submit" disabled={!isFormValid}>

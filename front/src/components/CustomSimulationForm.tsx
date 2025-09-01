@@ -13,6 +13,7 @@ import { CustomAgent, Neighbor } from '@/lib/types';
 import { useSimulationState } from '@/hooks/useSimulationState.tsx';
 import {setChannelId} from "@/lib/channelStore.ts";
 import { usePermissions } from '@/hooks/usePermissions';
+import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
 
 const SAVE_MODES = { 0: "Full", 1: "Standard", 2: "Standard Light", 4: "Roundless", 5: "Agentless Typed", 7: "Agentless", 8: "Performance", 9: "Debug"};
 const SILENCE_STRATEGIES = { 0: "DeGroot", 1: "Majority", 2: "Threshold", 3: "Confidence" };
@@ -42,6 +43,8 @@ export function CustomSimulationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const { connect, clearData, disconnect, connected } = useSimulationWebSocket();
 
   const agentsLimitExceeded = agents.length > limits.maxAgents;
   const iterationsLimitExceeded = iterationLimit > limits.maxIterations;
@@ -140,18 +143,21 @@ export function CustomSimulationForm() {
     });
 
     // Optional extra data
-    agents.forEach((agent, i) => {
-      uint8View[offset + i] = agent.silenceStrategy;
-      if (agent.silenceStrategy === 2) {
-        writeUint32(buffer, offset, i)
-        writeFloat32(buffer, offset + 4, agent.thresholdValue)
-        writeFloat32(buffer, offset + 8, 2.0) // This 2.0 value serves to indicate the type
-        offset += 12
-      } else if (agent.silenceStrategy === 3) {
-        writeUint32(buffer, offset, i)
-        writeFloat32(buffer, offset + 4, agent.updateValue)
-        writeFloat32(buffer, offset + 8, agent.confidenceValue)
-        offset += 12
+    const agentsWithOptionalData = agents
+      .map((agent, index) => ({ ...agent, originalIndex: index }))
+      .filter(agent => agent.silenceStrategy === 2 || agent.silenceStrategy === 3);
+
+    agentsWithOptionalData.forEach(agent => {
+      if (agent.silenceStrategy === 2) { // Threshold
+        writeUint32(buffer, offset, agent.originalIndex);
+        writeFloat32(buffer, offset + 4, agent.thresholdValue ?? 0);
+        writeFloat32(buffer, offset + 8, 2.0); // Type indicator
+        offset += 12;
+      } else if (agent.silenceStrategy === 3) { // Confidence
+        writeUint32(buffer, offset, agent.originalIndex);
+        writeFloat32(buffer, offset + 4, agent.updateValue ?? 1);
+        writeFloat32(buffer, offset + 8, agent.confidenceValue ?? 0);
+        offset += 12;
       }
     });
     return buffer;
@@ -242,6 +248,13 @@ export function CustomSimulationForm() {
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
+    
+    // Clear any existing data before starting new simulation
+    if (connected) {
+      disconnect();
+    }
+    clearData(); // Add this line to clear previous data
+    
     try {
       const buffer = buildBuffer();
 
@@ -257,12 +270,17 @@ export function CustomSimulationForm() {
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
       }
 
-      // Success
       const channelId = await response.text();
-      setChannelId(channelId)
-      console.log("Channel ID:", channelId);
+      console.log("Custom simulation channel ID:", channelId);
+      setChannelId(channelId);
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 3000);
+
+      // Add a small delay before connecting to ensure channel is ready
+      setTimeout(() => {
+        connect();
+      }, 1000);
+      
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {

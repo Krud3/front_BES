@@ -49,12 +49,16 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
   const processAndQueueMessage = useCallback((buffer: ArrayBuffer) => {
     try {
       const dataView = new DataView(buffer);
-      const runId = dataView.getInt32(16, true);
+      
+      // The backend sends a 36-byte header. These offsets match that structure.
+      // networkId is bytes 0-15
+      const runId = dataView.getBigInt64(16, true);
       const numberOfAgents = dataView.getInt32(24, true);
       const round = dataView.getInt32(28, true);
       const indexReference = dataView.getInt32(32, true);
       const offset = 36;
 
+      // The console log below will now show correct values
       console.log(`Header: runId=${runId}, agents=${numberOfAgents}, round=${round}`);
 
       const expectedMinSize = offset + (numberOfAgents * (4 + 4 + 1));
@@ -68,7 +72,8 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
       const speakingStatuses = new Uint8Array(buffer, offset + (numberOfAgents * 8), numberOfAgents);
 
       dataQueueRef.current.push({
-        runId, numberOfAgents, round, indexReference, beliefs, privateBeliefs, speakingStatuses, timestamp: new Date()
+        runId: Number(runId),
+        numberOfAgents, round, indexReference, beliefs, privateBeliefs, speakingStatuses, timestamp: new Date()
       });
     } catch (error) {
       console.error('Error parsing binary message:', error);
@@ -144,14 +149,14 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
     const socket = new WebSocket(`ws://localhost:9000/ws/${channelId}`);
 
     socket.onopen = () => {
-      console.log('Connected to WebSocket');
+      console.log(`Connected to WebSocket on channel: ${channelId}`);
       setConnected(true);
       lastRenderTimeRef.current = performance.now();
       animationFrameId.current = requestAnimationFrame(renderLoop);
     };
 
-    socket.onclose = () => {
-      console.log('Disconnected from WebSocket');
+    socket.onclose = (event) => {
+      console.log(`Disconnected from WebSocket. Code: ${event.code}, Reason: ${event.reason}`);
       setConnected(false);
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
@@ -172,9 +177,6 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     socketRef.current = socket;
-    // We remove `disconnect` from the dependency array because the linter is now smart enough
-    // to see it's defined outside the component render cycle scope (or is stable).
-    // However, it's good practice to keep it for clarity.
   }, [processAndQueueMessage, renderLoop, disconnect]);
 
   const clearData = useCallback(() => {
