@@ -1,4 +1,0 @@
-Flask==3.1.0
-numpy==2.1.3
-measures @ git+https://github.com/Ulvenforst/pol_measures.git@4c3863f1125306ce342489249c10ddad8d346acd
-Flask-Cors==5.0.0
