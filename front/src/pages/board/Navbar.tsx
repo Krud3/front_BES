@@ -27,7 +27,7 @@ type NavbarProps = {
   setLinks: React.Dispatch<React.SetStateAction<Links[]>>;
 };
 
-const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
+const Navbar: React.FC<NavbarProps> = (/*{ setNodes, setLinks }*/) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { user } = useAuth();
   const [showAlert, setShowAlert] = useState(false);
@@ -56,12 +56,12 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
             <Logo className="h-9 w-9" />
             <span className="sr-only">BES</span>
           </Link>
-          <PRSheet setNodes={setNodes} setLinks={setLinks} />
+          {/* <PRSheet setNodes={setNodes} setLinks={setLinks} /> */}
           <CreateSimulationSheet />
-          <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} />
-          <Link to="/user-management" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
+          {/* <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} /> */}
+          {/* <Link to="/user-management" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
             User's Management
-          </Link>
+          </Link> */}
         </nav>
 
         {/* Sheet for mobile menu */}
@@ -83,16 +83,16 @@ const Navbar: React.FC<NavbarProps> = ({ setNodes, setLinks }) => {
                 <span className="sr-only">BES</span>
               </Link>
 
-              <PRSheet setNodes={setNodes} setLinks={setLinks} />
+              {/* <PRSheet setNodes={setNodes} setLinks={setLinks} /> */}
               <CreateSimulationSheet />
-              <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} />
-              <Link
+              {/* <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} /> */}
+              {/* <Link
                 to="/user-management"
                 className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
                 onClick={closeSheet}
               >
                 User's Management
-              </Link>
+              </Link> */}
             </nav>
           </SheetContent>
         </Sheet>

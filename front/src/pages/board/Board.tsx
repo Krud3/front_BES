@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from '@/pages/board/Navbar';
 import { Node, Links } from '@/lib/types';
+import { UnifiedDashboard } from "@/components/UnifiedDashboard";
 
 
 type BoardProps = {
@@ -17,6 +18,7 @@ const Board: React.FC<BoardProps> = ({ setNodes, setLinks }) => {
         <Navbar setNodes={setNodes} setLinks={setLinks} />
         <div style={{ flex: 1, overflow: 'auto' }}>
           <Outlet />
+          <UnifiedDashboard />
         </div>
       </div>
     
