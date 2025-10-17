@@ -163,17 +163,17 @@ const Display: React.FC<DisplayProps> = () => {
   }, [handleKeyDown]);
 
   useEffect(() => {
-    const updateBeliefsBasedOnTimeline = () => {
-      const timeline = timelineRef.current;
-      if (!timeline || !cosmograph || !nodes) return;
+    // const updateBeliefsBasedOnTimeline = () => {
+    //   const timeline = timelineRef.current;
+    //   if (!timeline || !cosmograph || !nodes) return;
 
-      const selection = timeline.getCurrentSelection() as
-        | [Date, Date]
-        | undefined;
-      setSelectedDateRange(selection);
+    //   const selection = timeline.getCurrentSelection() as
+    //     | [Date, Date]
+    //     | undefined;
+    //   setSelectedDateRange(selection);
 
-      timeline.setSelection(selection);
-    };
+    //   timeline.setSelection(selection);
+    // };
 
     const intervalId = setInterval(() => {
       const timeline = timelineRef.current;

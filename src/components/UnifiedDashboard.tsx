@@ -140,7 +140,7 @@ export const UnifiedDashboard: React.FC = () => {
             />
           );
         }
-        return null;
+        return <></>;
       };
       return (
         <Line

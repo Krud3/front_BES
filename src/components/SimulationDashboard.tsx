@@ -1,5 +1,5 @@
-import { Pause, Play, SkipBack, SkipForward, Trash2 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import { SkipBack, SkipForward, Trash2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,

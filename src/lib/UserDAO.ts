@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -13,6 +12,8 @@ import {
 import { db } from "@/firebaseConfig";
 
 class UserDAO {
+  collectionRef: any;
+
   constructor() {
     this.collectionRef = collection(db, "users");
   }

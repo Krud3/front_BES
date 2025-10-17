@@ -9,8 +9,8 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const setUser = useAuthStore((state) => state.setUser);
-  const setLoading = useAuthStore((state) => state.setLoading);
+  const setUser = useAuthStore((state: any) => state.setUser);
+  const setLoading = useAuthStore((state: any) => state.setLoading);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(

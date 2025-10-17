@@ -1,5 +1,5 @@
 import { AlertCircle, Check, Plus, Trash2 } from "lucide-react";
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,17 +20,12 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useSimulationWebSocket } from "@/contexts/WebSocketContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSimulationState } from "@/hooks/useSimulationState.tsx";
 import { setChannelId } from "@/lib/channelStore.ts";
 import { CustomAgent, Neighbor } from "@/lib/types";
+import { TooltipProvider } from "./ui/tooltip";
 
 const SAVE_MODES = {
   0: "Full",
@@ -57,15 +52,25 @@ const BIASES = {
   4: "Insular",
 };
 
-const AgentInput = ({
+interface props {
+  label: string;
+  value: any;
+  onChange: (v: any) => void;
+  type: string;
+  min: number;
+  max: number;
+  step: number;
+  placeholder: any;
+}
+const AgentInput: React.FC<props> = ({
   label,
   value,
   onChange,
+  placeholder,
   type = "float",
   min = 0,
   max = 1,
   step = 0.01,
-  placeholder,
 }) => (
   <div className="space-y-1">
     <Label className="text-xs text-muted-foreground">{label}</Label>
@@ -99,7 +104,7 @@ export function CustomSimulationForm() {
     neighbors,
   } = customForm;
 
-  const { limits, loadingPermissions } = usePermissions();
+  const { limits } = usePermissions();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -699,41 +704,57 @@ export function CustomSimulationForm() {
                         <AgentInput
                           label="Belief"
                           value={agent.initialBelief}
-                          onChange={(val) =>
+                          onChange={(val: any) =>
                             handleUpdateAgent(agent.id, { initialBelief: val })
                           }
                           placeholder={0.5}
+                          type={""}
+                          min={0}
+                          max={0}
+                          step={0}
                         />
                         <AgentInput
                           label="Radius"
                           value={agent.toleranceRadius}
-                          onChange={(val) =>
+                          onChange={(val: any) =>
                             handleUpdateAgent(agent.id, {
                               toleranceRadius: val,
                             })
                           }
                           placeholder={0.3}
+                          type={""}
+                          min={0}
+                          max={0}
+                          step={0}
                         />
                         <AgentInput
                           label="Offset"
                           value={agent.toleranceOffset}
-                          onChange={(val) =>
+                          onChange={(val: any) =>
                             handleUpdateAgent(agent.id, {
                               toleranceOffset: val,
                             })
                           }
                           placeholder={0.1}
+                          type={""}
+                          min={0}
+                          max={0}
+                          step={0}
                         />
                         {needsThreshold && (
                           <AgentInput
                             label="Threshold Value"
                             value={agent.thresholdValue}
-                            onChange={(val) =>
+                            onChange={(val: any) =>
                               handleUpdateAgent(agent.id, {
                                 thresholdValue: val,
                               })
                             }
                             placeholder={0.5}
+                            type={""}
+                            min={0}
+                            max={0}
+                            step={0}
                           />
                         )}
                         {needsConfidence && (
@@ -741,12 +762,16 @@ export function CustomSimulationForm() {
                             <AgentInput
                               label="Confidence Value"
                               value={agent.confidenceValue}
-                              onChange={(val) =>
+                              onChange={(val: any) =>
                                 handleUpdateAgent(agent.id, {
                                   confidenceValue: val,
                                 })
                               }
                               placeholder={0.5}
+                              type={""}
+                              min={0}
+                              max={0}
+                              step={0}
                             />
                             <AgentInput
                               label="Update Value"
@@ -755,11 +780,12 @@ export function CustomSimulationForm() {
                               step={1}
                               value={agent.updateValue}
                               placeholder={1}
-                              onChange={(val) =>
+                              onChange={(val: any) =>
                                 handleUpdateAgent(agent.id, {
                                   updateValue: val,
                                 })
                               }
+                              max={0}
                             />
                           </>
                         )}

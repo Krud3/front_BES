@@ -95,7 +95,7 @@ export const usePermissions = () => {
   // useMemo prevents recalculating the permission set on every render.
   const permissions = useMemo(() => {
     const userPermissions = new Set<string>();
-    roles.forEach((role) => {
+    roles.forEach((role: any) => {
       const perms = getPermissionsForRole(role);
       perms.forEach((p) => userPermissions.add(p));
     });
