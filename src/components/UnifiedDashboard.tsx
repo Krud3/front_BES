@@ -140,7 +140,16 @@ export const UnifiedDashboard: React.FC = () => {
             />
           );
         }
-        return null;
+        // Return an invisible circle instead of null
+        return (
+          <circle
+            key={`dot-${key}-${dotIndex}`}
+            cx={cx}
+            cy={cy}
+            r={0}
+            fill="transparent"
+          />
+        );
       };
       return (
         <Line

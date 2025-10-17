@@ -4,18 +4,9 @@ import { CustomSimulationForm } from "@/components/CustomSimulationForm";
 import { SimulationForm } from "@/components/SimulationForm";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,

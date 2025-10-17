@@ -1,5 +1,5 @@
 import { signOut } from "firebase/auth";
-import { CircleUser, Menu, Package2, Terminal } from "lucide-react";
+import { CircleUser, Menu, Terminal } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
@@ -18,8 +18,6 @@ import { auth } from "@/firebaseConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { Links, Node } from "@/lib/types";
 import CreateSimulationSheet from "@/pages/board/CSSheet"; // Renamed for clarity
-import PRSheet from "@/pages/board/PRSheet";
-import UploadDialog from "@/pages/board/UploadDialog";
 
 type NavbarProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;

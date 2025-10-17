@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import logoAvispa2 from "@/assets/logos/JPG/AVISPA.jpg";
-import logoAvispa from "@/assets/logos/SVG/avispa.svg";
 import logoPromueva from "@/assets/logos/SVG/promueva.svg";
 import logoUnivalle from "@/assets/logos/SVG/univalle.svg";
 import { Container } from "@/components/Container";

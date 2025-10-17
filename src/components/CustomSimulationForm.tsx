@@ -1,5 +1,5 @@
 import { AlertCircle, Check, Plus, Trash2 } from "lucide-react";
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSimulationWebSocket } from "@/contexts/WebSocketContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -57,6 +54,17 @@ const BIASES = {
   4: "Insular",
 };
 
+interface AgentInputProps {
+  label: string;
+  value: any;
+  onChange: (value: number) => void;
+  type?: "float" | "int";
+  min?: number;
+  max?: number;
+  step?: number;
+  placeholder: any;
+}
+
 const AgentInput = ({
   label,
   value,
@@ -66,7 +74,7 @@ const AgentInput = ({
   max = 1,
   step = 0.01,
   placeholder,
-}) => (
+}: AgentInputProps) => (
   <div className="space-y-1">
     <Label className="text-xs text-muted-foreground">{label}</Label>
     <Input
@@ -99,7 +107,7 @@ export function CustomSimulationForm() {
     neighbors,
   } = customForm;
 
-  const { limits, loadingPermissions } = usePermissions();
+  const { limits } = usePermissions();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -699,7 +707,7 @@ export function CustomSimulationForm() {
                         <AgentInput
                           label="Belief"
                           value={agent.initialBelief}
-                          onChange={(val) =>
+                          onChange={(val: any) =>
                             handleUpdateAgent(agent.id, { initialBelief: val })
                           }
                           placeholder={0.5}
@@ -707,7 +715,7 @@ export function CustomSimulationForm() {
                         <AgentInput
                           label="Radius"
                           value={agent.toleranceRadius}
-                          onChange={(val) =>
+                          onChange={(val: any) =>
                             handleUpdateAgent(agent.id, {
                               toleranceRadius: val,
                             })
@@ -717,7 +725,7 @@ export function CustomSimulationForm() {
                         <AgentInput
                           label="Offset"
                           value={agent.toleranceOffset}
-                          onChange={(val) =>
+                          onChange={(val: any) =>
                             handleUpdateAgent(agent.id, {
                               toleranceOffset: val,
                             })
@@ -728,7 +736,7 @@ export function CustomSimulationForm() {
                           <AgentInput
                             label="Threshold Value"
                             value={agent.thresholdValue}
-                            onChange={(val) =>
+                            onChange={(val: any) =>
                               handleUpdateAgent(agent.id, {
                                 thresholdValue: val,
                               })
@@ -741,7 +749,7 @@ export function CustomSimulationForm() {
                             <AgentInput
                               label="Confidence Value"
                               value={agent.confidenceValue}
-                              onChange={(val) =>
+                              onChange={(val: any) =>
                                 handleUpdateAgent(agent.id, {
                                   confidenceValue: val,
                                 })
@@ -755,7 +763,7 @@ export function CustomSimulationForm() {
                               step={1}
                               value={agent.updateValue}
                               placeholder={1}
-                              onChange={(val) =>
+                              onChange={(val: any) =>
                                 handleUpdateAgent(agent.id, {
                                   updateValue: val,
                                 })

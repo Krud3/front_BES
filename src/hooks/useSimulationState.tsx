@@ -155,7 +155,7 @@ export const SimulationStateProvider = ({
 
   useEffect(() => {
     const stateToStore = { standardForm, customForm };
-    const serializedState = JSON.stringify(stateToStore, (key, value) =>
+    const serializedState = JSON.stringify(stateToStore, (_key, value) =>
       typeof value === "bigint" ? value.toString() : value,
     );
     localStorage.setItem(LOCAL_STORAGE_KEY, serializedState);

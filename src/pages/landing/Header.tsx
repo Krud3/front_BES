@@ -3,7 +3,6 @@ import { CircleUser, Menu, Terminal } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
-import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

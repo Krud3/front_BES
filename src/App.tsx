@@ -26,7 +26,6 @@ import LoginPage from "@/pages/landing/LoginPage";
 import NotFound from "@/pages/not-found";
 import OnConstruction from "@/pages/on-construction";
 import { SimulationDashboard } from "./components/SimulationDashboard";
-import { UnifiedDashboard } from "./components/UnifiedDashboard";
 
 interface ThemeManagerProps {
   children: ReactNode;

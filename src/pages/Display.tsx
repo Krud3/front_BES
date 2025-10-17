@@ -21,9 +21,7 @@ import {
 import { Links, Node } from "@/lib/types";
 import { setNodeColor } from "@/lib/utils";
 
-interface DisplayProps {}
-
-const Display: React.FC<DisplayProps> = () => {
+const Display: React.FC = () => {
   const timelineRef = useRef<CosmographTimelineRef<any>>(null);
   const { cosmograph, nodes, links } = useCosmograph() || {};
   const [selectedDateRange, setSelectedDateRange] = useState<
@@ -163,17 +161,17 @@ const Display: React.FC<DisplayProps> = () => {
   }, [handleKeyDown]);
 
   useEffect(() => {
-    const updateBeliefsBasedOnTimeline = () => {
-      const timeline = timelineRef.current;
-      if (!timeline || !cosmograph || !nodes) return;
+    // const updateBeliefsBasedOnTimeline = () => {
+    //   const timeline = timelineRef.current;
+    //   if (!timeline || !cosmograph || !nodes) return;
 
-      const selection = timeline.getCurrentSelection() as
-        | [Date, Date]
-        | undefined;
-      setSelectedDateRange(selection);
+    //   const selection = timeline.getCurrentSelection() as
+    //     | [Date, Date]
+    //     | undefined;
+    //   setSelectedDateRange(selection);
 
-      timeline.setSelection(selection);
-    };
+    //   timeline.setSelection(selection);
+    // };
 
     const intervalId = setInterval(() => {
       const timeline = timelineRef.current;

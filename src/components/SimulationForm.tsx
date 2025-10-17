@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { CheckCircleIcon } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -183,7 +183,7 @@ export function SimulationForm() {
   const { connect, disconnect, clearData, connected } =
     useSimulationWebSocket();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<
     "success" | "error" | null
   >(null);
@@ -341,7 +341,7 @@ export function SimulationForm() {
   );
 
   const handleAgentCountChange = useCallback(
-    (configId: string, value: string | number, source: "input" | "slider") => {
+    (configId: string, value: string | number /*, source: "input" | "slider"*/) => {
       let newCount =
         typeof value === "string" ? parseInt(value, 10) : Math.round(value);
       if (isNaN(newCount) || newCount < 0) newCount = 0;
@@ -431,7 +431,7 @@ export function SimulationForm() {
   );
 
   const handleBiasCountChange = useCallback(
-    (configId: string, value: string | number, source: "input" | "slider") => {
+    (configId: string, value: string | number, /*, source: "input" | "slider"*/) => {
       let newCount =
         typeof value === "string" ? parseInt(value, 10) : Math.round(value);
       if (isNaN(newCount) || newCount < 0) newCount = 0;
@@ -840,7 +840,7 @@ export function SimulationForm() {
                                 handleAgentCountChange(
                                   config.id,
                                   v[0],
-                                  "slider",
+                                  // "slider",
                                 )
                               }
                               className="col-start-1 w-full"
@@ -863,7 +863,7 @@ export function SimulationForm() {
                                   handleAgentCountChange(
                                     config.id,
                                     e.target.value,
-                                    "input",
+                                    // "input",
                                   )
                                 }
                                 className="w-full"
@@ -980,7 +980,7 @@ export function SimulationForm() {
                                   handleBiasCountChange(
                                     config.id,
                                     v[0],
-                                    "slider",
+                                    // "slider",
                                   )
                                 }
                                 className="col-start-1 w-full"
@@ -1004,7 +1004,7 @@ export function SimulationForm() {
                                     handleBiasCountChange(
                                       config.id,
                                       e.target.value,
-                                      "input",
+                                      // "input",
                                     )
                                   }
                                   className="w-full"
