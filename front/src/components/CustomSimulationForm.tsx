@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { useSimulationState } from '@/hooks/useSimulationState.tsx';
 import {setChannelId} from "@/lib/channelStore.ts";
 import { usePermissions } from '@/hooks/usePermissions';
 import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
+import { useNavigate } from 'react-router-dom';
 
 const SAVE_MODES = { 0: "Full", 1: "Standard", 2: "Standard Light", 4: "Roundless", 5: "Agentless Typed", 7: "Agentless", 8: "Performance", 9: "Debug"};
 const SILENCE_STRATEGIES = { 0: "DeGroot", 1: "Majority", 2: "Threshold", 3: "Confidence" };
@@ -35,6 +36,7 @@ const AgentInput = ({ label, value, onChange, type = "float", min = 0, max = 1, 
 );
 
 export function CustomSimulationForm() {
+  const navigate = useNavigate();
   const { customForm, setCustomForm } = useSimulationState();
   const { stopThreshold, iterationLimit, saveMode, networkName, agents, neighbors } = customForm;
 
@@ -44,7 +46,7 @@ export function CustomSimulationForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const { connect, clearData, disconnect, connected } = useSimulationWebSocket();
+  const { connect, clearData, disconnect, connected, isGraphInitialized } = useSimulationWebSocket();
 
   const agentsLimitExceeded = agents.length > limits.maxAgents;
   const iterationsLimitExceeded = iterationLimit > limits.maxIterations;
@@ -287,6 +289,15 @@ export function CustomSimulationForm() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    // Cuando el contexto nos avise que el grafo inicial está listo...
+    if (isGraphInitialized) {
+      // ...navegamos a la página del visualizador.
+      console.log('Graph is initialized, navigating to cosmograph...');
+      navigate('/board/cosmograph');
+    }
+  }, [isGraphInitialized, navigate]);
 
   const maxNeighbors = agents.length * (agents.length - 1);
   // const isValid = agents.length > 0 && agents.every(a => a.name.trim().length > 0) && neighbors.every(n => n.source && n.target && n.source !== n.target) && networkName.trim().length > 0 && stringToBytes(networkName).length <= 255;

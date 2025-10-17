@@ -1,34 +1,42 @@
-import React, { createContext, useContext, useRef, useState, useCallback, ReactNode, useEffect } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { getChannelId } from '../lib/channelStore.ts';
+import { Node, Links, TopologyData, SimulationData } from '@/lib/types'; // Asegúrate que los tipos estén exportados desde types.ts
+import { processBinaryDataToGraph } from '@/lib/graphProcessor.ts';
 
-// This interface is used for the data points in our history map
+/** =========================
+ * Tipos y modelos
+ * ========================= */
+
 interface ChartDataPoint {
   round: number;
   [key: string]: number | boolean | null;
 }
 
-// This interface represents a raw data packet from the WebSocket
-interface SimulationData {
-  runId: number;
-  numberOfAgents: number;
-  round: number;
-  indexReference: number;
-  beliefs: Float32Array;
-  privateBeliefs: Float32Array;
-  speakingStatuses: Uint8Array;
-  timestamp: Date;
-}
-
-// This interface defines what the context will provide to consumers.
 interface WebSocketContextType {
   connected: boolean;
   connect: () => void;
   disconnect: () => void;
   latestSimulationData: SimulationData | null;
+  topologyData: TopologyData | null;
+  nodes: Node[];
+  links: Links[];
+  isGraphInitialized: boolean;
   historyMap: Map<number, ChartDataPoint>;
   messageCount: number;
   clearData: () => void;
 }
+
+/** =========================
+ * Contexto y Provider
+ * ========================= */
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
 
@@ -37,9 +45,15 @@ const RENDER_INTERVAL = 1000 / RENDER_FPS;
 
 export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [connected, setConnected] = useState(false);
-  const [messageCount, setMessageCount] = useState(0);
-  const [historyMap, setHistoryMap] = useState<Map<number, ChartDataPoint>>(new Map());
   const [latestSimulationData, setLatestSimulationData] = useState<SimulationData | null>(null);
+  const [topologyData, setTopologyData] = useState<TopologyData | null>(null);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [links, setLinks] = useState<Links[]>([]);
+  const [isGraphInitialized, setIsGraphInitialized] = useState(false);
+  const [historyMap, setHistoryMap] = useState<Map<number, ChartDataPoint>>(new Map());
+  const [messageCount, setMessageCount] = useState(0);
+
+  const [roundZeroData, setRoundZeroData] = useState<SimulationData | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
   const dataQueueRef = useRef<SimulationData[]>([]);
@@ -47,86 +61,71 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
   const lastRenderTimeRef = useRef<number>(0);
 
   const processAndQueueMessage = useCallback((buffer: ArrayBuffer) => {
-    try {
-      const dataView = new DataView(buffer);
+    if (buffer.byteLength === 0) return;
+    const view = new DataView(buffer);
+    const packetId = view.getUint8(0);
+
+    const parseTopologyPacket = (buf: ArrayBuffer) => {
+      const dataView = new DataView(buf);
+      let offset = 4;
+      const networkId_msb = dataView.getBigUint64(offset, false); offset += 8;
+      const networkId_lsb = dataView.getBigUint64(offset, false); offset += 8;
+      const runId = dataView.getBigUint64(offset, false); offset += 8;
+      const numberOfAgents = dataView.getInt32(offset, false); offset += 4;
+      const numberOfNeighbors = dataView.getInt32(offset, false); offset += 4;
+      const indexOffset = new Int32Array(buf, offset, numberOfAgents); offset += numberOfAgents * 4;
+      const neighborsRefs = new Int32Array(buf, offset, numberOfNeighbors); offset += numberOfNeighbors * 4;
+      const neighborsWeights = new Float32Array(buf, offset, numberOfNeighbors); offset += numberOfNeighbors * 4;
+      const neighborBiases = new Uint8Array(buf, offset, numberOfNeighbors);
+      const topology: TopologyData = { networkId: `${networkId_msb.toString(16)}-${networkId_lsb.toString(16)}`, runId, numberOfAgents, numberOfNeighbors, indexOffset, neighborsRefs, neighborsWeights, neighborBiases };
+      setTopologyData(topology);
+      console.log("✅ Topology data received and processed:", topology);
+    };
+
+    const parseRoundDataPacket = (buf: ArrayBuffer) => {
+      const dataView = new DataView(buf);
+      let offset = 4;
+      offset += 16;
+      const runId = dataView.getBigInt64(offset, true); offset += 8;
+      const numberOfAgents = dataView.getInt32(offset, true); offset += 4;
+      const round = dataView.getInt32(offset, true); offset += 4;
+      const indexReference = dataView.getInt32(offset, true); offset += 4;
+      const publicBeliefs = new Float32Array(buf, offset, numberOfAgents); offset += numberOfAgents * 4;
+      const privateBeliefs = new Float32Array(buf, offset, numberOfAgents); offset += numberOfAgents * 4;
+      const speakingStatuses = new Uint8Array(buf, offset, numberOfAgents);
+      const newSimData: SimulationData = { runId, numberOfAgents, round, indexReference, beliefs: publicBeliefs, privateBeliefs, speakingStatuses, timestamp: new Date() };
       
-      // The backend sends a 36-byte header. These offsets match that structure.
-      // networkId is bytes 0-15
-      const runId = dataView.getBigInt64(16, true);
-      const numberOfAgents = dataView.getInt32(24, true);
-      const round = dataView.getInt32(28, true);
-      const indexReference = dataView.getInt32(32, true);
-      const offset = 36;
-
-      // The console log below will now show correct values
-      console.log(`Header: runId=${runId}, agents=${numberOfAgents}, round=${round}`);
-
-      const expectedMinSize = offset + (numberOfAgents * (4 + 4 + 1));
-      if (buffer.byteLength < expectedMinSize) {
-        console.warn(`Buffer too small: ${buffer.byteLength} bytes, expected at least ${expectedMinSize}`);
-        return;
+      // --- LÓGICA MODIFICADA ---
+      // "Atrapamos" los datos de la ronda 0 la primera vez que llegan.
+      if (round === 0) {
+        setRoundZeroData(newSimData);
       }
 
-      const beliefs = new Float32Array(buffer, offset, numberOfAgents);
-      const privateBeliefs = new Float32Array(buffer, offset + (numberOfAgents * 4), numberOfAgents);
-      const speakingStatuses = new Uint8Array(buffer, offset + (numberOfAgents * 8), numberOfAgents);
+      dataQueueRef.current.push(newSimData);
+    };
 
-      dataQueueRef.current.push({
-        runId: Number(runId),
-        numberOfAgents, round, indexReference, beliefs, privateBeliefs, speakingStatuses, timestamp: new Date()
-      });
-    } catch (error) {
-      console.error('Error parsing binary message:', error);
+    console.log(`PacketID: ${packetId}`);
+    switch (packetId) {
+      case 1: parseTopologyPacket(buffer); break;
+      case 2: parseRoundDataPacket(buffer); break;
+      default: console.warn(`Unknown packet ID received: ${packetId}`);
     }
   }, []);
 
   const renderLoop = useCallback(() => {
     animationFrameId.current = requestAnimationFrame(renderLoop);
-
     const now = performance.now();
     if (now - lastRenderTimeRef.current < RENDER_INTERVAL) {
       return;
     }
     lastRenderTimeRef.current = now;
-
     if (dataQueueRef.current.length === 0) {
       return;
     }
-
     const batchToProcess = dataQueueRef.current;
     dataQueueRef.current = [];
-
     setLatestSimulationData(batchToProcess[batchToProcess.length - 1]);
     setMessageCount(prev => prev + batchToProcess.length);
-
-    setHistoryMap(prevMap => {
-      const newMap = new Map(prevMap);
-      for (const data of batchToProcess) {
-        const { round, beliefs, speakingStatuses, indexReference } = data;
-        const existingData = newMap.get(round) || { round };
-
-        let roundMax = existingData.max as number | undefined;
-        let roundMin = existingData.min as number | undefined;
-
-        const roundData: ChartDataPoint = { ...existingData };
-
-        for (let index = 0; index < beliefs.length; index++) {
-          const agentId = indexReference + index;
-          const belief = beliefs[index];
-          roundData[`agent${agentId}`] = belief;
-          roundData[`speaking${agentId}`] = speakingStatuses[index] === 1;
-
-          if (roundMax === undefined || belief > roundMax) roundMax = belief;
-          if (roundMin === undefined || belief < roundMin) roundMin = belief;
-        }
-
-        roundData.max = roundMax ?? null;
-        roundData.min = roundMin ?? null;
-
-        newMap.set(round, roundData);
-      }
-      return newMap;
-    });
   }, []);
 
   const disconnect = useCallback(() => {
@@ -134,27 +133,25 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
       socketRef.current.close();
       socketRef.current = null;
     }
-
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
     }
   }, []);
 
-   const connect = useCallback(() => {
+  const connect = useCallback(() => {
     if (socketRef.current) {
       disconnect();
     }
-
     const channelId = getChannelId();
     const socket = new WebSocket(`ws://localhost:9000/ws/${channelId}`);
-
+    socketRef.current = socket;
+    
     socket.onopen = () => {
       console.log(`Connected to WebSocket on channel: ${channelId}`);
       setConnected(true);
       lastRenderTimeRef.current = performance.now();
       animationFrameId.current = requestAnimationFrame(renderLoop);
     };
-
     socket.onclose = (event) => {
       console.log(`Disconnected from WebSocket. Code: ${event.code}, Reason: ${event.reason}`);
       setConnected(false);
@@ -162,12 +159,10 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
       setConnected(false);
     };
-
     socket.onmessage = (event) => {
       if (event.data instanceof Blob) {
         event.data.arrayBuffer().then(processAndQueueMessage).catch(error => {
@@ -175,16 +170,38 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
         });
       }
     };
-
-    socketRef.current = socket;
   }, [processAndQueueMessage, renderLoop, disconnect]);
 
   const clearData = useCallback(() => {
     dataQueueRef.current = [];
     setHistoryMap(new Map());
     setLatestSimulationData(null);
+    setTopologyData(null);
     setMessageCount(0);
+    setNodes([]);
+    setLinks([]);
+    setIsGraphInitialized(false);
+    // --- MODIFICADO ---
+    // Limpiamos también el estado de la ronda 0.
+    setRoundZeroData(null);
   }, []);
+
+  // --- LÓGICA DE ENSAMBLAJE CORREGIDA Y ROBUSTA ---
+  useEffect(() => {
+    // La nueva condición: se ejecuta cuando tengamos la topología Y los datos de la ronda 0.
+    if (topologyData && roundZeroData && !isGraphInitialized) {
+      console.log("🚀 Assembling initial graph state...");
+      
+      // Usamos los datos guardados de la ronda 0, garantizando que son los correctos.
+      (async () => {
+        const graph = await processBinaryDataToGraph(topologyData, roundZeroData);
+        setNodes(graph.nodes);
+        setLinks(graph.links);
+        setIsGraphInitialized(true);
+        console.log("✅ Initial graph state assembled!", { nodes: graph.nodes, links: graph.links });
+      })();
+    }
+  }, [topologyData, roundZeroData, isGraphInitialized]);
 
   useEffect(() => {
     return () => {
@@ -193,24 +210,35 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
   }, [disconnect]);
 
   return (
-    <WebSocketContext.Provider value={{
-      connected,
-      connect,
-      disconnect,
-      latestSimulationData,
-      historyMap,
-      messageCount,
-      clearData
-    }}>
+    <WebSocketContext.Provider
+      value={{
+        connected,
+        connect,
+        disconnect,
+        latestSimulationData,
+        topologyData,
+        nodes,
+        links,
+        isGraphInitialized,
+        historyMap,
+        messageCount,
+        clearData,
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   );
 };
 
-export const useSimulationWebSocket = () => {
+/** =========================
+ * Hook de consumo
+ * ========================= */
+
+export const useSimulationWebSocket = (): WebSocketContextType => {
   const context = useContext(WebSocketContext);
   if (context === undefined) {
     throw new Error('useSimulationWebSocket must be used within a SimulationWebSocketProvider');
   }
   return context;
 };
+

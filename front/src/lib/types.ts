@@ -23,6 +23,28 @@ export type Links = {
   date?: Date;
 };
 
+export interface TopologyData {
+  networkId: string;
+  runId: bigint;
+  numberOfAgents: number;
+  numberOfNeighbors: number;
+  indexOffset: Int32Array;
+  neighborsRefs: Int32Array;
+  neighborsWeights: Float32Array;
+  neighborBiases: Uint8Array;
+}
+
+export interface SimulationData {
+  runId: bigint;
+  numberOfAgents: number;
+  round: number;
+  indexReference: number;
+  beliefs: Float32Array;
+  privateBeliefs: Float32Array;
+  speakingStatuses: Uint8Array;
+  timestamp: Date;
+}
+
 // Simulation Form Types
 export type AgentStrategyType =
   | 'DeGroot'

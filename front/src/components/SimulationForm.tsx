@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { useSimulationState } from '@/hooks/useSimulationState.tsx';
 import { useSimulationWebSocket } from '@/contexts/WebSocketContext';
+import { useNavigate } from 'react-router-dom';
 
 import {
   AgentStrategyType,
@@ -94,6 +95,7 @@ const createFormSchema = (limits: { maxAgents: number; maxIterations: number; de
 };
 
 export function SimulationForm() {
+  const navigate = useNavigate();
   const { standardForm, setStandardForm } = useSimulationState();
   const { limits, loadingPermissions } = usePermissions();
 
@@ -110,7 +112,7 @@ export function SimulationForm() {
     values: { ...formValues, seed: formValues.seed ? formValues.seed.toString() : '' },
   });
 
-  const { connect, disconnect, clearData, connected } = useSimulationWebSocket();
+  const { connect, disconnect, clearData, connected, isGraphInitialized } = useSimulationWebSocket();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'success' | 'error' | null>(null);
@@ -156,6 +158,15 @@ export function SimulationForm() {
     if (d > n) return n * (n - 1);
     return Math.floor(d * (d - 1) + ((n - d) * 2 * d));
   }, [numAgents, density]);
+
+      useEffect(() => {
+      // Cuando el contexto nos avise que el grafo inicial está listo...
+      if (isGraphInitialized) {
+        // ...navegamos a la página del visualizador.
+        console.log('Graph is initialized, navigating to cosmograph...');
+        navigate('/board/cosmograph');
+      }
+    }, [isGraphInitialized, navigate]);
 
   useEffect(() => {
     if (biasConfigs.reduce((sum, config) => sum + config.count, 0) > maxEdges) {

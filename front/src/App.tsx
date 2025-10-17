@@ -24,6 +24,7 @@ import { SimulationChart } from '@/components/SimulationChart';
 import { SimulationDashboard } from './components/SimulationDashboard';
 import { SimulationStateProvider } from '@/hooks/useSimulationState';
 import { UnifiedDashboard } from './components/UnifiedDashboard';
+import { GraphStateBridge } from '@/contexts/GraphStateBridge';
 
 
 interface ThemeManagerProps {
@@ -90,6 +91,7 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <CosmographProvider nodes={nodes} links={links}>
                     <SimulationWebSocketProvider>
+                      <GraphStateBridge setNodes={setNodes} setLinks={setLinks} />
                       <SimulationStateProvider>
                         <Board setNodes={setNodes} setLinks={setLinks} />
                       </SimulationStateProvider>
