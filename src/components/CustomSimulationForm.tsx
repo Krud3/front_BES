@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSimulationWebSocket } from "@/contexts/WebSocketContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSimulationState } from "@/hooks/useSimulationState.tsx";
@@ -52,17 +53,18 @@ const BIASES = {
   4: "Insular",
 };
 
-interface props {
+interface AgentInputProps {
   label: string;
   value: any;
-  onChange: (v: any) => void;
-  type: string;
-  min: number;
-  max: number;
-  step: number;
+  onChange: (value: number) => void;
+  type?: "float" | "int";
+  min?: number;
+  max?: number;
+  step?: number;
   placeholder: any;
 }
-const AgentInput: React.FC<props> = ({
+
+const AgentInput = ({
   label,
   value,
   onChange,
@@ -71,7 +73,8 @@ const AgentInput: React.FC<props> = ({
   min = 0,
   max = 1,
   step = 0.01,
-}) => (
+  placeholder,
+}: AgentInputProps) => (
   <div className="space-y-1">
     <Label className="text-xs text-muted-foreground">{label}</Label>
     <Input

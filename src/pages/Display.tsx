@@ -21,9 +21,7 @@ import {
 import { Links, Node } from "@/lib/types";
 import { setNodeColor } from "@/lib/utils";
 
-interface DisplayProps {}
-
-const Display: React.FC<DisplayProps> = () => {
+const Display: React.FC = () => {
   const timelineRef = useRef<CosmographTimelineRef<any>>(null);
   const { cosmograph, nodes, links } = useCosmograph() || {};
   const [selectedDateRange, setSelectedDateRange] = useState<

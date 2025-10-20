@@ -12,7 +12,7 @@ import {
 import { db } from "@/firebaseConfig";
 
 class UserDAO {
-  collectionRef: any;
+  private collectionRef: any;
 
   constructor() {
     this.collectionRef = collection(db, "users");
