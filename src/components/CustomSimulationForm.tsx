@@ -94,6 +94,8 @@ const AgentInput = ({
   </div>
 );
 
+const HTTP_URL = import.meta.env.VITE_API_HTTP_URL;
+
 export function CustomSimulationForm() {
   const { customForm, setCustomForm } = useSimulationState();
   const {
@@ -438,7 +440,7 @@ export function CustomSimulationForm() {
     try {
       const buffer = buildBuffer();
 
-      const response = await fetch("http://localhost:9000/custom", {
+      const response = await fetch(`${HTTP_URL}/custom`, {
         method: "POST",
         headers: {
           "Content-Type": "application/octet-stream",

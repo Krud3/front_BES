@@ -1,5 +1,5 @@
 # STAGE 1: Build the application
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -18,7 +18,14 @@ COPY . .
 RUN npm run build
 
 # STAGE 2: Serve the application
-FROM node:20-alpine
+FROM node:22-alpine
+
+# Define build arguments for environment variables
+ARG VITE_API_HTTP_URL
+ARG VITE_API_WS_URL
+
+ENV VITE_API_HTTP_URL=${VITE_API_HTTP_URL}
+ENV VITE_API_WS_URL=${VITE_API_WS_URL}
 
 WORKDIR /app
 

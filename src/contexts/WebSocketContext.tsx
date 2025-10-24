@@ -45,6 +45,8 @@ const WebSocketContext = createContext<WebSocketContextType | undefined>(
 const RENDER_FPS = 5;
 const RENDER_INTERVAL = 1000 / RENDER_FPS;
 
+const WS_URL = import.meta.env.VITE_API_WS_URL;
+
 export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -182,7 +184,7 @@ export const SimulationWebSocketProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     const channelId = getChannelId();
-    const socket = new WebSocket(`ws://localhost:9000/ws/${channelId}`);
+    const socket = new WebSocket(`${WS_URL}/ws/${channelId}`);
 
     socket.onopen = () => {
       console.log(`Connected to WebSocket on channel: ${channelId}`);

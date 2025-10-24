@@ -104,6 +104,8 @@ const biasToByte = (bias: CognitiveBias): number => {
   }
 };
 
+const HTTP_URL = import.meta.env.VITE_API_HTTP_URL;
+
 const createFormSchema = (limits: {
   maxAgents: number;
   maxIterations: number;
@@ -519,7 +521,7 @@ export function SimulationForm() {
         view.setInt8(offset++, biasToByte(config.bias));
       });
 
-      const response = await fetch("http://localhost:9000/run", {
+      const response = await fetch(`${HTTP_URL}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/octet-stream" },
         body: buffer,

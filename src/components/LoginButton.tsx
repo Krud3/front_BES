@@ -5,6 +5,7 @@ import { auth } from "../firebaseConfig";
 import { Button } from "./ui/button"; // Assuming you are using Shadcn/UI Button
 
 const googleAuthProvider = new GoogleAuthProvider();
+const HTTP_URL = import.meta.env.VITE_API_HTTP_URL;
 
 export const LoginButton: React.FC = () => {
   const handleLogin = async () => {
@@ -22,7 +23,7 @@ export const LoginButton: React.FC = () => {
         usageLimits: {}, // Default usage limits
       });
 
-      const response = await fetch("http://localhost:9000/api/users/sync", {
+      const response = await fetch(`${HTTP_URL}/api/users/sync`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
