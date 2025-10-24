@@ -26,7 +26,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useSimulationState } from "@/hooks/useSimulationState.tsx";
 import { setChannelId } from "@/lib/channelStore.ts";
 import { CustomAgent, Neighbor } from "@/lib/types";
-import { TooltipProvider } from "./ui/tooltip";
 
 const SAVE_MODES = {
   0: "Full",
@@ -57,7 +56,7 @@ interface AgentInputProps {
   label: string;
   value: any;
   onChange: (value: number) => void;
-  type?: "float" | "int";
+  type?: "float" | "int" | string;
   min?: number;
   max?: number;
   step?: number;
@@ -73,7 +72,6 @@ const AgentInput = ({
   min = 0,
   max = 1,
   step = 0.01,
-  placeholder,
 }: AgentInputProps) => (
   <div className="space-y-1">
     <Label className="text-xs text-muted-foreground">{label}</Label>
