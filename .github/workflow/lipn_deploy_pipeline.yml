@@ -1,0 +1,17 @@
+name: Trigger LIPN Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger_deploy_pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: eic/trigger-gitlab-ci@v1
+        with:
+          url: https://depot.lipn.univ-paris13.fr
+          token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+          project_id: 975
+
