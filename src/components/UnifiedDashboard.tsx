@@ -24,6 +24,39 @@ import { Progress } from "@/components/ui/progress";
 import { useSimulationWebSocket } from "@/contexts/WebSocketContext";
 import { useSimulationHistory } from "@/hooks/useSimulationHistory";
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload) return null;
+
+  const MAX_ITEMS = 10;
+  const agentData = payload.filter((entry: any) =>
+    entry.dataKey.startsWith("agent"),
+  );
+
+  const displayedData = agentData.slice(0, MAX_ITEMS);
+  const hiddenCount = agentData.length - MAX_ITEMS;
+
+  return (
+    <div className="bg-white dark:bg-gray-800 p-3 border rounded shadow-lg max-h-96 overflow-y-auto">
+      <p className="font-semibold mb-2">Round {label}</p>
+      {displayedData.map((entry: any, index: number) => (
+        <div key={index} className="flex items-center gap-2 text-sm">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span>
+            {entry.dataKey}: {entry.value.toFixed(4)}
+          </span>
+        </div>
+      ))}
+      {hiddenCount > 0 && (
+        <p className="text-xs text-muted-foreground mt-2 italic">
+          + {hiddenCount} agentes más...
+        </p>
+      )}
+    </div>
+  );
+};
 export const UnifiedDashboard: React.FC = () => {
   const { connected, latestSimulationData, messageCount } =
     useSimulationWebSocket();
@@ -326,12 +359,7 @@ export const UnifiedDashboard: React.FC = () => {
                   domain={["dataMin", "dataMax"]}
                 />
                 <YAxis domain={[0, 1]} />
-                <Tooltip
-                  formatter={(value: any) =>
-                    typeof value === "number" ? value.toFixed(4) : value
-                  }
-                  labelFormatter={(label) => `Round ${label}`}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 {generateLines()}
               </LineChart>
             </ResponsiveContainer>
