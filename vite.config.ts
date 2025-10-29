@@ -9,4 +9,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  preview: {
+    host: true,
+    allowedHosts: ['silensess.lipn.univ-paris13.fr']
+  }
 })
