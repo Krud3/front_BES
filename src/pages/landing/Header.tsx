@@ -36,7 +36,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6">
+      <header className="sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6 py-4">
         {/* Logo */}
         <Link
           to="/"
@@ -49,19 +49,19 @@ const Header: React.FC = () => {
         {/* Navegación para pantallas grandes */}
         <nav className="hidden md:flex md:flex-1 justify-center gap-6 text-lg font-medium ">
           <Link
-            to="#introduction"
+            to="/home#introduction"
             className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
           >
             Introduction
           </Link>
           <Link
-            to="#features"
+            to="/home#features"
             className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
           >
             Features
           </Link>
           <Link
-            to="#examples"
+            to="/home#examples"
             className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
           >
             Some examples

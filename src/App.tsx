@@ -24,8 +24,8 @@ import Display from "@/pages/Display";
 import Home from "@/pages/landing/Home";
 import LoginPage from "@/pages/landing/LoginPage";
 import NotFound from "@/pages/not-found";
-import OnConstruction from "@/pages/on-construction";
 import { SimulationDashboard } from "./components/SimulationDashboard";
+import Wiki from "@/pages/Wiki";
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -164,7 +164,7 @@ const App: React.FC = () => {
               }
             />
             <Route path="*" element={<NotFound />} />
-            <Route path="/wiki" element={<OnConstruction />} />
+            <Route path="/wiki" element={<Wiki />} />
           </Routes>
         </ThemeManager>
       </Router>

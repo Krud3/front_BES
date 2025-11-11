@@ -200,7 +200,7 @@ export const UnifiedDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Simulation Progress</CardTitle>

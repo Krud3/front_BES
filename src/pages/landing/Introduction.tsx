@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import logoAvispa2 from "@/assets/logos/JPG/AVISPA.jpg";
 import logoPromueva from "@/assets/logos/SVG/promueva.svg";
 import logoUnivalle from "@/assets/logos/SVG/univalle.svg";
+import logoJaverianaCali from "@/assets/logos/PNG/javeriana2.png";
 import { Container } from "@/components/Container";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,9 +41,10 @@ const Introduction: React.FC = () => {
         >
           {[
             [
-              { name: "Universidad del valle", logo: logoUnivalle },
               { name: "Promueva", logo: logoPromueva },
+              { name: "Universidad del valle", logo: logoUnivalle },
               { name: "Avispa", logo: logoAvispa2 },
+              { name: "Javeriana Cali", logo: logoJaverianaCali },
             ],
             /*[
                 { name: 'Mirage', logo: logoMirage },
