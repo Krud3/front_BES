@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import { CheckCircleIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { CheckCircleIcon, Download, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -48,6 +48,7 @@ import {
   SAVE_MODES_MAP,
   SaveModeString,
 } from "@/lib/types";
+import { useCsvIO } from "@/hooks/useCsvIO";
 
 const formSchema = z.object({
   seed: z.string().optional(),
@@ -161,6 +162,41 @@ const createFormSchema = (limits: {
 };
 
 export function SimulationForm() {
+  const { exportStandardParams, parseStandardCsv } = useCsvIO();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { formValues: newVals, agentConfigs: newAgents, biasConfigs: newBias } = await parseStandardCsv(file);
+      
+      // Batch update state
+      setStandardForm(prev => ({
+        ...prev,
+        formValues: { ...prev.formValues, ...newVals },
+        agentConfigs: newAgents,
+        biasConfigs: newBias
+      }));
+      
+      alert("Configuration imported successfully.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to import CSV");
+    }
+    
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleExport = () => {
+    exportStandardParams(formValues, agentConfigs, biasConfigs);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const { standardForm, setStandardForm } = useSimulationState();
   const { limits, loadingPermissions } = usePermissions();
 
@@ -201,7 +237,7 @@ export function SimulationForm() {
           seed:
             value.seed && value.seed.trim() !== ""
               ? BigInt(value.seed)
-              : undefined,
+              : 0n,
         },
       }));
     });
@@ -595,10 +631,29 @@ export function SimulationForm() {
     <TooltipProvider>
       <Card className="w-full max-w-3xl mx-auto border-none shadow-none">
         <CardHeader>
-          <CardTitle>Run Simulation</CardTitle>
-          <CardDescription>
-            Configure the parameters for the simulation run.
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Run Simulation</CardTitle>
+              <CardDescription>
+                Configure the parameters for the simulation run.
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleExport}>
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleImportClick}>
+                <Upload className="w-4 h-4 mr-2" /> Import
+              </Button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                accept=".csv" 
+                className="hidden" 
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">

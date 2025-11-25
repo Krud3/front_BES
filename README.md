@@ -1,12 +1,11 @@
-
 ```
 front_BES
+├─ .dockerignore
 ├─ biome.json
 ├─ components.json
 ├─ docker-compose.yml
-├─ Dockerfile
+├─ Dockerfile_front
 ├─ eslint.config.js
-├─ front
 ├─ index.html
 ├─ package-lock.json
 ├─ package.json
@@ -28,6 +27,9 @@ front_BES
 │  │  ├─ logos
 │  │  │  ├─ JPG
 │  │  │  │  └─ AVISPA.jpg
+│  │  │  ├─ PNG
+│  │  │  │  ├─ javeriana.png
+│  │  │  │  └─ javeriana2.png
 │  │  │  └─ SVG
 │  │  │     ├─ avispa.svg
 │  │  │     ├─ logo-bes.svg
@@ -81,6 +83,7 @@ front_BES
 │  ├─ hooks
 │  │  ├─ use-mobile.tsx
 │  │  ├─ useAuth.ts
+│  │  ├─ useCsvIO.ts
 │  │  ├─ usePermissions.ts
 │  │  ├─ useSimulationHistory.ts
 │  │  └─ useSimulationState.tsx
@@ -88,6 +91,7 @@ front_BES
 │  ├─ lib
 │  │  ├─ authStore.ts
 │  │  ├─ channelStore.ts
+│  │  ├─ csvSchemas.ts
 │  │  ├─ parseCSVToNodes.ts
 │  │  ├─ types.ts
 │  │  ├─ UserDAO.ts
@@ -115,7 +119,8 @@ front_BES
 │  │  │  ├─ Introduction.tsx
 │  │  │  └─ LoginPage.tsx
 │  │  ├─ not-found.tsx
-│  │  └─ on-construction.tsx
+│  │  ├─ on-construction.tsx
+│  │  └─ Wiki.tsx
 │  └─ vite-env.d.ts
 ├─ tailwind.config.js
 ├─ tsconfig.app.json

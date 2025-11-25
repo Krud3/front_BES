@@ -1,5 +1,5 @@
-import { AlertCircle, Check, Plus, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { AlertCircle, Check, Plus, Trash2, Download, Upload } from "lucide-react";
+import { useCallback, useState, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useSimulationState } from "@/hooks/useSimulationState.tsx";
 import { setChannelId } from "@/lib/channelStore.ts";
 import { CustomAgent, Neighbor } from "@/lib/types";
+import { useCsvIO } from "@/hooks/useCsvIO";
 
 const SAVE_MODES = {
   0: "Full",
@@ -97,6 +98,38 @@ const AgentInput = ({
 const HTTP_URL = import.meta.env.VITE_API_HTTP_URL;
 
 export function CustomSimulationForm() {
+  const {
+    exportCustomSimulation,
+    parseCustomSimulation
+  } = useCsvIO();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await parseCustomSimulation(file);
+      
+      // Batch update the entire form state
+      setCustomForm(prev => ({
+        ...prev,
+        stopThreshold: data.stopThreshold ?? prev.stopThreshold,
+        iterationLimit: data.iterationLimit ?? prev.iterationLimit,
+        saveMode: data.saveMode ?? prev.saveMode,
+        networkName: data.networkName ?? prev.networkName,
+        agents: data.agents,
+        neighbors: data.neighbors
+      }));
+      
+      alert("Custom simulation loaded successfully!");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to import file");
+    }
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const { customForm, setCustomForm } = useSimulationState();
   const {
     stopThreshold,
@@ -488,11 +521,30 @@ export function CustomSimulationForm() {
     <TooltipProvider>
       <Card className="w-full max-w-4xl mx-auto border-none shadow-none">
         <CardHeader>
-          <CardTitle>Custom Simulation Run</CardTitle>
-          <CardDescription>
-            Configure and run a custom simulation with specific agents and
-            network topology
-          </CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>Custom Simulation Run</CardTitle>
+                <CardDescription>Configure agents and topology manually.</CardDescription>
+            </div>
+            
+            {/* UNIFIED CONTROLS */}
+            <div className="flex gap-2">
+               <Button variant="outline" size="sm" onClick={() => exportCustomSimulation(customForm)}>
+                 <Download className="w-4 h-4 mr-2" /> Export
+               </Button>
+               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                 <Upload className="w-4 h-4 mr-2" /> Import
+               </Button>
+               <input 
+                 type="file" 
+                 ref={fileInputRef} 
+                 onChange={handleImport} 
+                 accept=".csv" 
+                 className="hidden" 
+               />
+            </div>
+
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
