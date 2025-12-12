@@ -27,6 +27,7 @@ import { useSimulationState } from "@/hooks/useSimulationState.tsx";
 import { setChannelId } from "@/lib/channelStore.ts";
 import { CustomAgent, Neighbor } from "@/lib/types";
 import { useCsvIO } from "@/hooks/useCsvIO";
+import { NetworkPreviewDialog } from "@/components/NetworkPreviewDialog";
 
 const SAVE_MODES = {
   0: "Full",
@@ -1012,6 +1013,12 @@ export function CustomSimulationForm() {
                 Please ensure all fields are valid
               </p>
             )}
+
+            <NetworkPreviewDialog 
+              agents={agents} 
+              neighbors={neighbors} 
+            />
+
             <Button
               onClick={handleSubmit}
               disabled={!isValid || isSubmitting}
