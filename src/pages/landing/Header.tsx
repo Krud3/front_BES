@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ModeToggle } from "@/components/mode-toggle";
 import { auth } from "@/firebaseConfig";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -126,9 +127,11 @@ const Header: React.FC = () => {
           </Sheet>
         </div>
 
-        {/* Opciones de usuario (DropdownMenu) */}
-        {user && (
-          <div className="flex items-center gap-4">
+        {/* Opciones de usuario y tema */}
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -141,19 +144,13 @@ const Header: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>My Account</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Languages</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Cambiar tema */}
-            {/*<ModeToggle />*/}
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       {/* Render the logout alert if triggered */}

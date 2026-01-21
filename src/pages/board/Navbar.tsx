@@ -18,6 +18,7 @@ import { auth } from "@/firebaseConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { Links, Node } from "@/lib/types";
 import CreateSimulationSheet from "@/pages/board/CSSheet"; // Renamed for clarity
+import { ModeToggle } from "@/components/mode-toggle";
 
 type NavbarProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
@@ -47,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = (/*{ setNodes, setLinks }*/) => {
 
   return (
     <>
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link
             to="/"
@@ -56,12 +57,7 @@ const Navbar: React.FC<NavbarProps> = (/*{ setNodes, setLinks }*/) => {
             <Logo className="h-9 w-9" />
             <span className="sr-only">BES</span>
           </Link>
-          {/* <PRSheet setNodes={setNodes} setLinks={setLinks} /> */}
           <CreateSimulationSheet />
-          {/* <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} /> */}
-          {/* <Link to="/user-management" className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap">
-            User's Management
-          </Link> */}
         </nav>
 
         {/* Sheet for mobile menu */}
@@ -86,49 +82,36 @@ const Navbar: React.FC<NavbarProps> = (/*{ setNodes, setLinks }*/) => {
                 <Logo className="h-9 w-9" />
                 <span className="sr-only">BES</span>
               </Link>
-
-              {/* <PRSheet setNodes={setNodes} setLinks={setLinks} /> */}
               <CreateSimulationSheet />
-              {/* <UploadDialog setNodes={setNodes} setLinks={setLinks} closeSheet={closeSheet} /> */}
-              {/* <Link
-                to="/user-management"
-                className="text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
-                onClick={closeSheet}
-              >
-                User's Management
-              </Link> */}
             </nav>
           </SheetContent>
         </Sheet>
 
-        {user && (
-          <div className="ml-auto flex-1 sm:flex-initial">
-            <div className="ml-auto flex-1 sm:flex-initial flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="rounded-full"
-                  >
-                    <CircleUser className="h-5 w-5" />
-                    <span className="sr-only">Toggle user menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Languages</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          <ModeToggle />
+          
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full"
+                >
+                  <CircleUser className="h-5 w-5" />
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </header>
 
       {showAlert && (

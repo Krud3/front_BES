@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { CustomAgent, Neighbor, Node, Links } from "@/lib/types";
 import { setNodeColor } from "@/lib/utils"; // Assuming this exists based on Display.tsx
+import { useTheme } from "@/components/theme-provider";
 
 interface NetworkPreviewDialogProps {
   agents: CustomAgent[];
@@ -17,8 +18,7 @@ export const NetworkPreviewDialog: React.FC<NetworkPreviewDialogProps> = ({
   neighbors,
   disabled = false 
 }) => {
-  // Transform Form Data into Cosmograph Data
-  // Note: We use agent.name as the ID because neighbors store source/target by Name, not UUID.
+  const { theme } = useTheme();
   const { nodes, links } = useMemo(() => {
     const nodes: Node[] = agents.map((agent) => ({
       id: agent.name, 
@@ -51,24 +51,27 @@ export const NetworkPreviewDialog: React.FC<NetworkPreviewDialogProps> = ({
         
         <div className="flex-1 w-full h-full min-h-0 bg-secondary/10 rounded-md border relative overflow-hidden">
           {nodes.length > 0 ? (
-             <Cosmograph
-             nodes={nodes}
-             links={links}
-             nodeColor={(n) => n.color || "#b3b3b3"}
-             nodeSize={1}
-             nodeLabelAccessor={(n) => n.id}
-             linkWidth={(l) => (l.influenceValue || 0.5) * 4}
-             linkArrows={true}
-             curvedLinks={false}
-             simulationRepulsion={1.5}
-             simulationGravity={0.2} 
-             hoveredNodeRingColor={"red"}
-             focusedNodeRingColor={"white"}
-             disableSimulation={false}
-             simulationLinkSpring={0.1}
-             simulationFriction={0.1}
-             simulationRepulsionFromMouse={0.5}
-           />
+              <Cosmograph
+              nodes={nodes}
+              links={links}
+              nodeColor={(n) => n.color || "#b3b3b3"}
+              nodeSize={1}
+              nodeLabelAccessor={(n) => n.id}
+              linkWidth={(l) => (l.influenceValue || 0.5) * 4}
+              linkArrows={true}
+              curvedLinks={false}
+              simulationRepulsion={1.5}
+              simulationGravity={0.2} 
+              hoveredNodeRingColor={"red"}
+              focusedNodeRingColor={"white"}
+              disableSimulation={false}
+              simulationLinkSpring={0.1}
+              simulationFriction={0.1}
+              simulationRepulsionFromMouse={0.5}
+              backgroundColor={theme === "dark" ? "#111111" : "#ffffff"}
+              nodeLabelColor={theme === "dark" ? "#ffffff" : "#ffffff"}
+              hoveredNodeLabelColor={theme === "dark" ? "#ffffff" : "#ffffff"}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Add agents to generate a preview

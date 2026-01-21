@@ -1,5 +1,5 @@
 import React from "react";
-import Examples from "@/pages/landing/Examples";
+// import Examples from "@/pages/landing/Examples";
 import Features from "@/pages/landing/Features";
 import Header from "@/pages/landing/Header";
 import Introduction from "@/pages/landing/Introduction";
@@ -13,9 +13,9 @@ const Home: React.FC = () => {
           <Introduction />
         </section>
         <Features />
-        <section id="examples">
+        {/* <section id="examples">
           <Examples />
-        </section>
+        </section> */}
       </main>
     </div>
   );

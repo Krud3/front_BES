@@ -13,10 +13,10 @@ const Introduction: React.FC = () => {
 
   return (
     <Container className="pb-16 pt-20 text-center lg:pt-32">
-      <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
+      <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 dark:text-white sm:text-7xl">
         Advanced simulation made accessible for everyone.
       </h1>
-      <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
+      <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700 dark:text-slate-300">
         Our opinion evolution simulator, SiLEnSeSS, combines advanced social
         network models with an intuitive interface, designed so that both the
         general public and scientists can easily understand and apply the
@@ -31,13 +31,13 @@ const Introduction: React.FC = () => {
           </Link>
         </div>
       )}
-      <div className="mt-36 lg:mt-44">
-        <p className="font-display text-base text-slate-900">
+      <div className="flex flex-col mt-36 lg:mt-44 items-center">
+        <p className="font-display text-base text-slate-900 dark:text-slate-400">
           With the participation of
         </p>
         <ul
           role="list"
-          className="mt-8 flex items-center justify-center gap-x-8 sm:flex-col sm:gap-x-0 sm:gap-y-10 xl:flex-row xl:gap-x-12 xl:gap-y-0"
+          className="mt-8 flex items-center justify-center gap-x-8 sm:flex-col sm:gap-x-0 sm:gap-y-10 xl:flex-row xl:gap-x-12 xl:gap-y-0 bg-white p-4 max-w-96 rounded-lg"
         >
           {[
             [

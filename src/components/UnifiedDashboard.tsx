@@ -36,10 +36,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   const hiddenCount = agentData.length - MAX_ITEMS;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 border rounded shadow-lg max-h-96 overflow-y-auto">
-      <p className="font-semibold mb-2">Round {label}</p>
+    <div className="bg-background border border-border p-3 rounded shadow-lg max-h-96 overflow-y-auto">
+      <p className="font-semibold mb-2 text-foreground">Round {label}</p>
       {displayedData.map((entry: any, index: number) => (
-        <div key={index} className="flex items-center gap-2 text-sm">
+        <div key={index} className="flex items-center gap-2 text-sm text-foreground">
           <div
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: entry.color }}
@@ -57,6 +57,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     </div>
   );
 };
+
 export const UnifiedDashboard: React.FC = () => {
   const { connected, latestSimulationData, messageCount } =
     useSimulationWebSocket();
@@ -114,11 +115,11 @@ export const UnifiedDashboard: React.FC = () => {
   }, [currentDataPoint, getLatestRound, latestSimulationData]);
 
   const pieData = [
-    { name: "Speaking", value: metrics.speakingCount, color: "#22c55e" },
+    { name: "Speaking", value: metrics.speakingCount, color: "hsl(var(--chart-1))" },
     {
       name: "Silent",
       value: metrics.totalAgents - metrics.speakingCount,
-      color: "#e5e7eb",
+      color: "hsl(var(--muted))",
     },
   ];
 
@@ -147,11 +148,11 @@ export const UnifiedDashboard: React.FC = () => {
 
   const generateLines = () => {
     const colors = [
-      "#3498db",
-      "#2ecc71",
-      "#9b59b6",
-      "#f1c40f",
-      "#e74c3c",
+      "hsl(var(--chart-1))",
+      "hsl(var(--chart-2))",
+      "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))",
+      "hsl(var(--chart-5))",
       "#1abc9c",
     ];
     const agentKeys = getAgentKeys();
