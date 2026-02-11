@@ -4,8 +4,7 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'package.json'
+  workflow_dispatch:
 
 jobs:
   check-version:
