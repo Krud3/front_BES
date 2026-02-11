@@ -38,7 +38,7 @@ const ProtectedRoute: React.FC<{
   const loading = authLoading || loadingPermissions;
 
   if (loading) {
-    return <>Loading...</>;
+    return <div>Loading...</div>;
   }
 
   if (!user) {
