@@ -10,7 +10,9 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { toast } from "sonner";
 import { db } from "@/shared/api/firebase";
+import { logger } from "@/shared/lib/logger";
 import type { User } from "../types/user.types";
 
 const COLLECTION_NAME = "users";
@@ -29,7 +31,8 @@ export const userApi = {
       const snap = await getDoc(getUserDocRef(uid));
       return snap.exists() ? (snap.data() as User) : null;
     } catch (error) {
-      console.error("Error getting user:", error);
+      logger.error("userApi.getById", error);
+      toast.error("Error getting user");
       return null;
     }
   },
@@ -40,7 +43,8 @@ export const userApi = {
       const snap = await getDocs(q);
       return snap.empty || !snap.docs[0] ? null : (snap.docs[0].data() as User);
     } catch (error) {
-      console.error("Error getting user by email:", error);
+      logger.error("userApi.getByEmail", error);
+      toast.error("Error getting user by email");
       return null;
     }
   },
@@ -59,7 +63,8 @@ export const userApi = {
       });
       return true;
     } catch (error) {
-      console.error("Error creating user:", error);
+      logger.error("userApi.create", error);
+      toast.error("Error creating user");
       return false;
     }
   },
@@ -69,7 +74,8 @@ export const userApi = {
       await updateDoc(getUserDocRef(uid), data);
       return true;
     } catch (error) {
-      console.error("Error updating user:", error);
+      logger.error("userApi.update", error);
+      toast.error("Error updating user");
       return false;
     }
   },
@@ -79,7 +85,8 @@ export const userApi = {
       await deleteDoc(getUserDocRef(uid));
       return true;
     } catch (error) {
-      console.error("Error deleting user:", error);
+      logger.error("userApi.remove", error);
+      toast.error("Error deleting user");
       return false;
     }
   },

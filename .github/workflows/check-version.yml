@@ -1,0 +1,47 @@
+name: Check Version Bump
+
+on:
+  push:
+    branches: [refactor]
+  pull_request:
+    branches: [refactor]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR/push
+        uses: actions/checkout@v4
+
+      - name: Get current version
+        id: current
+        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Get base version
+        id: base
+        run: |
+          git fetch origin refactor --depth=1
+          echo "version=$(git show origin/refactor:package.json | jq -r .version)" >> "$GITHUB_OUTPUT"
+
+      - name: Compare versions
+        run: |
+          BASE="${{ steps.base.outputs.version }}"
+          CURRENT="${{ steps.current.outputs.version }}"
+
+          echo "Base version: $BASE"
+          echo "Current version: $CURRENT"
+
+          if [ "$BASE" = "$CURRENT" ]; then
+            echo "::error::Version not bumped. Update version in package.json (current: $CURRENT)"
+            exit 1
+          fi
+
+          # Compare semver (including pre-release tags)
+          HIGHER=$(echo -e "$BASE\n$CURRENT" | sort -V | tail -1)
+
+          if [ "$HIGHER" != "$CURRENT" ]; then
+            echo "::error::Version must be higher than $BASE (got: $CURRENT)"
+            exit 1
+          fi
+
+          echo "✅ Version bumped: $BASE → $CURRENT"

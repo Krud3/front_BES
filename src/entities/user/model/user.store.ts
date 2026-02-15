@@ -5,8 +5,10 @@ import {
   signOut,
   type Unsubscribe,
 } from "firebase/auth";
+import { toast } from "sonner";
 import { create } from "zustand";
 import { auth } from "@/shared/api/firebase";
+import { logger } from "@/shared/lib/logger";
 import { userApi } from "../api/user.api";
 import type { User } from "../types/user.types";
 
@@ -28,7 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Login error:", error);
+      logger.error("useAuthStore.login", error);
+      toast.error("Error during login");
     }
   },
 
@@ -37,7 +40,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       await signOut(auth);
       set({ user: null });
     } catch (error) {
-      console.error("Logout error:", error);
+      logger.error("useAuthStore.logout", error);
+      toast.error("Error during logout");
     }
   },
 
