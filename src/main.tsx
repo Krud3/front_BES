@@ -1,7 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { AppRoutes } from "@/app/routes";
+import { useAuthStore } from "./entities/user";
 import "./shared/styles/globals.css";
+
+useAuthStore.getState().observeAuthState();
 
 const rootElement = document.getElementById("root");
 
