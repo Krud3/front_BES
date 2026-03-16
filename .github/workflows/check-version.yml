@@ -1,8 +1,6 @@
 name: Check Version Bump
 
 on:
-  push:
-    branches: [refactor]
   pull_request:
     branches: [refactor]
 

@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { db } from "@/shared/api/firebase";
 import { logger } from "@/shared/lib/logger";
+import { getRoleLimits } from "../lib/permissions";
 import type { User } from "../types/user.types";
 
 const COLLECTION_NAME = "users";
@@ -51,7 +52,7 @@ export const userApi = {
 
   async create(user: User): Promise<boolean> {
     try {
-      const existing = await userApi.getByEmail(user.email);
+      const existing = await userApi.getById(user.uid);
       if (existing) return false;
 
       await setDoc(getUserDocRef(user.uid), {
@@ -59,7 +60,7 @@ export const userApi = {
         name: user.name,
         photo: user.photo,
         roles: user.roles,
-        usageLimits: user.usageLimits ?? {},
+        usageLimits: getRoleLimits(user.roles),
       });
       return true;
     } catch (error) {

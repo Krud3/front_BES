@@ -18,11 +18,8 @@ export function LoginPage() {
         </Link>
         <p className="mt-10 text-sm font-medium text-gray-700">Login Page</p>
         <h1 className="mt-3 text-2xl font-semibold text-gray-900 text-center">
-          Welcome to the Belief Evolution Simulator
+          Welcome to SiLEnSeSS
         </h1>
-        <p className="mt-3 text-sm text-gray-700 text-center max-w-md">
-          Sign up to access special features.
-        </p>
         <div className="mt-10">
           <LoginButton />
         </div>
