@@ -1,1 +1,1 @@
-console.log("dummy");
+export { ProfilePage } from "./profile/profile-page";

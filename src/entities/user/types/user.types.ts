@@ -13,4 +13,5 @@ export interface User {
   photo: string;
   roles: UserRole[];
   usageLimits?: UsageLimits;
+  deactivated?: boolean;
 }

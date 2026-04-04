@@ -5,6 +5,6 @@ export {
   ROLE_LIMITS,
   ROLE_PERMISSIONS,
 } from "./lib/permissions";
-export { usePermissions } from "./lib/use-permissions";
+export { usePermissions } from "./model/use-permissions";
 export { useAuthStore } from "./model/user.store";
 export type { UsageLimits, User, UserRole } from "./types/user.types";
