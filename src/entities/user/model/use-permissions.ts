@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useAuthStore } from "../model/user.store";
-import { getRoleLimits, getRolePermissions } from "./permissions";
+import { getRoleLimits, getRolePermissions } from "../lib/permissions";
+import { useAuthStore } from "./user.store";
 
 export function usePermissions() {
   const user = useAuthStore((state) => state.user);

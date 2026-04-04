@@ -12,13 +12,12 @@ export default defineConfig({
     restoreMocks: true,
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "html", "cobertura"],
+      reporter: ["text", "lcov"],
       reportsDirectory: "./coverage",
       include: [
-        "src/features/**/domain/**/*.ts",
-        "src/features/**/application/**/*.ts",
-        "src/features/**/infraestructure/mappers/**/*.ts",
-        "src/shared/errors/**/*.ts",
+        "src/entities/**/*.ts",
+        "src/features/**/*.ts",
+        "src/shared/lib/**/*.ts",
       ],
       exclude: [
         "**/*.d.ts",

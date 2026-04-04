@@ -43,3 +43,8 @@ coverage
 .vscode/
 
 serviceAccount.json
+
+.agents/
+skills-lock.json
+.context/
+.claude/

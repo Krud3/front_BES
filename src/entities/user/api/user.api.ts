@@ -30,7 +30,7 @@ export const userApi = {
   async getById(uid: string): Promise<User | null> {
     try {
       const snap = await getDoc(getUserDocRef(uid));
-      return snap.exists() ? (snap.data() as User) : null;
+      return snap.exists() ? ({ uid, ...snap.data() } as User) : null;
     } catch (error) {
       logger.error("userApi.getById", error);
       toast.error("Error getting user");

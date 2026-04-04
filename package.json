@@ -1,6 +1,6 @@
 {
   "name": "front_bes",
-  "version": "2.0.0-alpha.3",
+  "version": "2.0.0-alpha.4",
   "type": "module",
   "private": true,
   "scripts": {
@@ -29,6 +29,8 @@
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
+    "@vitest/coverage-v8": "^4.1.2",
+    "happy-dom": "^20.8.9",
     "jsdom": "^28.0.0",
     "tailwindcss": "^4.1.18",
     "vitest": "^4.0.18"
