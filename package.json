@@ -1,6 +1,6 @@
 {
   "name": "front_bes",
-  "version": "2.0.0-alpha.4",
+  "version": "2.0.0-alpha.5",
   "type": "module",
   "private": true,
   "scripts": {
@@ -47,6 +47,7 @@
     "i18next": "^26.0.3",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^0.563.0",
+    "motion": "^12.38.0",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
