@@ -1,31 +1,37 @@
 import { useAuthStore, usePermissions } from "@/entities/user";
 import { LogoutButton } from "@/features/auth";
+import { LanguageSwitcher } from "@/features/language-switch";
+import { useTranslation } from "@/shared/i18n";
 
 export function HomePage() {
   const user = useAuthStore((state) => state.user);
   const { roles, limits } = usePermissions();
+  const { t } = useTranslation();
 
   return (
     <div className="p-8 font-sans">
-      <h1 className="text-2xl font-bold">🚀 SiLEnSeSS v2.0.0-alpha.1</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">🚀 SiLEnSeSS v2.0.0-alpha.1</h1>
+        <LanguageSwitcher />
+      </div>
       <div className="mt-6 space-y-2">
         <p>
-          <strong>Name:</strong> {user?.name ?? "Guest"}
+          <strong>{t("home.name")}:</strong> {user?.name ?? "Guest"}
         </p>
         <p>
-          <strong>Email:</strong> {user?.email ?? "-"}
+          <strong>{t("home.email")}:</strong> {user?.email ?? "-"}
         </p>
         <p>
-          <strong>Roles:</strong> {roles.join(", ")}
+          <strong>{t("home.roles")}:</strong> {roles.join(", ")}
         </p>
         <p>
-          <strong>Max Agents:</strong> {limits.maxAgents}
+          <strong>{t("home.maxAgents")}:</strong> {limits.maxAgents}
         </p>
         <p>
-          <strong>Max Iterations:</strong> {limits.maxIterations}
+          <strong>{t("home.maxIterations")}:</strong> {limits.maxIterations}
         </p>
         <p>
-          <strong>Density Factor:</strong> {limits.densityFactor}
+          <strong>{t("home.densityFactor")}:</strong> {limits.densityFactor}
         </p>
       </div>
       <div className="mt-6">

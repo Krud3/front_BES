@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { AppProviders } from "@/app/providers";
 import { AppRoutes } from "@/app/routes";
-import { Toaster } from "@/shared/ui/sonner";
 import { useAuthStore } from "./entities/user";
 import "./shared/styles/globals.css";
 
@@ -15,7 +15,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AppRoutes />
-    <Toaster />
+    <AppProviders>
+      <AppRoutes />
+    </AppProviders>
   </StrictMode>,
 );
