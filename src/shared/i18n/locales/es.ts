@@ -44,6 +44,26 @@ const es = {
     language: "Idioma",
     en: "Inglés",
     es: "Español",
+    home: "Inicio",
+    wiki: "Wiki",
+    previousResults: "Resultados anteriores",
+    openMenu: "Abrir menú",
+    closeMenu: "Cerrar menú",
+    onThisPage: "En esta página",
+  },
+  board: {
+    title: "Tablero",
+    comingSoon: "Próximamente",
+  },
+  footer: {
+    description:
+      "SiLEnSeSS es una plataforma de simulación para investigación en dinámica de opiniones, desarrollada por el grupo PROMUEVA de la Universidad del Valle.",
+    navigation: "Navegación",
+    more: "Más",
+    faq: "Preguntas frecuentes",
+    contact: "Contacto",
+    about: "Acerca de",
+    rights: "Todos los derechos reservados.",
   },
 } as const;
 

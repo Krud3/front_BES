@@ -1,42 +1,56 @@
-import { useAuthStore, usePermissions } from "@/entities/user";
-import { LogoutButton } from "@/features/auth";
-import { LanguageSwitcher } from "@/features/language-switch";
-import { useTranslation } from "@/shared/i18n";
-
 export function HomePage() {
-  const user = useAuthStore((state) => state.user);
-  const { roles, limits } = usePermissions();
-  const { t } = useTranslation();
-
   return (
-    <div className="p-8 font-sans">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">🚀 SiLEnSeSS v2.0.0-alpha.1</h1>
-        <LanguageSwitcher />
-      </div>
-      <div className="mt-6 space-y-2">
-        <p>
-          <strong>{t("home.name")}:</strong> {user?.name ?? "Guest"}
+    <article className="flex flex-col gap-10 max-w-prose">
+      <section className="flex flex-col gap-4">
+        <h1 className="font-display text-4xl font-normal tracking-tight text-foreground">
+          SiLEnSeSS
+        </h1>
+        <p className="text-lg text-muted-foreground leading-relaxed">
+          A simulation platform for opinion dynamics research, built for the PROMUEVA
+          research group at Universidad del Valle.
         </p>
-        <p>
-          <strong>{t("home.email")}:</strong> {user?.email ?? "-"}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-2xl font-normal text-foreground">Introduction</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Opinion dynamics studies how individual beliefs evolve through social interaction.
+          SiLEnSeSS lets researchers configure agent networks, choose an update rule, and
+          observe how opinion distributions shift over time — all without writing code.
         </p>
-        <p>
-          <strong>{t("home.roles")}:</strong> {roles.join(", ")}
+        <p className="text-muted-foreground leading-relaxed">
+          The platform currently implements two foundational models: the <strong>DeGroot</strong> averaging
+          model and the <strong>Spiral of Silence</strong> suppression model. Both run on
+          configurable network topologies and expose per-iteration data for analysis.
         </p>
-        <p>
-          <strong>{t("home.maxAgents")}:</strong> {limits.maxAgents}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-2xl font-normal text-foreground">Examples</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          The following scenarios illustrate the kinds of questions SiLEnSeSS can help answer.
         </p>
-        <p>
-          <strong>{t("home.maxIterations")}:</strong> {limits.maxIterations}
-        </p>
-        <p>
-          <strong>{t("home.densityFactor")}:</strong> {limits.densityFactor}
-        </p>
-      </div>
-      <div className="mt-6">
-        <LogoutButton />
-      </div>
-    </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h3 className="font-sans font-semibold text-foreground">Consensus under DeGroot</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              A 500-agent Barabási–Albert network with uniform influence weights converges to
+              a shared opinion within ~300 iterations. Hub nodes dominate early; peripheral
+              agents follow after sufficient exposure.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h3 className="font-sans font-semibold text-foreground">Silencing cascade</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              In a polarized Erdős–Rényi network calibrated with 2022 Colombian election data,
+              the minority cluster begins suppressing its opinion at iteration 80, producing a
+              cascade that amplifies the majority position far beyond its initial share.
+            </p>
+          </div>
+        </div>
+      </section>
+    </article>
   );
 }

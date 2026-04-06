@@ -44,6 +44,26 @@ const en = {
     language: "Language",
     en: "English",
     es: "Spanish",
+    home: "Home",
+    wiki: "Wiki",
+    previousResults: "Previous Results",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+    onThisPage: "On This Page",
+  },
+  board: {
+    title: "Board",
+    comingSoon: "Coming soon",
+  },
+  footer: {
+    description:
+      "SiLEnSeSS is a simulation platform for opinion dynamics research, developed by the PROMUEVA group at Universidad del Valle.",
+    navigation: "Navigation",
+    more: "More",
+    faq: "FAQ",
+    contact: "Contact",
+    about: "About",
+    rights: "All rights reserved.",
   },
 } as const;
 
