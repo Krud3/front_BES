@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LanguageSwitcher } from "@/features/language-switch";
 import { useTranslation } from "@/shared/i18n";
 import { Logo } from "@/shared/ui/logo";
-import { LanguageSwitcher } from "@/features/language-switch";
 
 const NAV_LINKS = [
-  { to: "/wiki", labelKey: "wiki" },
-  { to: "/results", labelKey: "previousResults" },
+  { to: "/wiki", labelKey: "nav.wiki" },
+  { to: "/results", labelKey: "nav.previousResults" },
 ] as const;
 
 export function LandingHeader() {
-  const { t } = useTranslation("nav");
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -45,7 +45,7 @@ export function LandingHeader() {
           <button
             type="button"
             className="md:hidden rounded-md p-2 text-foreground/60 hover:text-foreground hover:bg-accent transition-colors"
-            aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
+            aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((prev) => !prev)}
           >

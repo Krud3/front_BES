@@ -3,6 +3,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Anchor scroll offset — accounts for sticky header (h-16 = 4rem) + breathing room */
+h1, h2, h3, h4 {
+  scroll-margin-top: 5.5rem;
+}
+
+/* MathJax inline math — prevent block line breaks */
+mjx-container {
+  display: inline !important;
+  vertical-align: baseline;
+}
+mjx-container svg {
+  display: inline;
+  vertical-align: -0.2em;
+}
+
 /* ─────────────────────────────────────────────
    Brand scale — Azul Institucional
    Base: #24378d (BES logo) = oklch(0.30 0.17 264)

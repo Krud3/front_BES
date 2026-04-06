@@ -11,18 +11,18 @@ export function TableOfContents({
   containerSelector = "main",
   className,
 }: TableOfContentsProps) {
-  const { t } = useTranslation("nav");
+  const { t } = useTranslation();
   const { entries, activeId } = useTableOfContents(containerSelector);
 
   if (entries.length === 0) return null;
 
   return (
     <nav
-      aria-label={t("onThisPage")}
+      aria-label={t("nav.onThisPage")}
       className={cn("w-56 shrink-0", className)}
     >
       <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/50">
-        {t("onThisPage")}
+        {t("nav.onThisPage")}
       </p>
       <ul className="space-y-1">
         {entries.map((entry) => (
