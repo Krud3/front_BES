@@ -237,6 +237,19 @@ const es = {
     backToList: "Volver a resultados",
     emptyState: "Aún no se han publicado resultados. Vuelve pronto.",
   },
+  dashboard: {
+    userMenuTrigger: "Menú de usuario",
+    guestName: "Invitado",
+    guestEmail: "Sin sesión iniciada",
+    profile: "Perfil",
+    language: "Idioma",
+    theme: "Tema",
+    themeLight: "Claro",
+    themeDark: "Oscuro",
+    themeSystem: "Sistema",
+    signOut: "Cerrar sesión",
+    errorSignOut: "Error al cerrar sesión. Por favor intenta de nuevo.",
+  },
   footer: {
     description:
       "SiLEnSeSS es una plataforma de simulación para investigación en dinámica de opiniones, desarrollada por el grupo PROMUEVA de la Universidad del Valle.",

@@ -234,6 +234,19 @@ const en = {
     backToList: "Back to results",
     emptyState: "No results have been published yet. Check back soon.",
   },
+  dashboard: {
+    userMenuTrigger: "User menu",
+    guestName: "Guest",
+    guestEmail: "Not signed in",
+    profile: "Profile",
+    language: "Language",
+    theme: "Theme",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
+    signOut: "Sign out",
+    errorSignOut: "Error signing out. Please try again.",
+  },
   footer: {
     description:
       "SiLEnSeSS is a simulation platform for opinion dynamics research, developed by the PROMUEVA group at Universidad del Valle.",
