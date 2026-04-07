@@ -13,6 +13,7 @@ const es = {
     continueWithout: "Continuar sin iniciar sesión",
     signingIn: "Cargando…",
     signOut: "Cerrar sesión",
+    errorLogin: "Error al iniciar sesión. Por favor intenta de nuevo.",
   },
   profile: {
     title: "Perfil",
@@ -31,6 +32,9 @@ const es = {
     deactivateConfirm:
       "¿Estás seguro de que deseas desactivar tu cuenta? Serás desconectado inmediatamente.",
     deactivating: "Desactivando…",
+    successEditName: "Nombre actualizado.",
+    errorEditName: "Error al actualizar el nombre. Por favor intenta de nuevo.",
+    errorDeactivate: "Error al desactivar la cuenta. Por favor intenta de nuevo.",
   },
   home: {
     headline: "Simulación avanzada al alcance de todos.",
@@ -259,6 +263,13 @@ const es = {
     contact: "Contacto",
     about: "Acerca de",
     rights: "Todos los derechos reservados.",
+  },
+  user: {
+    errorGet: "Error al cargar los datos del usuario.",
+    errorGetByEmail: "Error al cargar el usuario por correo.",
+    errorCreate: "Error al crear el perfil de usuario.",
+    errorUpdate: "Error al actualizar los datos del usuario.",
+    errorDelete: "Error al eliminar el usuario.",
   },
 } as const;
 

@@ -3,9 +3,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { userApi, useAuthStore } from "@/entities/user";
 import { auth } from "@/shared/api/firebase";
+import { useTranslation } from "@/shared/i18n";
 import { logger } from "@/shared/lib/logger";
 
 export function useDeactivate() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +20,7 @@ export function useDeactivate() {
       // store clears via observeAuthState
     } catch (error) {
       logger.error("useDeactivate", error);
-      toast.error("Error deactivating account");
+      toast.error(t("profile.errorDeactivate"));
       setLoading(false);
     }
   };

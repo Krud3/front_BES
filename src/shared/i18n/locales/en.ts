@@ -13,6 +13,7 @@ const en = {
     continueWithout: "Continue without signing in",
     signingIn: "Loading…",
     signOut: "Sign out",
+    errorLogin: "Error signing in. Please try again.",
   },
   profile: {
     title: "Profile",
@@ -31,6 +32,9 @@ const en = {
     deactivateConfirm:
       "Are you sure you want to deactivate your account? You will be logged out immediately.",
     deactivating: "Deactivating…",
+    successEditName: "Display name updated.",
+    errorEditName: "Error updating display name. Please try again.",
+    errorDeactivate: "Error deactivating account. Please try again.",
   },
   home: {
     headline: "Advanced simulation made accessible for everyone.",
@@ -256,6 +260,13 @@ const en = {
     contact: "Contact",
     about: "About",
     rights: "All rights reserved.",
+  },
+  user: {
+    errorGet: "Error loading user data.",
+    errorGetByEmail: "Error loading user by email.",
+    errorCreate: "Error creating user profile.",
+    errorUpdate: "Error updating user data.",
+    errorDelete: "Error deleting user.",
   },
 } as const;
 
