@@ -50,6 +50,7 @@ const es = {
     home: "Inicio",
     wiki: "Wiki",
     previousResults: "Resultados anteriores",
+    board: "Tablero",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
     onThisPage: "En esta página",
@@ -253,6 +254,26 @@ const es = {
     themeSystem: "Sistema",
     signOut: "Cerrar sesión",
     errorSignOut: "Error al cerrar sesión. Por favor intenta de nuevo.",
+    // Layout shell — sidebar
+    sidebarToggleExpand: "Expandir barra lateral",
+    sidebarToggleCollapse: "Contraer barra lateral",
+    fullscreenEnter: "Entrar en pantalla completa",
+    fullscreenExit: "Salir de pantalla completa",
+    // Nav tabs in header
+    tabNewSimulation: "Nueva Simulación",
+    tabMyExperiments: "Mis Experimentos",
+    // Breadcrumb route labels
+    breadcrumbBoard: "Tablero",
+    breadcrumbProfile: "Perfil",
+    breadcrumbSimulation: "Simulación",
+    breadcrumbStep: "Paso",
+    breadcrumbConfigure: "Configurar Agentes",
+    // Sidebar section labels
+    sidebarNewSimulation: "Nueva Simulación",
+    sidebarMyExperiments: "Mis Experimentos",
+    sidebarPlaceholder: "Contenido del panel próximamente",
+    // Logo link
+    logoHomeLink: "Ir a la página de inicio",
   },
   footer: {
     description:

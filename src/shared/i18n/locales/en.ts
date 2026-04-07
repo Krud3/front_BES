@@ -50,6 +50,7 @@ const en = {
     home: "Home",
     wiki: "Wiki",
     previousResults: "Previous Results",
+    board: "Dashboard",
     openMenu: "Open menu",
     closeMenu: "Close menu",
     onThisPage: "On This Page",
@@ -250,6 +251,26 @@ const en = {
     themeSystem: "System",
     signOut: "Sign out",
     errorSignOut: "Error signing out. Please try again.",
+    // Layout shell — sidebar
+    sidebarToggleExpand: "Expand sidebar",
+    sidebarToggleCollapse: "Collapse sidebar",
+    fullscreenEnter: "Enter fullscreen",
+    fullscreenExit: "Exit fullscreen",
+    // Nav tabs in header
+    tabNewSimulation: "New Simulation",
+    tabMyExperiments: "My Experiments",
+    // Breadcrumb route labels
+    breadcrumbBoard: "Dashboard",
+    breadcrumbProfile: "Profile",
+    breadcrumbSimulation: "Simulation",
+    breadcrumbStep: "Step",
+    breadcrumbConfigure: "Configure Agents",
+    // Sidebar section labels
+    sidebarNewSimulation: "New Simulation",
+    sidebarMyExperiments: "My Experiments",
+    sidebarPlaceholder: "Panel content coming soon",
+    // Logo link
+    logoHomeLink: "Go to home page",
   },
   footer: {
     description:
