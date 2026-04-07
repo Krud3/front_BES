@@ -56,9 +56,11 @@ const en = {
   },
   wiki: {
     pageTitle: "The Theory Behind SiLEnSeSS",
-    pageIntro1: "Welcome to the SiLEnSeSS Wiki. This simulator is built upon a powerful multi-agent model that extends classic opinion dynamics by incorporating a key social theory: the",
+    pageIntro1:
+      "Welcome to the SiLEnSeSS Wiki. This simulator is built upon a powerful multi-agent model that extends classic opinion dynamics by incorporating a key social theory: the",
     spiralOfSilence: "Spiral of Silence",
-    pageIntro2: "This page breaks down the foundational logic and equations that power your simulations.",
+    pageIntro2:
+      "This page breaks down the foundational logic and equations that power your simulations.",
     degroot: {
       title: "The Starting Point: The Classic DeGroot Model",
       p1: "Traditional models of opinion formation, like the DeGroot framework, are built on a simple, intuitive idea: agents update their opinions by taking a",
@@ -79,8 +81,10 @@ const en = {
       limitation1strong: "it assumes all agents express their opinions at every time step",
       limitation2_1: "In reality, people may choose",
       limitation2_not: "not",
-      limitation2_2: "to express their opinions, especially if they feel their view is in the minority. This is the core idea of the",
-      limitation2_3: "theory, which posits that individuals fear social isolation and will remain silent rather than voice an opinion they perceive as unpopular.",
+      limitation2_2:
+        "to express their opinions, especially if they feel their view is in the minority. This is the core idea of the",
+      limitation2_3:
+        "theory, which posits that individuals fear social isolation and will remain silent rather than voice an opinion they perceive as unpopular.",
     },
     som: {
       title: "Our Models: Integrating the Spiral of Silence",
@@ -90,9 +94,10 @@ const en = {
       speaking: "speaking",
       or: "or",
       silent: "silent",
-      intro2: "An agent decides to speak at the next step only if they perceive \"enough\" support from their neighbors. We define this with two parameters:",
+      intro2:
+        'An agent decides to speak at the next step only if they perceive "enough" support from their neighbors. We define this with two parameters:',
       toleranceLabel: "Tolerance Radius",
-      toleranceDesc_1: "How \"close\" another opinion needs to be to",
+      toleranceDesc_1: 'How "close" another opinion needs to be to',
       toleranceDesc_2: "for agent",
       toleranceDesc_3: "to consider it supportive.",
       majorityLabel: "Majority Threshold",
@@ -124,7 +129,8 @@ const en = {
         eq3desc_5: ") whose opinions are within their tolerance",
         eq3desc_6: "meets their majority threshold",
         takeawayTitle: "Simulation Takeaway",
-        takeaway: "This model shows how \"bridge\" agents — agents who connect different community clusters — can become perpetually silent, effectively splitting the network and preventing a global consensus.",
+        takeaway:
+          'This model shows how "bridge" agents — agents who connect different community clusters — can become perpetually silent, effectively splitting the network and preventing a global consensus.',
       },
       somPlus: {
         description_1: "In this model, agents",
@@ -140,7 +146,7 @@ const en = {
         eq5desc_2: "represents the last",
         eq5desc_publicOpinion: "public opinion",
         eq5desc_3: "of agent",
-        eq5desc_4: ". This opinion is \"sticky\" and continues to influence others even after",
+        eq5desc_4: '. This opinion is "sticky" and continues to influence others even after',
         eq5desc_5: "goes silent.",
         eq6Title: "Silence Update (Eq. 6)",
         eq6desc_1: "An agent speaks by comparing their",
@@ -152,17 +158,19 @@ const en = {
         eq6desc_4: "their neighbors.",
         takeawayTitle: "Simulation Takeaway",
         takeaway_1: "This model can lead to",
-        takeaway_hiddenConsensus: "\"Hidden Consensus\"",
+        takeaway_hiddenConsensus: '"Hidden Consensus"',
         takeaway_2: ". Agents'",
         takeaway_private: "private",
         takeaway_3: "opinions might all converge, but because their",
         takeaway_public: "public",
-        takeaway_4: "opinions are \"stuck\" in the past, they all perceive disagreement and remain silent, never realizing they actually agree.",
+        takeaway_4:
+          'opinions are "stuck" in the past, they all perceive disagreement and remain silent, never realizing they actually agree.',
       },
     },
     variables: {
       title: "Key Parameters at a Glance",
-      intro: "These are the core variables that define the state and behavior of the agents in the simulation.",
+      intro:
+        "These are the core variables that define the state and behavior of the agents in the simulation.",
       colNotation: "Notation",
       colVariable: "Variable",
       colDescription: "Description",
@@ -179,7 +187,7 @@ const en = {
       silenceStateDesc_speaking: "speaking",
       silenceStateDesc_silent: "silent",
       toleranceRadius: "Tolerance Radius",
-      toleranceDesc_1: "The \"comfort zone\" for agent",
+      toleranceDesc_1: 'The "comfort zone" for agent',
       toleranceDesc_2: ". They feel supported by opinions",
       toleranceDesc_3: "where",
       majorityThreshold: "Majority Threshold",
@@ -200,18 +208,31 @@ const en = {
       p1_3: ", the SiLEnSeSS simulator allows you to explore far more complex and realistic social dynamics.",
       p2: "As you run your experiments, you can observe phenomena predicted by the Spiral of Silence theory:",
       vocalMinoritiesTitle: "Vocal Minorities:",
-      vocalMinorities: "Watch how a small, highly-connected, and \"loud\" group of agents can pull the entire network's opinion, even when they are numerically in the minority.",
+      vocalMinorities:
+        'Watch how a small, highly-connected, and "loud" group of agents can pull the entire network\'s opinion, even when they are numerically in the minority.',
       echoChamberTitle: "Echo Chambers & Polarization:",
       echoChamber_1: "See how setting low tolerance radii (",
-      echoChamber_2: ") can cause agents to fall silent, effectively breaking connections and leading to polarized, disconnected clusters.",
+      echoChamber_2:
+        ") can cause agents to fall silent, effectively breaking connections and leading to polarized, disconnected clusters.",
       publicPrivateTitle: "Public vs. Private Belief:",
       publicPrivate_1: "Use the",
       publicPrivate_2: "model to see how a network's",
       publicPrivate_public: "public",
       publicPrivate_3: "discourse can appear hotly debated, even while agents'",
       publicPrivate_private: "private",
-      publicPrivate_4: "beliefs converge to a \"hidden consensus\".",
+      publicPrivate_4: 'beliefs converge to a "hidden consensus".',
     },
+  },
+  results: {
+    pageTitle: "Previous Results",
+    pageIntro:
+      "This archive collects simulation experiments published by the PROMUEVA research group. Each entry documents the model configuration, network topology, and key findings. Results are presented as they are validated; entries marked as placeholder will be replaced with real data as the platform matures.",
+    featuredLabel: "Featured Study",
+    allResultsHeading: "All Experiments",
+    readMore: "Read full report",
+    publishedOn: "Published",
+    backToList: "Back to results",
+    emptyState: "No results have been published yet. Check back soon.",
   },
   footer: {
     description:
