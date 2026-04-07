@@ -35,6 +35,16 @@ const es = {
     successEditName: "Nombre actualizado.",
     errorEditName: "Error al actualizar el nombre. Por favor intenta de nuevo.",
     errorDeactivate: "Error al desactivar la cuenta. Por favor intenta de nuevo.",
+    // Sheet-specific
+    sheetDescription: "Gestiona la configuración y preferencias de tu cuenta.",
+    roles: "Roles",
+    deactivateDescription:
+      "Desactiva permanentemente tu cuenta. Esta acción no se puede deshacer.",
+    usageLimitsDescription: "Cuotas aplicadas a tu rol actual.",
+    agentsUsed: "Agentes",
+    iterationsUsed: "Iteraciones",
+    densityFactorLabel: "Factor de densidad",
+    unlimited: "Ilimitado",
   },
   home: {
     headline: "Simulación avanzada al alcance de todos.",

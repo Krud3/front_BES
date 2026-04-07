@@ -35,6 +35,16 @@ const en = {
     successEditName: "Display name updated.",
     errorEditName: "Error updating display name. Please try again.",
     errorDeactivate: "Error deactivating account. Please try again.",
+    // Sheet-specific
+    sheetDescription: "Manage your account settings and preferences.",
+    roles: "Roles",
+    deactivateDescription:
+      "Permanently deactivate your account. This action cannot be undone.",
+    usageLimitsDescription: "Quotas applied to your current role.",
+    agentsUsed: "Agents",
+    iterationsUsed: "Iterations",
+    densityFactorLabel: "Density factor",
+    unlimited: "Unlimited",
   },
   home: {
     headline: "Advanced simulation made accessible for everyone.",

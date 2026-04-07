@@ -1,10 +1,10 @@
 import { LogOut, Monitor, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Link } from "react-router-dom";
 import { useAuthStore } from "@/entities/user";
 import { useLogout } from "@/features/auth/logout";
 import { type Lang, useLanguageSwitch } from "@/features/language-switch";
 import { useTranslation } from "@/shared/i18n";
+import { useProfileSheetStore } from "@/shared/model/profile-sheet.store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import {
   DropdownMenu,
@@ -41,6 +41,7 @@ export function SettingsDropdown() {
   const { currentLang, changeLanguage } = useLanguageSwitch();
   const user = useAuthStore((state) => state.user);
   const { logout } = useLogout();
+  const openProfileSheet = useProfileSheetStore((s) => s.open);
 
   const displayName = user?.name || t("dashboard.guestName");
   const email = user?.email || t("dashboard.guestEmail");
@@ -75,11 +76,12 @@ export function SettingsDropdown() {
         {user && (
           <>
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
-                  <User className="h-4 w-4" />
-                  <span>{t("dashboard.profile")}</span>
-                </Link>
+              <DropdownMenuItem
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={openProfileSheet}
+              >
+                <User className="h-4 w-4" />
+                <span>{t("dashboard.profile")}</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
 
