@@ -101,7 +101,6 @@ export function ProfileSheet() {
                 </div>
                 <Progress
                   value={isUnlimited(limits.maxAgents) ? 100 : agentPercent}
-                  className={isUnlimited(limits.maxAgents) ? "opacity-40" : undefined}
                 />
               </div>
 
@@ -117,7 +116,6 @@ export function ProfileSheet() {
                 </div>
                 <Progress
                   value={isUnlimited(limits.maxIterations) ? 100 : iterationPercent}
-                  className={isUnlimited(limits.maxIterations) ? "opacity-40" : undefined}
                 />
               </div>
 
