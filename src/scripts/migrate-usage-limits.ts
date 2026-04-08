@@ -49,4 +49,5 @@ async function migrate() {
   console.log(`\nDone: ${updated} updated, ${skipped} skipped`);
 }
 
+// biome-ignore lint/suspicious/noConsole: intentional console output for migration script
 migrate().catch(console.error);
