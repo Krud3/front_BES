@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { toast } from "sonner";
 import { db } from "@/shared/api/firebase";
+import { i18n } from "@/shared/i18n";
 import { logger } from "@/shared/lib/logger";
 import { getRoleLimits } from "../lib/permissions";
 import type { User } from "../types/user.types";
@@ -33,7 +34,7 @@ export const userApi = {
       return snap.exists() ? ({ uid, ...snap.data() } as User) : null;
     } catch (error) {
       logger.error("userApi.getById", error);
-      toast.error("Error getting user");
+      toast.error(i18n.t("user.errorGet"));
       return null;
     }
   },
@@ -45,7 +46,7 @@ export const userApi = {
       return snap.empty || !snap.docs[0] ? null : (snap.docs[0].data() as User);
     } catch (error) {
       logger.error("userApi.getByEmail", error);
-      toast.error("Error getting user by email");
+      toast.error(i18n.t("user.errorGetByEmail"));
       return null;
     }
   },
@@ -65,7 +66,7 @@ export const userApi = {
       return true;
     } catch (error) {
       logger.error("userApi.create", error);
-      toast.error("Error creating user");
+      toast.error(i18n.t("user.errorCreate"));
       return false;
     }
   },
@@ -76,7 +77,7 @@ export const userApi = {
       return true;
     } catch (error) {
       logger.error("userApi.update", error);
-      toast.error("Error updating user");
+      toast.error(i18n.t("user.errorUpdate"));
       return false;
     }
   },
@@ -87,7 +88,7 @@ export const userApi = {
       return true;
     } catch (error) {
       logger.error("userApi.remove", error);
-      toast.error("Error deleting user");
+      toast.error(i18n.t("user.errorDelete"));
       return false;
     }
   },

@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { DashboardLayout } from "@/app/layouts/dashboard";
 import { LandingLayout } from "@/app/layouts/landing";
 import { ProtectedRoute } from "@/features/auth";
 import { BoardPage, HomePage, ProfilePage, ResultsPage, WikiPage } from "@/pages";
@@ -18,23 +19,17 @@ export function AppRoutes() {
           <Route path="/results" element={<ResultsPage />} />
         </Route>
 
-        {/* Protected app routes */}
+        {/* Protected app routes — wrapped in DashboardLayout */}
         <Route
-          path="/board"
           element={
             <ProtectedRoute>
-              <BoardPage />
+              <DashboardLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route path="/board" element={<BoardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
 
         <Route path="*" element={<div>404 - Not Found</div>} />
       </Routes>

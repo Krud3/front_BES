@@ -1,13 +1,14 @@
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LanguageSwitcher } from "@/features/language-switch";
 import { useTranslation } from "@/shared/i18n";
 import { Logo } from "@/shared/ui/logo";
+import { SettingsDropdown } from "@/widgets/settings-dropdown";
 
 const NAV_LINKS = [
   { to: "/wiki", labelKey: "nav.wiki" },
   { to: "/results", labelKey: "nav.previousResults" },
+  { to: "/board", labelKey: "nav.board" },
 ] as const;
 
 export function LandingHeader() {
@@ -39,7 +40,7 @@ export function LandingHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <LanguageSwitcher />
+          <SettingsDropdown />
 
           {/* Mobile menu toggle */}
           <button

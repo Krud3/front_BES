@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { userApi, useAuthStore } from "@/entities/user";
+import { useTranslation } from "@/shared/i18n";
 import { logger } from "@/shared/lib/logger";
 
 export function useEditName() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [loading, setLoading] = useState(false);
@@ -15,11 +17,11 @@ export function useEditName() {
       const ok = await userApi.update(user.uid, { name: newName.trim() });
       if (ok) {
         setUser({ ...user, name: newName.trim() });
-        toast.success("Display name updated");
+        toast.success(t("profile.successEditName"));
       }
     } catch (error) {
       logger.error("useEditName", error);
-      toast.error("Error updating display name");
+      toast.error(t("profile.errorEditName"));
     } finally {
       setLoading(false);
     }

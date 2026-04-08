@@ -13,6 +13,7 @@ const es = {
     continueWithout: "Continuar sin iniciar sesión",
     signingIn: "Cargando…",
     signOut: "Cerrar sesión",
+    errorLogin: "Error al iniciar sesión. Por favor intenta de nuevo.",
   },
   profile: {
     title: "Perfil",
@@ -31,6 +32,19 @@ const es = {
     deactivateConfirm:
       "¿Estás seguro de que deseas desactivar tu cuenta? Serás desconectado inmediatamente.",
     deactivating: "Desactivando…",
+    successEditName: "Nombre actualizado.",
+    errorEditName: "Error al actualizar el nombre. Por favor intenta de nuevo.",
+    errorDeactivate: "Error al desactivar la cuenta. Por favor intenta de nuevo.",
+    // Sheet-specific
+    sheetDescription: "Gestiona la configuración y preferencias de tu cuenta.",
+    roles: "Roles",
+    deactivateDescription:
+      "Desactiva permanentemente tu cuenta. Esta acción no se puede deshacer.",
+    usageLimitsDescription: "Cuotas aplicadas a tu rol actual.",
+    agentsUsed: "Agentes",
+    iterationsUsed: "Iteraciones",
+    densityFactorLabel: "Factor de densidad",
+    unlimited: "Ilimitado",
   },
   home: {
     headline: "Simulación avanzada al alcance de todos.",
@@ -46,6 +60,7 @@ const es = {
     home: "Inicio",
     wiki: "Wiki",
     previousResults: "Resultados anteriores",
+    board: "Tablero",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
     onThisPage: "En esta página",
@@ -56,9 +71,11 @@ const es = {
   },
   wiki: {
     pageTitle: "La teoría detrás de SiLEnSeSS",
-    pageIntro1: "Bienvenido al Wiki de SiLEnSeSS. Este simulador está construido sobre un potente modelo multiagente que extiende la dinámica clásica de opiniones incorporando una teoría social clave: la",
+    pageIntro1:
+      "Bienvenido al Wiki de SiLEnSeSS. Este simulador está construido sobre un potente modelo multiagente que extiende la dinámica clásica de opiniones incorporando una teoría social clave: la",
     spiralOfSilence: "Espiral del Silencio",
-    pageIntro2: "Esta página desglosa la lógica fundamental y las ecuaciones que impulsan tus simulaciones.",
+    pageIntro2:
+      "Esta página desglosa la lógica fundamental y las ecuaciones que impulsan tus simulaciones.",
     degroot: {
       title: "El punto de partida: el modelo clásico de DeGroot",
       p1: "Los modelos tradicionales de formación de opiniones, como el marco de DeGroot, se basan en una idea simple e intuitiva: los agentes actualizan sus opiniones tomando una",
@@ -76,23 +93,28 @@ const es = {
       equationDesc3: ").",
       limitationTitle: "La limitación clave",
       limitation1: "El modelo de DeGroot asume algo que a menudo no es cierto en el mundo real:",
-      limitation1strong: "asume que todos los agentes expresan sus opiniones en cada paso de tiempo",
+      limitation1strong:
+        "asume que todos los agentes expresan sus opiniones en cada paso de tiempo",
       limitation2_1: "En realidad, las personas pueden elegir",
       limitation2_not: "no",
-      limitation2_2: "expresar sus opiniones, especialmente si sienten que su postura es minoritaria. Esta es la idea central de la teoría de la",
-      limitation2_3: ", que postula que los individuos temen el aislamiento social y permanecerán en silencio antes que expresar una opinión que perciben como impopular.",
+      limitation2_2:
+        "expresar sus opiniones, especialmente si sienten que su postura es minoritaria. Esta es la idea central de la teoría de la",
+      limitation2_3:
+        ", que postula que los individuos temen el aislamiento social y permanecerán en silencio antes que expresar una opinión que perciben como impopular.",
     },
     som: {
       title: "Nuestros modelos: integrando la Espiral del Silencio",
-      intro1_1: "Para crear una simulación más realista, nuestros modelos introducen el concepto de un",
+      intro1_1:
+        "Para crear una simulación más realista, nuestros modelos introducen el concepto de un",
       silenceState: "estado de silencio",
       intro1_2: "para cada agente. Un agente puede estar",
       speaking: "hablando",
       or: "o",
       silent: "en silencio",
-      intro2: "Un agente decide hablar en el siguiente paso solo si percibe suficiente apoyo de sus vecinos. Definimos esto con dos parámetros:",
+      intro2:
+        "Un agente decide hablar en el siguiente paso solo si percibe suficiente apoyo de sus vecinos. Definimos esto con dos parámetros:",
       toleranceLabel: "Radio de tolerancia",
-      toleranceDesc_1: "Qué tan \"cerca\" necesita estar otra opinión de",
+      toleranceDesc_1: 'Qué tan "cerca" necesita estar otra opinión de',
       toleranceDesc_2: "para que el agente",
       toleranceDesc_3: "la considere de apoyo.",
       majorityLabel: "Umbral de mayoría",
@@ -124,7 +146,8 @@ const es = {
         eq3desc_5: ") cuyas opiniones están dentro de su tolerancia",
         eq3desc_6: "alcanza su umbral de mayoría",
         takeawayTitle: "Conclusión de la simulación",
-        takeaway: "Este modelo muestra cómo los agentes \"puente\" — agentes que conectan diferentes clústeres de la comunidad — pueden volverse perpetuamente silenciosos, dividiendo efectivamente la red e impidiendo un consenso global.",
+        takeaway:
+          'Este modelo muestra cómo los agentes "puente" — agentes que conectan diferentes clústeres de la comunidad — pueden volverse perpetuamente silenciosos, dividiendo efectivamente la red e impidiendo un consenso global.',
       },
       somPlus: {
         description_1: "En este modelo, los agentes",
@@ -140,7 +163,8 @@ const es = {
         eq5desc_2: "representa la última",
         eq5desc_publicOpinion: "opinión pública",
         eq5desc_3: "del agente",
-        eq5desc_4: ". Esta opinión es \"pegajosa\" y continúa influyendo en otros incluso después de que",
+        eq5desc_4:
+          '. Esta opinión es "pegajosa" y continúa influyendo en otros incluso después de que',
         eq5desc_5: "guarda silencio.",
         eq6Title: "Actualización de silencio (Ec. 6)",
         eq6desc_1: "Un agente habla comparando su",
@@ -152,17 +176,19 @@ const es = {
         eq6desc_4: "sus vecinos.",
         takeawayTitle: "Conclusión de la simulación",
         takeaway_1: "Este modelo puede conducir a un fenómeno llamado",
-        takeaway_hiddenConsensus: "\"Consenso Oculto\"",
+        takeaway_hiddenConsensus: '"Consenso Oculto"',
         takeaway_2: ". Las opiniones",
         takeaway_private: "privadas",
         takeaway_3: "de los agentes podrían converger, pero como sus opiniones",
         takeaway_public: "públicas",
-        takeaway_4: "están \"atascadas\" en el pasado, todos perciben desacuerdo y permanecen en silencio, sin darse cuenta de que en realidad están de acuerdo.",
+        takeaway_4:
+          'están "atascadas" en el pasado, todos perciben desacuerdo y permanecen en silencio, sin darse cuenta de que en realidad están de acuerdo.',
       },
     },
     variables: {
       title: "Parámetros clave de un vistazo",
-      intro: "Estas son las variables centrales que definen el estado y el comportamiento de los agentes en la simulación.",
+      intro:
+        "Estas son las variables centrales que definen el estado y el comportamiento de los agentes en la simulación.",
       colNotation: "Notación",
       colVariable: "Variable",
       colDescription: "Descripción",
@@ -179,7 +205,7 @@ const es = {
       silenceStateDesc_speaking: "hablando",
       silenceStateDesc_silent: "silencio",
       toleranceRadius: "Radio de tolerancia",
-      toleranceDesc_1: "La \"zona de confort\" del agente",
+      toleranceDesc_1: 'La "zona de confort" del agente',
       toleranceDesc_2: ". Se siente apoyado por opiniones",
       toleranceDesc_3: "donde",
       majorityThreshold: "Umbral de mayoría",
@@ -200,18 +226,64 @@ const es = {
       p1_3: ", el simulador SiLEnSeSS permite explorar dinámicas sociales mucho más complejas y realistas.",
       p2: "Al ejecutar tus experimentos, podrás observar fenómenos predichos por la teoría de la Espiral del Silencio:",
       vocalMinoritiesTitle: "Minorías vocales:",
-      vocalMinorities: "Observa cómo un grupo pequeño, altamente conectado y \"ruidoso\" puede arrastrar la opinión de toda la red, incluso cuando son numéricamente minoría.",
+      vocalMinorities:
+        'Observa cómo un grupo pequeño, altamente conectado y "ruidoso" puede arrastrar la opinión de toda la red, incluso cuando son numéricamente minoría.',
       echoChamberTitle: "Cámaras de eco y polarización:",
       echoChamber_1: "Observa cómo establecer radios de tolerancia bajos (",
-      echoChamber_2: ") puede hacer que los agentes guarden silencio, rompiendo conexiones y generando clústeres polarizados y desconectados.",
+      echoChamber_2:
+        ") puede hacer que los agentes guarden silencio, rompiendo conexiones y generando clústeres polarizados y desconectados.",
       publicPrivateTitle: "Creencia pública vs. privada:",
       publicPrivate_1: "Usa el modelo",
       publicPrivate_2: "para ver cómo el discurso",
       publicPrivate_public: "público",
       publicPrivate_3: "de una red puede parecer muy debatido, incluso cuando las creencias",
       publicPrivate_private: "privadas",
-      publicPrivate_4: "de los agentes convergen hacia un \"consenso oculto\".",
+      publicPrivate_4: 'de los agentes convergen hacia un "consenso oculto".',
     },
+  },
+  results: {
+    pageTitle: "Resultados anteriores",
+    pageIntro:
+      "Este archivo recopila experimentos de simulación publicados por el grupo de investigación PROMUEVA. Cada entrada documenta la configuración del modelo, la topología de red y los hallazgos clave. Los resultados se presentan a medida que se validan; las entradas marcadas como marcadores de posición serán reemplazadas con datos reales a medida que la plataforma madure.",
+    featuredLabel: "Estudio destacado",
+    allResultsHeading: "Todos los experimentos",
+    readMore: "Leer el informe completo",
+    publishedOn: "Publicado",
+    backToList: "Volver a resultados",
+    emptyState: "Aún no se han publicado resultados. Vuelve pronto.",
+  },
+  dashboard: {
+    userMenuTrigger: "Menú de usuario",
+    guestName: "Invitado",
+    guestEmail: "Sin sesión iniciada",
+    profile: "Perfil",
+    language: "Idioma",
+    theme: "Tema",
+    themeLight: "Claro",
+    themeDark: "Oscuro",
+    themeSystem: "Sistema",
+    signOut: "Cerrar sesión",
+    errorSignOut: "Error al cerrar sesión. Por favor intenta de nuevo.",
+    // Layout shell — sidebar
+    sidebarToggleExpand: "Expandir barra lateral",
+    sidebarToggleCollapse: "Contraer barra lateral",
+    fullscreenEnter: "Entrar en pantalla completa",
+    fullscreenExit: "Salir de pantalla completa",
+    // Nav tabs in header
+    tabNewSimulation: "Nueva Simulación",
+    tabMyExperiments: "Mis Experimentos",
+    // Breadcrumb route labels
+    breadcrumbBoard: "Tablero",
+    breadcrumbProfile: "Perfil",
+    breadcrumbSimulation: "Simulación",
+    breadcrumbStep: "Paso",
+    breadcrumbConfigure: "Configurar Agentes",
+    // Sidebar section labels
+    sidebarNewSimulation: "Nueva Simulación",
+    sidebarMyExperiments: "Mis Experimentos",
+    sidebarPlaceholder: "Contenido del panel próximamente",
+    // Logo link
+    logoHomeLink: "Ir a la página de inicio",
   },
   footer: {
     description:
@@ -222,6 +294,13 @@ const es = {
     contact: "Contacto",
     about: "Acerca de",
     rights: "Todos los derechos reservados.",
+  },
+  user: {
+    errorGet: "Error al cargar los datos del usuario.",
+    errorGetByEmail: "Error al cargar el usuario por correo.",
+    errorCreate: "Error al crear el perfil de usuario.",
+    errorUpdate: "Error al actualizar los datos del usuario.",
+    errorDelete: "Error al eliminar el usuario.",
   },
 } as const;
 
