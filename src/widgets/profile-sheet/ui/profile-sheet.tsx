@@ -6,13 +6,7 @@ import { useProfileSheetStore } from "@/shared/model/profile-sheet.store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Progress } from "@/shared/ui/progress";
 import { Separator } from "@/shared/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/shared/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 
 export function ProfileSheet() {
   const { t } = useTranslation();
@@ -85,8 +79,12 @@ export function ProfileSheet() {
           <>
             <section className="px-4 py-4 flex flex-col gap-3">
               <div className="flex flex-col gap-0.5">
-                <h3 className="text-sm font-semibold text-foreground">{t("profile.usageLimits")}</h3>
-                <p className="text-xs text-muted-foreground">{t("profile.usageLimitsDescription")}</p>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {t("profile.usageLimits")}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {t("profile.usageLimitsDescription")}
+                </p>
               </div>
 
               {/* Agents */}
@@ -94,29 +92,25 @@ export function ProfileSheet() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{t("profile.agentsUsed")}</span>
                   <span className="text-sm font-mono font-medium">
-                    {isUnlimited(limits.maxAgents)
-                      ? t("profile.unlimited")
-                      : limits.maxAgents}
+                    {isUnlimited(limits.maxAgents) ? t("profile.unlimited") : limits.maxAgents}
                   </span>
                 </div>
-                <Progress
-                  value={isUnlimited(limits.maxAgents) ? 100 : agentPercent}
-                />
+                <Progress value={isUnlimited(limits.maxAgents) ? 100 : agentPercent} />
               </div>
 
               {/* Iterations */}
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{t("profile.iterationsUsed")}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("profile.iterationsUsed")}
+                  </span>
                   <span className="text-sm font-mono font-medium">
                     {isUnlimited(limits.maxIterations)
                       ? t("profile.unlimited")
                       : limits.maxIterations}
                   </span>
                 </div>
-                <Progress
-                  value={isUnlimited(limits.maxIterations) ? 100 : iterationPercent}
-                />
+                <Progress value={isUnlimited(limits.maxIterations) ? 100 : iterationPercent} />
               </div>
 
               {/* Density factor */}

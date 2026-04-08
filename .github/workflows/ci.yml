@@ -1,14 +1,43 @@
-name: Check Version Bump
+name: CI
 
 on:
+  push:
+    branches: [main, refactor]
   pull_request:
-    branches: [refactor]
+    branches: [main, refactor]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  check-version:
+  lint-and-test:
+    name: Lint & Test
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout PR/push
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: bun run lint
+
+      - name: Run tests
+        run: bunx vitest run
+
+  check-version:
+    name: Version Bump Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Get current version
@@ -18,8 +47,8 @@ jobs:
       - name: Get base version
         id: base
         run: |
-          git fetch origin refactor --depth=1
-          echo "version=$(git show origin/refactor:package.json | jq -r .version)" >> "$GITHUB_OUTPUT"
+          git fetch origin ${{ github.base_ref }} --depth=1
+          echo "version=$(git show origin/${{ github.base_ref }}:package.json | jq -r .version)" >> "$GITHUB_OUTPUT"
 
       - name: Compare versions
         run: |
@@ -34,7 +63,6 @@ jobs:
             exit 1
           fi
 
-          # Compare semver (including pre-release tags)
           HIGHER=$(echo -e "$BASE\n$CURRENT" | sort -V | tail -1)
 
           if [ "$HIGHER" != "$CURRENT" ]; then
@@ -42,4 +70,4 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Version bumped: $BASE → $CURRENT"
+          echo "Version bumped: $BASE → $CURRENT"

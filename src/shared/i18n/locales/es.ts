@@ -38,8 +38,7 @@ const es = {
     // Sheet-specific
     sheetDescription: "Gestiona la configuración y preferencias de tu cuenta.",
     roles: "Roles",
-    deactivateDescription:
-      "Desactiva permanentemente tu cuenta. Esta acción no se puede deshacer.",
+    deactivateDescription: "Desactiva permanentemente tu cuenta. Esta acción no se puede deshacer.",
     usageLimitsDescription: "Cuotas aplicadas a tu rol actual.",
     agentsUsed: "Agentes",
     iterationsUsed: "Iteraciones",

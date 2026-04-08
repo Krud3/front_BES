@@ -26,7 +26,6 @@ export function LandingFooter() {
     <footer className="border-t border-border/40 bg-background">
       <div className="container mx-auto px-4 md:px-8 lg:px-16 py-12">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-
           {/* Brand column */}
           <div className="flex flex-col gap-4">
             <NavLink to="/home" aria-label="SiLEnSeSS">
@@ -82,20 +81,40 @@ export function LandingFooter() {
             © {year} PROMUEVA — Universidad del Valle. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-3">
-            <a href="https://www.univalle.edu.co/" target="_blank" rel="noopener noreferrer"
-              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white">
+            <a
+              href="https://www.univalle.edu.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white"
+            >
               <img src={univalleSvg} alt="Universidad del Valle" className="h-6 w-auto" />
             </a>
-            <a href="https://sites.google.com/view/promueva/" target="_blank" rel="noopener noreferrer"
-              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white">
+            <a
+              href="https://sites.google.com/view/promueva/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white"
+            >
               <img src={promuevaSvg} alt="PROMUEVA" className="h-6 w-auto" />
             </a>
-            <a href="https://www.javerianacali.edu.co/" target="_blank" rel="noopener noreferrer"
-              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white">
-              <img src={javerianaLogo} alt="Pontificia Universidad Javeriana" className="h-6 w-auto" />
+            <a
+              href="https://www.javerianacali.edu.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white"
+            >
+              <img
+                src={javerianaLogo}
+                alt="Pontificia Universidad Javeriana"
+                className="h-6 w-auto"
+              />
             </a>
-            <a href="https://eisc.univalle.edu.co/index.php/grupos-investigacion/avispa" target="_blank" rel="noopener noreferrer"
-              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white">
+            <a
+              href="https://eisc.univalle.edu.co/index.php/grupos-investigacion/avispa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center rounded-md px-2 py-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-white"
+            >
               <img src={avispaLogo} alt="AVISPA" className="h-6 w-auto" />
             </a>
           </div>

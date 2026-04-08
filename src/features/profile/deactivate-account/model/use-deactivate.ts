@@ -1,7 +1,7 @@
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 import { toast } from "sonner";
-import { userApi, useAuthStore } from "@/entities/user";
+import { useAuthStore, userApi } from "@/entities/user";
 import { auth } from "@/shared/api/firebase";
 import { useTranslation } from "@/shared/i18n";
 import { logger } from "@/shared/lib/logger";

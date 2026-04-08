@@ -30,7 +30,9 @@ export function WikiPage() {
   }, [i18n.language]);
 
   const handleTabChange = (_value: string) => {
-    setTimeout(() => { window.MathJax?.typesetPromise?.(); }, 0);
+    setTimeout(() => {
+      window.MathJax?.typesetPromise?.();
+    }, 0);
   };
 
   return (
@@ -42,9 +44,7 @@ export function WikiPage() {
         {t("wiki.pageIntro1")}{" "}
         <strong className="text-foreground">{t("wiki.spiralOfSilence")}</strong>.
       </p>
-      <p className="mt-4 text-lg tracking-tight text-muted-foreground">
-        {t("wiki.pageIntro2")}
-      </p>
+      <p className="mt-4 text-lg tracking-tight text-muted-foreground">{t("wiki.pageIntro2")}</p>
 
       <Separator className="my-12" />
 
@@ -59,10 +59,10 @@ export function WikiPage() {
           {t("wiki.degroot.p1end")}
         </p>
         <p className="text-lg tracking-tight text-muted-foreground">
-          {t("wiki.degroot.p2_1")} <Mi tex="i" /> {t("wiki.degroot.p2_2")}{" "}
-          <Mi tex="B_{i}^{t}" /> {t("wiki.degroot.p2_3")} <Mi tex="t" />
-          {t("wiki.degroot.p2_4")} <Mi tex="j" /> {t("wiki.degroot.p2_5")}{" "}
-          <Mi tex="i" /> {t("wiki.degroot.p2_6")} <Mi tex="I_{ji}" />.
+          {t("wiki.degroot.p2_1")} <Mi tex="i" /> {t("wiki.degroot.p2_2")} <Mi tex="B_{i}^{t}" />{" "}
+          {t("wiki.degroot.p2_3")} <Mi tex="t" />
+          {t("wiki.degroot.p2_4")} <Mi tex="j" /> {t("wiki.degroot.p2_5")} <Mi tex="i" />{" "}
+          {t("wiki.degroot.p2_6")} <Mi tex="I_{ji}" />.
         </p>
 
         <Card className="overflow-x-auto">
@@ -70,7 +70,9 @@ export function WikiPage() {
             <CardTitle>{t("wiki.degroot.equationTitle")}</CardTitle>
             <CardDescription>
               {t("wiki.degroot.equationDesc1")} <Mi tex="i" />
-              {t("wiki.degroot.equationDesc2")}<Mi tex="t+1" />{t("wiki.degroot.equationDesc3")}
+              {t("wiki.degroot.equationDesc2")}
+              <Mi tex="t+1" />
+              {t("wiki.degroot.equationDesc3")}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
@@ -104,31 +106,31 @@ export function WikiPage() {
         </h2>
         <p className="text-lg tracking-tight text-muted-foreground">
           {t("wiki.som.intro1_1")}{" "}
-          <strong className="text-foreground">{t("wiki.som.silenceState")}</strong>{" "}
-          (<Mi tex="S_{i}^{t}" />) {t("wiki.som.intro1_2")}{" "}
-          <strong className="text-foreground">{t("wiki.som.speaking")}</strong>{" "}
-          (<Mi tex="S_{i}^{t} = 1" />) {t("wiki.som.or")}{" "}
-          <strong className="text-foreground">{t("wiki.som.silent")}</strong>{" "}
-          (<Mi tex="S_{i}^{t} = 0" />).
+          <strong className="text-foreground">{t("wiki.som.silenceState")}</strong> (
+          <Mi tex="S_{i}^{t}" />) {t("wiki.som.intro1_2")}{" "}
+          <strong className="text-foreground">{t("wiki.som.speaking")}</strong> (
+          <Mi tex="S_{i}^{t} = 1" />) {t("wiki.som.or")}{" "}
+          <strong className="text-foreground">{t("wiki.som.silent")}</strong> (
+          <Mi tex="S_{i}^{t} = 0" />
+          ).
         </p>
         <p className="text-lg tracking-tight text-muted-foreground">{t("wiki.som.intro2")}</p>
         <ul className="list-disc list-inside text-lg text-muted-foreground flex flex-col gap-2">
           <li>
             <strong className="text-foreground">
-              {t("wiki.som.toleranceLabel")} (<Mi tex="\tau_{i}" />):
+              {t("wiki.som.toleranceLabel")} (<Mi tex="\tau_{i}" />
+              ):
             </strong>{" "}
-            {t("wiki.som.toleranceDesc_1")} <Mi tex="B_{i}^{t}" />{" "}
-            {t("wiki.som.toleranceDesc_2")} <Mi tex="i" />{" "}
-            {t("wiki.som.toleranceDesc_3")}
+            {t("wiki.som.toleranceDesc_1")} <Mi tex="B_{i}^{t}" /> {t("wiki.som.toleranceDesc_2")}{" "}
+            <Mi tex="i" /> {t("wiki.som.toleranceDesc_3")}
           </li>
           <li>
             <strong className="text-foreground">
-              {t("wiki.som.majorityLabel")} (<Mi tex="\mathcal{M}_{i}" />):
+              {t("wiki.som.majorityLabel")} (<Mi tex="\mathcal{M}_{i}" />
+              ):
             </strong>{" "}
-            {t("wiki.som.majorityDesc_1")}{" "}
-            <em>{t("wiki.som.majorityDesc_proportion")}</em>{" "}
-            {t("wiki.som.majorityDesc_2")} <Mi tex="i" />{" "}
-            {t("wiki.som.majorityDesc_3")}
+            {t("wiki.som.majorityDesc_1")} <em>{t("wiki.som.majorityDesc_proportion")}</em>{" "}
+            {t("wiki.som.majorityDesc_2")} <Mi tex="i" /> {t("wiki.som.majorityDesc_3")}
           </li>
         </ul>
 
@@ -141,45 +143,62 @@ export function WikiPage() {
           <TabsContent value="som">
             <Card>
               <CardHeader>
-                <CardTitle><Mi tex="SOM^{-}" />: Silence Opinion Memoryless</CardTitle>
+                <CardTitle>
+                  <Mi tex="SOM^{-}" />: Silence Opinion Memoryless
+                </CardTitle>
                 <CardDescription>{t("wiki.som.somMinus.description")}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somMinus.coreIdeaTitle")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somMinus.coreIdeaTitle")}
+                  </h4>
                   <p className="text-muted-foreground">
-                    {t("wiki.som.somMinus.coreIdea_1")} <em>{t("wiki.som.somMinus.coreIdea_only")}</em>{" "}
+                    {t("wiki.som.somMinus.coreIdea_1")}{" "}
+                    <em>{t("wiki.som.somMinus.coreIdea_only")}</em>{" "}
                     {t("wiki.som.somMinus.coreIdea_2")}{" "}
-                    <strong className="text-foreground">{t("wiki.som.somMinus.coreIdea_speaking")}</strong>
+                    <strong className="text-foreground">
+                      {t("wiki.som.somMinus.coreIdea_speaking")}
+                    </strong>
                     {t("wiki.som.somMinus.coreIdea_3")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somMinus.eq2Title")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somMinus.eq2Title")}
+                  </h4>
                   <p className="text-center text-lg md:text-xl text-foreground">
                     <Mb tex="B_{i}^{t+1} = B_{i}^{t} + \sum_{j \in N_{i}} I_{ji} \cdot S_{j}^{t} \cdot (B_{j}^{t} - B_{i}^{t})" />
                   </p>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somMinus.eq2desc_1")} <Mi tex="S_{j}^{t}" />{" "}
                     {t("wiki.som.somMinus.eq2desc_2")} <Mi tex="j" />{" "}
-                    {t("wiki.som.somMinus.eq2desc_3")}<Mi tex="S_{j}^{t} = 0" />
+                    {t("wiki.som.somMinus.eq2desc_3")}
+                    <Mi tex="S_{j}^{t} = 0" />
                     {t("wiki.som.somMinus.eq2desc_4")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somMinus.eq3Title")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somMinus.eq3Title")}
+                  </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somMinus.eq3desc_1")} <Mi tex="i" />{" "}
                     {t("wiki.som.somMinus.eq3desc_2")} <Mi tex="S_{i}^{t+1} = 1" />{" "}
                     {t("wiki.som.somMinus.eq3desc_3")}{" "}
-                    <strong className="text-foreground">{t("wiki.som.somMinus.eq3desc_nonSilent")}</strong>{" "}
-                    {t("wiki.som.somMinus.eq3desc_4")}<Mi tex="N_{i}^{t}" />{t("wiki.som.somMinus.eq3desc_5")}{" "}
-                    <Mi tex="\tau_{i}" /> {t("wiki.som.somMinus.eq3desc_6")}{" "}
-                    <Mi tex="\mathcal{M}_{i}" />.
+                    <strong className="text-foreground">
+                      {t("wiki.som.somMinus.eq3desc_nonSilent")}
+                    </strong>{" "}
+                    {t("wiki.som.somMinus.eq3desc_4")}
+                    <Mi tex="N_{i}^{t}" />
+                    {t("wiki.som.somMinus.eq3desc_5")} <Mi tex="\tau_{i}" />{" "}
+                    {t("wiki.som.somMinus.eq3desc_6")} <Mi tex="\mathcal{M}_{i}" />.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somMinus.takeawayTitle")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somMinus.takeawayTitle")}
+                  </h4>
                   <p className="text-muted-foreground">{t("wiki.som.somMinus.takeaway")}</p>
                 </div>
               </CardContent>
@@ -189,7 +208,9 @@ export function WikiPage() {
           <TabsContent value="som-plus">
             <Card>
               <CardHeader>
-                <CardTitle><Mi tex="SOM^{+}" />: Silence Opinion Memory-based</CardTitle>
+                <CardTitle>
+                  <Mi tex="SOM^{+}" />: Silence Opinion Memory-based
+                </CardTitle>
                 <CardDescription>
                   {t("wiki.som.somPlus.description_1")}{" "}
                   <em>{t("wiki.som.somPlus.description_remember")}</em>{" "}
@@ -198,44 +219,64 @@ export function WikiPage() {
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somPlus.coreIdeaTitle")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somPlus.coreIdeaTitle")}
+                  </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somPlus.coreIdea_1")} <em>{t("wiki.som.somPlus.coreIdea_all")}</em>{" "}
                     {t("wiki.som.somPlus.coreIdea_2")}{" "}
-                    <strong className="text-foreground">{t("wiki.som.somPlus.coreIdea_lastPublic")}</strong>.
+                    <strong className="text-foreground">
+                      {t("wiki.som.somPlus.coreIdea_lastPublic")}
+                    </strong>
+                    .
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somPlus.eq5Title")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somPlus.eq5Title")}
+                  </h4>
                   <p className="text-center text-lg md:text-xl text-foreground">
                     <Mb tex="B_{i}^{t+1} = B_{i}^{t} + \sum_{j \in N_{i}} I_{ji} \cdot (pubB_{j}^{t} - B_{i}^{t})" />
                   </p>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somPlus.eq5desc_1")} <Mi tex="pubB_{j}^{t}" />{" "}
-                    {t("wiki.som.somPlus.eq5desc_2")} <em>{t("wiki.som.somPlus.eq5desc_publicOpinion")}</em>{" "}
+                    {t("wiki.som.somPlus.eq5desc_2")}{" "}
+                    <em>{t("wiki.som.somPlus.eq5desc_publicOpinion")}</em>{" "}
                     {t("wiki.som.somPlus.eq5desc_3")} <Mi tex="j" />
                     {t("wiki.som.somPlus.eq5desc_4")} <Mi tex="j" />{" "}
                     {t("wiki.som.somPlus.eq5desc_5")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somPlus.eq6Title")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somPlus.eq6Title")}
+                  </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somPlus.eq6desc_1")}{" "}
-                    <strong className="text-foreground">{t("wiki.som.somPlus.eq6desc_currentPrivate")}</strong>{" "}
+                    <strong className="text-foreground">
+                      {t("wiki.som.somPlus.eq6desc_currentPrivate")}
+                    </strong>{" "}
                     (<Mi tex="B_{i}^{t}" />) {t("wiki.som.somPlus.eq6desc_2")}{" "}
-                    <strong className="text-foreground">{t("wiki.som.somPlus.eq6desc_publicOpinions")}</strong>{" "}
+                    <strong className="text-foreground">
+                      {t("wiki.som.somPlus.eq6desc_publicOpinions")}
+                    </strong>{" "}
                     (<Mi tex="pubB_{j}^{t}" />) {t("wiki.som.somPlus.eq6desc_3")}{" "}
                     <em>{t("wiki.som.somPlus.eq6desc_all")}</em> {t("wiki.som.somPlus.eq6desc_4")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold text-foreground">{t("wiki.som.somPlus.takeawayTitle")}</h4>
+                  <h4 className="text-lg font-semibold text-foreground">
+                    {t("wiki.som.somPlus.takeawayTitle")}
+                  </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somPlus.takeaway_1")}{" "}
-                    <strong className="text-foreground">{t("wiki.som.somPlus.takeaway_hiddenConsensus")}</strong>
-                    {t("wiki.som.somPlus.takeaway_2")} <em>{t("wiki.som.somPlus.takeaway_private")}</em>{" "}
-                    {t("wiki.som.somPlus.takeaway_3")} <em>{t("wiki.som.somPlus.takeaway_public")}</em>{" "}
+                    <strong className="text-foreground">
+                      {t("wiki.som.somPlus.takeaway_hiddenConsensus")}
+                    </strong>
+                    {t("wiki.som.somPlus.takeaway_2")}{" "}
+                    <em>{t("wiki.som.somPlus.takeaway_private")}</em>{" "}
+                    {t("wiki.som.somPlus.takeaway_3")}{" "}
+                    <em>{t("wiki.som.somPlus.takeaway_public")}</em>{" "}
                     {t("wiki.som.somPlus.takeaway_4")}
                   </p>
                 </div>
@@ -264,7 +305,9 @@ export function WikiPage() {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell className="font-mono"><Mi tex="B_{i}^{t}" /></TableCell>
+                <TableCell className="font-mono">
+                  <Mi tex="B_{i}^{t}" />
+                </TableCell>
                 <TableCell>{t("wiki.variables.opinion")}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {t("wiki.variables.opinionDesc_1")} <Mi tex="i" />{" "}
@@ -273,7 +316,9 @@ export function WikiPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-mono"><Mi tex="I_{ji}" /></TableCell>
+                <TableCell className="font-mono">
+                  <Mi tex="I_{ji}" />
+                </TableCell>
                 <TableCell>{t("wiki.variables.influence")}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {t("wiki.variables.influenceDesc_1")} <Mi tex="j" />{" "}
@@ -283,15 +328,19 @@ export function WikiPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-mono"><Mi tex="S_{i}^{t}" /></TableCell>
+                <TableCell className="font-mono">
+                  <Mi tex="S_{i}^{t}" />
+                </TableCell>
                 <TableCell>{t("wiki.variables.silenceState")}</TableCell>
                 <TableCell className="text-muted-foreground">
-                  <Mi tex="1" /> = {t("wiki.variables.silenceStateDesc_speaking")},{" "}
-                  <Mi tex="0" /> = {t("wiki.variables.silenceStateDesc_silent")}.
+                  <Mi tex="1" /> = {t("wiki.variables.silenceStateDesc_speaking")}, <Mi tex="0" /> ={" "}
+                  {t("wiki.variables.silenceStateDesc_silent")}.
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-mono"><Mi tex="\tau_{i}" /></TableCell>
+                <TableCell className="font-mono">
+                  <Mi tex="\tau_{i}" />
+                </TableCell>
                 <TableCell>{t("wiki.variables.toleranceRadius")}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {t("wiki.variables.toleranceDesc_1")} <Mi tex="i" />
@@ -301,7 +350,9 @@ export function WikiPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-mono"><Mi tex="\mathcal{M}_{i}" /></TableCell>
+                <TableCell className="font-mono">
+                  <Mi tex="\mathcal{M}_{i}" />
+                </TableCell>
                 <TableCell>{t("wiki.variables.majorityThreshold")}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {t("wiki.variables.majorityDesc_1")}{" "}
@@ -311,11 +362,12 @@ export function WikiPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-mono"><Mi tex="pubB_{j}^{t}" /></TableCell>
+                <TableCell className="font-mono">
+                  <Mi tex="pubB_{j}^{t}" />
+                </TableCell>
                 <TableCell>{t("wiki.variables.publicOpinion")}</TableCell>
                 <TableCell className="text-muted-foreground">
-                  {t("wiki.variables.publicOpinionDesc_1")}{" "}
-                  <Mi tex="SOM^{+}" />{" "}
+                  {t("wiki.variables.publicOpinionDesc_1")} <Mi tex="SOM^{+}" />{" "}
                   {t("wiki.variables.publicOpinionDesc_2")} <Mi tex="j" />.
                 </TableCell>
               </TableRow>
@@ -344,7 +396,8 @@ export function WikiPage() {
           </li>
           <li>
             <strong className="text-foreground">{t("wiki.conclusion.echoChamberTitle")}</strong>{" "}
-            {t("wiki.conclusion.echoChamber_1")}<Mi tex="\tau" />
+            {t("wiki.conclusion.echoChamber_1")}
+            <Mi tex="\tau" />
             {t("wiki.conclusion.echoChamber_2")}
           </li>
           <li>

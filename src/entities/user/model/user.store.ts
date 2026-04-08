@@ -1,8 +1,4 @@
-import {
-  onAuthStateChanged,
-  signOut,
-  type Unsubscribe,
-} from "firebase/auth";
+import { onAuthStateChanged, signOut, type Unsubscribe } from "firebase/auth";
 import { create } from "zustand";
 import { auth } from "@/shared/api/firebase";
 import { userApi } from "../api/user.api";

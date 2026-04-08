@@ -7,20 +7,14 @@ interface TableOfContentsProps {
   className?: string;
 }
 
-export function TableOfContents({
-  containerSelector = "main",
-  className,
-}: TableOfContentsProps) {
+export function TableOfContents({ containerSelector = "main", className }: TableOfContentsProps) {
   const { t } = useTranslation();
   const { entries, activeId } = useTableOfContents(containerSelector);
 
   if (entries.length === 0) return null;
 
   return (
-    <nav
-      aria-label={t("nav.onThisPage")}
-      className={cn("w-56 shrink-0", className)}
-    >
+    <nav aria-label={t("nav.onThisPage")} className={cn("w-56 shrink-0", className)}>
       <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/50">
         {t("nav.onThisPage")}
       </p>
@@ -31,9 +25,7 @@ export function TableOfContents({
               href={`#${entry.id}`}
               className={cn(
                 "block truncate text-sm transition-colors hover:text-foreground",
-                activeId === entry.id
-                  ? "font-medium text-foreground"
-                  : "text-foreground/50",
+                activeId === entry.id ? "font-medium text-foreground" : "text-foreground/50",
               )}
             >
               {entry.text}

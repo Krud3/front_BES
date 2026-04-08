@@ -19,18 +19,17 @@ export function useTableOfContents(containerSelector = "main"): {
 
   useEffect(() => {
     const container = document.querySelector(containerSelector) ?? document;
-    const headings = Array.from(
-      container.querySelectorAll<HTMLHeadingElement>("h2, h3"),
-    );
+    const headings = Array.from(container.querySelectorAll<HTMLHeadingElement>("h2, h3"));
 
     // Auto-assign ids to headings that lack one
     for (const heading of headings) {
       if (!heading.id) {
-        heading.id = heading.textContent
-          ?.trim()
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^\w-]/g, "") ?? Math.random().toString(36).slice(2);
+        heading.id =
+          heading.textContent
+            ?.trim()
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w-]/g, "") ?? Math.random().toString(36).slice(2);
       }
     }
 

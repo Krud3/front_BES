@@ -21,8 +21,16 @@ const item: Variants = {
 const PARTNERS = [
   { src: univalleSvg, alt: "Universidad del Valle", href: "https://www.univalle.edu.co/" },
   { src: promuevaSvg, alt: "PROMUEVA", href: "https://sites.google.com/view/promueva/" },
-  { src: avispaLogo, alt: "AVISPA", href: "https://eisc.univalle.edu.co/index.php/grupos-investigacion/avispa" },
-  { src: javerianaLogo, alt: "Pontificia Universidad Javeriana", href: "https://www.javerianacali.edu.co/" },
+  {
+    src: avispaLogo,
+    alt: "AVISPA",
+    href: "https://eisc.univalle.edu.co/index.php/grupos-investigacion/avispa",
+  },
+  {
+    src: javerianaLogo,
+    alt: "Pontificia Universidad Javeriana",
+    href: "https://www.javerianacali.edu.co/",
+  },
 ] as const;
 
 export function HomePage() {
@@ -31,7 +39,6 @@ export function HomePage() {
 
   return (
     <article className="flex flex-col gap-16">
-
       {/* Hero — staggered */}
       <motion.section
         variants={container}
@@ -62,9 +69,7 @@ export function HomePage() {
         )}
 
         <motion.div variants={item} className="flex flex-col gap-6 pt-8">
-          <p className="text-sm font-medium text-muted-foreground">
-            {t("home.participation")}
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">{t("home.participation")}</p>
           <div className="flex flex-wrap items-center gap-4">
             {PARTNERS.map(({ src, alt, href }) => (
               <a
@@ -86,12 +91,12 @@ export function HomePage() {
         <h2 className="font-display text-2xl font-normal text-foreground">Introduction</h2>
         <p className="text-muted-foreground leading-relaxed">
           Opinion dynamics studies how individual beliefs evolve through social interaction.
-          SiLEnSeSS lets researchers configure agent networks, choose an update rule, and
-          observe how opinion distributions shift over time — all without writing code.
+          SiLEnSeSS lets researchers configure agent networks, choose an update rule, and observe
+          how opinion distributions shift over time — all without writing code.
         </p>
         <p className="text-muted-foreground leading-relaxed">
-          The platform currently implements two foundational models: the <strong>DeGroot</strong> averaging
-          model and the <strong>Spiral of Silence</strong> suppression model. Both run on
+          The platform currently implements two foundational models: the <strong>DeGroot</strong>{" "}
+          averaging model and the <strong>Spiral of Silence</strong> suppression model. Both run on
           configurable network topologies and expose per-iteration data for analysis.
         </p>
       </section>
@@ -107,23 +112,22 @@ export function HomePage() {
           <div className="flex flex-col gap-2">
             <h3 className="font-sans font-semibold text-foreground">Consensus under DeGroot</h3>
             <p className="text-muted-foreground leading-relaxed">
-              A 500-agent Barabási–Albert network with uniform influence weights converges to
-              a shared opinion within ~300 iterations. Hub nodes dominate early; peripheral
-              agents follow after sufficient exposure.
+              A 500-agent Barabási–Albert network with uniform influence weights converges to a
+              shared opinion within ~300 iterations. Hub nodes dominate early; peripheral agents
+              follow after sufficient exposure.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <h3 className="font-sans font-semibold text-foreground">Silencing cascade</h3>
             <p className="text-muted-foreground leading-relaxed">
-              In a polarized Erdős–Rényi network calibrated with 2022 Colombian election data,
-              the minority cluster begins suppressing its opinion at iteration 80, producing a
-              cascade that amplifies the majority position far beyond its initial share.
+              In a polarized Erdős–Rényi network calibrated with 2022 Colombian election data, the
+              minority cluster begins suppressing its opinion at iteration 80, producing a cascade
+              that amplifies the majority position far beyond its initial share.
             </p>
           </div>
         </div>
       </section>
-
     </article>
   );
 }
