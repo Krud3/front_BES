@@ -43,6 +43,7 @@ coverage
 .vscode/
 
 serviceAccount.json
+.vercel/
 
 .agents/
 skills-lock.json

@@ -71,3 +71,84 @@ jobs:
           fi
 
           echo "Version bumped: $BASE → $CURRENT"
+
+  # ── Build ──────────────────────────────────────────────────────────────────
+  # Runs type checking (tsc) and Rsbuild. Uses vercel pull to fetch Firebase
+  # env vars from the Vercel project — no need to duplicate them in GitHub
+  # Secrets. Uploads the Vercel output as an artifact for the deploy job.
+  #
+  # Required GitHub Secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+  # (obtain from: vercel.com/account/tokens and `vercel link` locally)
+  build:
+    name: Type Check & Build
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bunx tsc --noEmit
+
+      - name: Pull Vercel env & config
+        run: bunx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: bunx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-output
+          path: .vercel/output/
+          retention-days: 1
+
+  # ── Deploy ─────────────────────────────────────────────────────────────────
+  # Deploys the prebuilt artifact to Vercel production.
+  # Only runs on direct push to main (not on PRs).
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/refactor'
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Pull Vercel project config
+        run: bunx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vercel-output
+          path: .vercel/output/
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(bunx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
