@@ -115,6 +115,7 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     steps:
       - name: Checkout
@@ -130,10 +131,10 @@ jobs:
         run: bunx tsc --noEmit
 
       - name: Pull Vercel env & config
-        run: bunx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: bunx vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: Build
-        run: bunx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: bunx vercel build --prod --token=$VERCEL_TOKEN
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -154,6 +155,7 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     environment:
       name: production
@@ -167,7 +169,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Pull Vercel project config
-        run: bunx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: bunx vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: Download build artifact
         uses: actions/download-artifact@v4
@@ -178,5 +180,5 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          url=$(bunx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(bunx vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN)
           echo "url=$url" >> "$GITHUB_OUTPUT"
