@@ -49,3 +49,5 @@ serviceAccount.json
 skills-lock.json
 .context/
 .claude/
+.vercel
+.env*.local
