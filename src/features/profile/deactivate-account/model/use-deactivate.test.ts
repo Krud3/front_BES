@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { signOut } from "firebase/auth";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore, userApi } from "@/entities/user";
 import { logger } from "@/shared/lib/logger";
 import { useDeactivate } from "./use-deactivate";
@@ -60,7 +60,13 @@ describe("useDeactivate", () => {
     vi.clearAllMocks();
     vi.mocked(signOut).mockResolvedValue(undefined);
     vi.mocked(useAuthStore).mockImplementation((selector) =>
-      selector({ user: mockUser, loading: false, setUser: vi.fn(), setLoading: vi.fn(), observeAuthState: vi.fn() })
+      selector({
+        user: mockUser,
+        loading: false,
+        setUser: vi.fn(),
+        setLoading: vi.fn(),
+        observeAuthState: vi.fn(),
+      }),
     );
   });
 
@@ -78,7 +84,13 @@ describe("useDeactivate", () => {
   describe("deactivate — null guard", () => {
     it("returns early and does not call userApi.update when user is null", async () => {
       vi.mocked(useAuthStore).mockImplementation((selector) =>
-        selector({ user: null, loading: false, setUser: vi.fn(), setLoading: vi.fn(), observeAuthState: vi.fn() })
+        selector({
+          user: null,
+          loading: false,
+          setUser: vi.fn(),
+          setLoading: vi.fn(),
+          observeAuthState: vi.fn(),
+        }),
       );
 
       const { result } = renderHook(() => useDeactivate());

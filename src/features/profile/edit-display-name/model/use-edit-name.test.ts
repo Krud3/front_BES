@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore, userApi } from "@/entities/user";
 import { logger } from "@/shared/lib/logger";
 import { useEditName } from "./use-edit-name";
@@ -59,7 +59,7 @@ describe("useEditName", () => {
         setUser: mockSetUser,
         setLoading: vi.fn(),
         observeAuthState: vi.fn(),
-      })
+      }),
     );
   });
 
@@ -79,7 +79,7 @@ describe("useEditName", () => {
           setUser: mockSetUser,
           setLoading: vi.fn(),
           observeAuthState: vi.fn(),
-        })
+        }),
       );
 
       const { result } = renderHook(() => useEditName());
@@ -103,7 +103,7 @@ describe("useEditName", () => {
           setUser: mockSetUser,
           setLoading: vi.fn(),
           observeAuthState: vi.fn(),
-        })
+        }),
       );
 
       const { result } = renderHook(() => useEditName());

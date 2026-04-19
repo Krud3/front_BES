@@ -10,8 +10,7 @@ type AuthStoreState = { user: User | null; loading: boolean };
 let mockStoreState: AuthStoreState = { user: null, loading: false };
 
 vi.mock("./user.store", () => ({
-  useAuthStore: (selector: (state: AuthStoreState) => unknown) =>
-    selector(mockStoreState),
+  useAuthStore: (selector: (state: AuthStoreState) => unknown) => selector(mockStoreState),
 }));
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────

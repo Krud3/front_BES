@@ -22,6 +22,7 @@ describe("logger.error", () => {
 
     logger.error("myContext", new Error("boom"));
 
+    // biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
     expect(console.error).toHaveBeenCalledWith("[myContext]:", expect.any(Error));
   });
 
@@ -31,6 +32,7 @@ describe("logger.error", () => {
 
     logger.error("myContext", new Error("silent"));
 
+    // biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
     expect(console.error).not.toHaveBeenCalled();
   });
 
@@ -41,6 +43,7 @@ describe("logger.error", () => {
     const unknownError: unknown = { code: 42, message: "unknown shape" };
     logger.error("ctx", unknownError);
 
+    // biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
     expect(console.error).toHaveBeenCalledWith("[ctx]:", unknownError);
   });
 
@@ -49,6 +52,7 @@ describe("logger.error", () => {
     const { logger } = await import("./logger");
 
     expect(() => logger.error("ctx", null)).not.toThrow();
+    // biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
     expect(console.error).toHaveBeenCalledWith("[ctx]:", null);
   });
 
@@ -57,6 +61,7 @@ describe("logger.error", () => {
     const { logger } = await import("./logger");
 
     expect(() => logger.error("ctx", undefined)).not.toThrow();
+    // biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
     expect(console.error).toHaveBeenCalledWith("[ctx]:", undefined);
   });
 });

@@ -179,6 +179,20 @@ it("catches error, logs, and toasts on failure", async () => {
 });
 ```
 
+### Biome lint suppressions
+
+The project uses Biome with `noConsole: warn` (only `console.log` is allowed). When testing a module that wraps `console.*` (e.g., `logger.ts`), you need to spy on it — Biome flags `expect(console.error)` as a member access even though it's not a direct call.
+
+Add `biome-ignore` only on the `expect(console.*)` assertion lines, not on `vi.spyOn`:
+
+```typescript
+// vi.spyOn is fine — no biome-ignore needed
+vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+// biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
+expect(console.error).toHaveBeenCalledWith("[ctx]:", expect.any(Error));
+```
+
 ## What NOT to do
 
 - Don't test implementation details — test behavior and return values

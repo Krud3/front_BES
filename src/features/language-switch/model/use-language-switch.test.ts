@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useLanguageSwitch } from "./use-language-switch";
 
@@ -35,7 +35,9 @@ describe("useLanguageSwitch", () => {
 
   describe("currentLang", () => {
     it('returns "es" when i18n.language starts with "es"', () => {
-      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("es") } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("es") } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 
@@ -43,7 +45,9 @@ describe("useLanguageSwitch", () => {
     });
 
     it('returns "es" when i18n.language is a regional variant like "es-CO"', () => {
-      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("es-CO") } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("es-CO") } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 
@@ -51,7 +55,9 @@ describe("useLanguageSwitch", () => {
     });
 
     it('returns "en" when i18n.language is "en"', () => {
-      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("en") } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("en") } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 
@@ -59,7 +65,9 @@ describe("useLanguageSwitch", () => {
     });
 
     it('returns "en" for any language that does not start with "es"', () => {
-      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("fr") } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("fr") } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 
@@ -70,7 +78,9 @@ describe("useLanguageSwitch", () => {
   describe("changeLanguage", () => {
     it('calls i18n.changeLanguage with "en"', () => {
       const mockI18n = makeMockI18n("es");
-      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 
@@ -83,7 +93,9 @@ describe("useLanguageSwitch", () => {
 
     it('calls i18n.changeLanguage with "es"', () => {
       const mockI18n = makeMockI18n("en");
-      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 
@@ -96,14 +108,18 @@ describe("useLanguageSwitch", () => {
 
     it('updates currentLang to "en" on next render after changing language', () => {
       const mockI18n = makeMockI18n("es");
-      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result, rerender } = renderHook(() => useLanguageSwitch());
 
       expect(result.current.currentLang).toBe("es");
 
       mockI18n.language = "en";
-      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<
+        typeof useTranslation
+      >);
 
       rerender();
 
@@ -113,7 +129,9 @@ describe("useLanguageSwitch", () => {
 
   describe("supportedLangs", () => {
     it('exports ["en", "es"]', () => {
-      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("en") } as ReturnType<typeof useTranslation>);
+      vi.mocked(useTranslation).mockReturnValue({ i18n: makeMockI18n("en") } as ReturnType<
+        typeof useTranslation
+      >);
 
       const { result } = renderHook(() => useLanguageSwitch());
 

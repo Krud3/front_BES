@@ -44,13 +44,9 @@ const mockAuthState = { loading: false };
 
 describe("useLogin", () => {
   beforeEach(() => {
-    vi.mocked(GoogleAuthProvider).mockReturnValue(
-      mockProvider as unknown as GoogleAuthProvider,
-    );
+    vi.mocked(GoogleAuthProvider).mockReturnValue(mockProvider as unknown as GoogleAuthProvider);
     // Use mockImplementation so the selector arrow function is actually invoked
-    vi.mocked(useAuthStore).mockImplementation((selector) =>
-      selector(mockAuthState as never),
-    );
+    vi.mocked(useAuthStore).mockImplementation((selector) => selector(mockAuthState as never));
     mockAuthState.loading = false;
     vi.clearAllMocks();
   });

@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "@/shared/i18n";
 import { logger } from "@/shared/lib/logger";
 import { getRoleLimits } from "../lib/permissions";
-import type { User, UsageLimits } from "../types/user.types";
+import type { UsageLimits, User } from "../types/user.types";
 import { userApi } from "./user.api";
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ const mockUser: User = {
   roles: ["Researcher"],
 };
 
-const mockUserWithLimits: User = {
+const _mockUserWithLimits: User = {
   ...mockUser,
   usageLimits: mockUsageLimits,
 };
@@ -118,7 +118,9 @@ describe("userApi", () => {
   describe("getById", () => {
     it("returns User with uid when document exists", async () => {
       const { uid, ...userData } = mockUser;
-      vi.mocked(getDoc).mockResolvedValue(makeDocSnap(true, userData) as Awaited<ReturnType<typeof getDoc>>);
+      vi.mocked(getDoc).mockResolvedValue(
+        makeDocSnap(true, userData) as Awaited<ReturnType<typeof getDoc>>,
+      );
 
       const result = await userApi.getById(uid);
 
@@ -195,7 +197,9 @@ describe("userApi", () => {
 
     it("returns false when user already exists", async () => {
       const { uid, ...userData } = mockUser;
-      vi.mocked(getDoc).mockResolvedValue(makeDocSnap(true, userData) as Awaited<ReturnType<typeof getDoc>>);
+      vi.mocked(getDoc).mockResolvedValue(
+        makeDocSnap(true, userData) as Awaited<ReturnType<typeof getDoc>>,
+      );
 
       const result = await userApi.create(mockUser);
 
@@ -241,7 +245,10 @@ describe("userApi", () => {
 
     it("accepts partial data and passes it to updateDoc", async () => {
       vi.mocked(updateDoc).mockResolvedValue(undefined);
-      const partial: Partial<Omit<User, "uid">> = { photo: "https://new-photo.jpg", roles: ["BaseUser"] };
+      const partial: Partial<Omit<User, "uid">> = {
+        photo: "https://new-photo.jpg",
+        roles: ["BaseUser"],
+      };
 
       await userApi.update(mockUser.uid, partial);
 

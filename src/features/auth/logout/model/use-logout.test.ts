@@ -44,9 +44,7 @@ const mockAuthState = { setUser: mockSetUser };
 describe("useLogout", () => {
   beforeEach(() => {
     // Use mockImplementation so the selector arrow function is actually invoked
-    vi.mocked(useAuthStore).mockImplementation((selector) =>
-      selector(mockAuthState as never),
-    );
+    vi.mocked(useAuthStore).mockImplementation((selector) => selector(mockAuthState as never));
     vi.clearAllMocks();
   });
 
