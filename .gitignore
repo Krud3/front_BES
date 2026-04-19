@@ -45,9 +45,20 @@ coverage
 serviceAccount.json
 .vercel/
 
-.agents/
 skills-lock.json
 .context/
-.claude/
 .vercel
 .env*.local
+
+# Claude Code — local settings only
+.claude/settings.local.json
+
+# Skills — evals y workspaces no van al repo (muchos archivos generados)
+# Skills genéricos (shadcn, frontend-design, github-actions-docs) tampoco —
+# son herramientas opcionales que cada dev instala por su cuenta.
+.agents/skills/*-workspace/
+.agents/skills/**/evals/
+.agents/skills/skill-creator/
+.agents/skills/shadcn/
+.agents/skills/frontend-design/
+.agents/skills/github-actions-docs/
