@@ -187,7 +187,7 @@ When using `vi.mocked(fn).mockReturnValue(...)` with complex library types (e.g.
 // ❌ TS2352: neither type sufficiently overlaps
 vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<typeof useTranslation>);
 
-// ✅ correct — double cast through unknown
+// ✅ correct
 vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as unknown as ReturnType<typeof useTranslation>);
 ```
 
@@ -216,6 +216,16 @@ vi.spyOn(console, "error").mockImplementation(() => undefined);
 // biome-ignore lint/suspicious/noConsole: asserting on spied console.error — not a direct call
 expect(console.error).toHaveBeenCalledWith("[ctx]:", expect.any(Error));
 ```
+
+## After writing the test file
+
+Run lint:fix to auto-format the generated file before finishing:
+
+```bash
+bun run lint:fix
+```
+
+This handles all Biome formatting rules automatically (line width, trailing commas, quotes, etc.) — no need to manually match the formatter output.
 
 ## What NOT to do
 
