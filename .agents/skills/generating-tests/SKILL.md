@@ -179,6 +179,18 @@ it("catches error, logs, and toasts on failure", async () => {
 });
 ```
 
+### Array index access
+
+The project has `noUncheckedIndexedAccess: true` in `tsconfig.json`. This means `array[0]` is typed as `T | undefined`, not `T`. Always use optional chaining when accessing array elements in assertions:
+
+```typescript
+// ❌ TS2532: Object is possibly 'undefined'
+expect(result.current.entries[0].level).toBe(2);
+
+// ✅ correct
+expect(result.current.entries[0]?.level).toBe(2);
+```
+
 ### Biome lint suppressions
 
 The project uses Biome with `noConsole: warn` (only `console.log` is allowed). When testing a module that wraps `console.*` (e.g., `logger.ts`), you need to spy on it — Biome flags `expect(console.error)` as a member access even though it's not a direct call.

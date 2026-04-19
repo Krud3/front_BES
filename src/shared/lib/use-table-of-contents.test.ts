@@ -114,7 +114,7 @@ describe("useTableOfContents", () => {
 
       const { result } = renderHook(() => useTableOfContents("main"));
 
-      expect(result.current.entries[0].level).toBe(2);
+      expect(result.current.entries[0]?.level).toBe(2);
     });
 
     it("sets level=3 for h3 elements", () => {
@@ -125,7 +125,7 @@ describe("useTableOfContents", () => {
 
       const { result } = renderHook(() => useTableOfContents("main"));
 
-      expect(result.current.entries[0].level).toBe(3);
+      expect(result.current.entries[0]?.level).toBe(3);
     });
   });
 
@@ -138,7 +138,7 @@ describe("useTableOfContents", () => {
 
       const { result } = renderHook(() => useTableOfContents("main"));
 
-      expect(result.current.entries[0].id).toBe("hello-world-section");
+      expect(result.current.entries[0]?.id).toBe("hello-world-section");
     });
 
     it("auto-assigns random id when heading textContent is null (unreachable via DOM, guarded by ??)", () => {
@@ -153,7 +153,7 @@ describe("useTableOfContents", () => {
       const { result } = renderHook(() => useTableOfContents("main"));
 
       // Empty textContent slugifies to "" — the ?? path is not triggered in DOM contexts.
-      expect(result.current.entries[0].id).toBe("");
+      expect(result.current.entries[0]?.id).toBe("");
     });
   });
 
