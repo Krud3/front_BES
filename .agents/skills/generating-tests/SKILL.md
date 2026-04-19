@@ -179,6 +179,18 @@ it("catches error, logs, and toasts on failure", async () => {
 });
 ```
 
+### Casting mock return values
+
+When using `vi.mocked(fn).mockReturnValue(...)` with complex library types (e.g. `ReturnType<typeof useTranslation>`), a direct `as ReturnType<...>` cast often fails because the mock object doesn't overlap enough with the full type. Always cast through `unknown` first:
+
+```typescript
+// ❌ TS2352: neither type sufficiently overlaps
+vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as ReturnType<typeof useTranslation>);
+
+// ✅ correct — double cast through unknown
+vi.mocked(useTranslation).mockReturnValue({ i18n: mockI18n } as unknown as ReturnType<typeof useTranslation>);
+```
+
 ### Array index access
 
 The project has `noUncheckedIndexedAccess: true` in `tsconfig.json`. This means `array[0]` is typed as `T | undefined`, not `T`. Always use optional chaining when accessing array elements in assertions:
