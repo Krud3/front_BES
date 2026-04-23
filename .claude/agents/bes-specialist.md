@@ -63,6 +63,28 @@ const doSomething = async () => {
 
 `logger` comes from `@/shared/lib/logger`. `toast` comes from `sonner`. The toast message is always a translated key. Missing any of these four elements is a structural issue.
 
+When the backend can return specific error codes, use the centralized error utilities from `@/shared/lib/backend-error` to give targeted feedback:
+
+```ts
+} catch (error) {
+  logger.error("useHookName", error);
+  if (isErrorCode(error, "usage_limit_exceeded")) {
+    toast.error(t("namespace.errorUsageLimit"));
+  } else {
+    toast.error(t("namespace.errorSomething"));
+  }
+}
+```
+
+Available utilities (import from `@/shared/lib/backend-error`):
+- `isBackendError(error)` — type guard: `AxiosError<BackendError>`
+- `getBackendErrorCode(error)` — returns `BackendErrorCode | null`
+- `isErrorCode(error, code)` — shorthand for a specific code check
+
+Known codes: `"unauthorized"` · `"forbidden"` · `"not_found"` · `"invalid_body"` · `"usage_limit_exceeded"` · `"rate_limited"`.
+
+The API layer (`shared/api/backend/`) never catches or transforms errors — it lets them propagate. The feature hook is always the error boundary.
+
 ### Stack is fixed
 
 Bun + Rsbuild + Rspack · React 19 + TypeScript strict · Tailwind CSS v4 · Radix UI / shadcn · React Router DOM v7 · Zustand · Firebase (Auth + Firestore) · Biome · Vitest + happy-dom · `motion` v12 + `tw-animate-css`. Path alias `@/` → `src/`. Do not propose alternative libraries unless the user explicitly asks for a migration.
