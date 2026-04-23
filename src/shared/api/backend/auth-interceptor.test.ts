@@ -36,35 +36,23 @@ function makeSuccessAdapter(data: unknown = {}) {
 }
 
 function make401Error(config: InternalAxiosRequestConfig) {
-  return new axios.AxiosError(
-    "Unauthorized",
-    "ERR_BAD_REQUEST",
+  return new axios.AxiosError("Unauthorized", "ERR_BAD_REQUEST", config, null, {
+    status: 401,
+    statusText: "Unauthorized",
+    data: { error: "unauthorized", message: "Token expired" },
+    headers: {},
     config,
-    null,
-    {
-      status: 401,
-      statusText: "Unauthorized",
-      data: { error: "unauthorized", message: "Token expired" },
-      headers: {},
-      config,
-    },
-  );
+  });
 }
 
 function make403Error(config: InternalAxiosRequestConfig) {
-  return new axios.AxiosError(
-    "Forbidden",
-    "ERR_BAD_REQUEST",
+  return new axios.AxiosError("Forbidden", "ERR_BAD_REQUEST", config, null, {
+    status: 403,
+    statusText: "Forbidden",
+    data: { error: "forbidden", message: "Admin role required" },
+    headers: {},
     config,
-    null,
-    {
-      status: 403,
-      statusText: "Forbidden",
-      data: { error: "forbidden", message: "Admin role required" },
-      headers: {},
-      config,
-    },
-  );
+  });
 }
 
 // ─── Tests — request interceptor ─────────────────────────────────────────────
@@ -124,7 +112,7 @@ describe("auth-interceptor — response interceptor (401 retry)", () => {
   it("calls getIdToken(true) and retries when the backend responds with 401", async () => {
     const mockGetIdToken = vi
       .fn()
-      .mockResolvedValueOnce("old-token")      // request interceptor on first attempt
+      .mockResolvedValueOnce("old-token") // request interceptor on first attempt
       .mockResolvedValueOnce("refreshed-token"); // force-refresh in response interceptor
     // biome-ignore lint/suspicious/noExplicitAny: mutating mock object property
     (auth as any).currentUser = { getIdToken: mockGetIdToken };

@@ -294,6 +294,11 @@ const es = {
     about: "Acerca de",
     rights: "Todos los derechos reservados.",
   },
+  simulation: {
+    errorStream: "La conexión con la simulación falló. Por favor intenta de nuevo.",
+    errorRateLimited: "Demasiadas solicitudes. Espera antes de reconectar.",
+    errorForbidden: "No tienes permiso para acceder a esta simulación.",
+  },
   user: {
     errorGet: "Error al cargar los datos del usuario.",
     errorGetByEmail: "Error al cargar el usuario por correo.",

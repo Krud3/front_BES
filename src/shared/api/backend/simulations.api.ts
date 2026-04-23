@@ -18,64 +18,46 @@ import type {
 
 export const simulationsApi = {
   async startGenerated(body: GeneratedRunRequest): Promise<SimCreated> {
-    const { data } = await backendClient.post<SimCreated>(
-      "/simulations/generated",
-      body,
-    );
+    const { data } = await backendClient.post<SimCreated>("/simulations/generated", body);
     return data;
   },
 
   async startCustom(body: CustomRunRequest): Promise<SimCreated> {
-    const { data } = await backendClient.post<SimCreated>(
-      "/simulations/custom",
-      body,
-    );
+    const { data } = await backendClient.post<SimCreated>("/simulations/custom", body);
     return data;
   },
 
   async startCustomBinary(payload: ArrayBuffer): Promise<SimCreated> {
-    const { data } = await backendClient.post<SimCreated>(
-      "/simulations/custom",
-      payload,
-      { headers: { "Content-Type": "application/octet-stream" } },
-    );
+    const { data } = await backendClient.post<SimCreated>("/simulations/custom", payload, {
+      headers: { "Content-Type": "application/octet-stream" },
+    });
     return data;
   },
 
   async listMine(params?: PaginationParams): Promise<SimulationListResponse> {
-    const { data } = await backendClient.get<SimulationListResponse>(
-      "/simulations/mine",
-      { params },
-    );
+    const { data } = await backendClient.get<SimulationListResponse>("/simulations/mine", {
+      params,
+    });
     return data;
   },
 
   async listAll(params?: PaginationParams): Promise<SimulationListResponse> {
-    const { data } = await backendClient.get<SimulationListResponse>(
-      "/simulations",
-      { params },
-    );
+    const { data } = await backendClient.get<SimulationListResponse>("/simulations", { params });
     return data;
   },
 
   async getById(runId: string): Promise<RunSummary> {
-    const { data } = await backendClient.get<RunSummary>(
-      `/simulations/${runId}`,
-    );
+    const { data } = await backendClient.get<RunSummary>(`/simulations/${runId}`);
     return data;
   },
 
   async cancel(runId: string): Promise<RunCancelledResponse> {
-    const { data } = await backendClient.delete<RunCancelledResponse>(
-      `/simulations/${runId}`,
-    );
+    const { data } = await backendClient.delete<RunCancelledResponse>(`/simulations/${runId}`);
     return data;
   },
 
   async listNetworks(runId: string): Promise<NetworkListResponse> {
-    const { data } = await backendClient.get<NetworkListResponse>(
-      `/simulations/${runId}/networks`,
-    );
+    const { data } = await backendClient.get<NetworkListResponse>(`/simulations/${runId}/networks`);
     return data;
   },
 
@@ -106,9 +88,7 @@ export const simulationsApi = {
   },
 
   async getWsTicket(runId: string): Promise<WsTicketResponse> {
-    const { data } = await backendClient.post<WsTicketResponse>(
-      `/simulations/${runId}/ws-ticket`,
-    );
+    const { data } = await backendClient.post<WsTicketResponse>(`/simulations/${runId}/ws-ticket`);
     return data;
   },
 };

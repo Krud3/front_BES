@@ -1,6 +1,5 @@
 export { backendClient } from "./client";
 export { simulationsApi } from "./simulations.api";
-export { usersApi } from "./users.api";
 export type {
   AgentSpec,
   AgentType,
@@ -20,9 +19,9 @@ export type {
   RunCancelledResponse,
   RunSummary,
   SaveMode,
-  SimCreated,
   SilenceEffect,
   SilenceStrategy,
+  SimCreated,
   SimulationListResponse,
   TopologyAgent,
   TopologyEdge,
@@ -33,3 +32,4 @@ export type {
   UserSyncResponse,
   WsTicketResponse,
 } from "./types/backend.types";
+export { usersApi } from "./users.api";

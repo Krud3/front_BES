@@ -1,9 +1,7 @@
 import type { AxiosError } from "axios";
 import type { BackendError, BackendErrorCode } from "@/shared/api/backend";
 
-export function isBackendError(
-  error: unknown,
-): error is AxiosError<BackendError> {
+export function isBackendError(error: unknown): error is AxiosError<BackendError> {
   if (
     typeof error !== "object" ||
     error === null ||

@@ -291,6 +291,11 @@ const en = {
     about: "About",
     rights: "All rights reserved.",
   },
+  simulation: {
+    errorStream: "Connection to the simulation failed. Please try again.",
+    errorRateLimited: "Too many requests. Please wait before reconnecting.",
+    errorForbidden: "You do not have permission to access this simulation.",
+  },
   user: {
     errorGet: "Error loading user data.",
     errorGetByEmail: "Error loading user by email.",
