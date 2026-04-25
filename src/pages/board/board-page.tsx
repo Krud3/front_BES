@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { DashboardOutletContext } from "@/app/layouts/dashboard/dashboard-layout";
+import { useSimulationStore } from "@/entities/simulation";
 import { SimulationConfigWizard } from "@/features/simulation-config";
 import {
   RunDetailCard,
@@ -24,6 +25,9 @@ export function BoardPage() {
   const { t } = useTranslation();
   const { activePanel, setSidebarContent } = useOutletContext<DashboardOutletContext>();
 
+  const storeRunId = useSimulationStore((s) => s.runId);
+  const storeStatus = useSimulationStore((s) => s.status);
+
   const {
     runs,
     loading,
@@ -35,6 +39,11 @@ export function BoardPage() {
     selectRun,
     deleteRun,
   } = useSimulationHistory();
+
+  const statusMap = useMemo<Record<string, string>>(() => {
+    if (!storeRunId || storeStatus === "idle") return {};
+    return { [storeRunId]: storeStatus };
+  }, [storeRunId, storeStatus]);
 
   const prevPanel = useRef<string | null>(null);
   useEffect(() => {
@@ -52,12 +61,13 @@ export function BoardPage() {
         loading={loading}
         hasMore={hasMore}
         selectedRunId={selectedRunId}
+        statusMap={statusMap}
         onSelectRun={selectRun}
         onDeleteRun={deleteRun}
         onLoadMore={loadMore}
       />
     );
-  }, [activePanel, runs, loading, hasMore, selectedRunId, selectRun, deleteRun, loadMore]);
+  }, [activePanel, runs, loading, hasMore, selectedRunId, statusMap, selectRun, deleteRun, loadMore]);
 
   useEffect(() => {
     setSidebarContent(sidebarContent);

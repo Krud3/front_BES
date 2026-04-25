@@ -14,6 +14,8 @@ interface SimulationHistoryPanelProps {
   loading: boolean;
   hasMore: boolean;
   selectedRunId: string | null;
+  /** Status keyed by run id, derived from the simulation store in BoardPage */
+  statusMap?: Record<string, string>;
   onSelectRun: (id: string) => void;
   onDeleteRun: (id: string) => void;
   onLoadMore: () => void;
@@ -26,8 +28,8 @@ function statusBadgeVariant(status: string): "default" | "secondary" | "destruct
   return "outline";
 }
 
-function inferStatus(run: RunSummary): string {
-  return "completed";
+function inferStatus(run: RunSummary, statusMap: Record<string, string>): string {
+  return statusMap[run.id] ?? "completed";
 }
 
 function formatDate(iso: string): string {
@@ -43,6 +45,7 @@ export function SimulationHistoryPanel({
   loading,
   hasMore,
   selectedRunId,
+  statusMap = {},
   onSelectRun,
   onDeleteRun,
   onLoadMore,
@@ -59,7 +62,7 @@ export function SimulationHistoryPanel({
   ];
 
   const filteredRuns =
-    activeFilter === "all" ? runs : runs.filter((r) => inferStatus(r) === activeFilter);
+    activeFilter === "all" ? runs : runs.filter((r) => inferStatus(r, statusMap) === activeFilter);
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -111,7 +114,7 @@ export function SimulationHistoryPanel({
         )}
 
         {filteredRuns.map((run) => {
-          const status = inferStatus(run);
+          const status = inferStatus(run, statusMap);
           const isPendingDelete = pendingDeleteId === run.id;
           const displayName = run.name ?? t("simulationHistory.runNameFallback");
 
