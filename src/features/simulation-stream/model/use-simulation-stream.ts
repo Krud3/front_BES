@@ -46,9 +46,7 @@ export function useSimulationStream(runId: string) {
       clientRef.current?.disconnect();
       clientRef.current = null;
     };
-    // runId is intentionally the only dependency — changing runId starts a new stream
-    // biome-ignore lint/react-hooks/exhaustive-deps: runId is the only stable identity
-  }, [runId]);
+  }, [runId, reset, t]);
 
   return { status, topology, currentRound, agents, error, isConnecting };
 }
