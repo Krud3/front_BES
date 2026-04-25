@@ -421,8 +421,22 @@ describe("useSimulationConfig", () => {
             stopThreshold: 0.01,
             saveMode: 1,
             agents: [
-              { name: "A", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
-              { name: "B", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
+              {
+                name: "A",
+                belief: 0.5,
+                toleranceRadius: 0.3,
+                toleranceOffset: 0,
+                silenceStrategy: 0,
+                silenceEffect: 0,
+              },
+              {
+                name: "B",
+                belief: 0.5,
+                toleranceRadius: 0.3,
+                toleranceOffset: 0,
+                silenceStrategy: 0,
+                silenceEffect: 0,
+              },
             ],
             edges: [{ source: "A", target: "B", influence: 0.5, bias: 0 }],
           });
@@ -454,8 +468,22 @@ describe("useSimulationConfig", () => {
             stopThreshold: 0.001,
             saveMode: 1,
             agents: [
-              { name: "A", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
-              { name: "B", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
+              {
+                name: "A",
+                belief: 0.5,
+                toleranceRadius: 0.3,
+                toleranceOffset: 0,
+                silenceStrategy: 0,
+                silenceEffect: 0,
+              },
+              {
+                name: "B",
+                belief: 0.5,
+                toleranceRadius: 0.3,
+                toleranceOffset: 0,
+                silenceStrategy: 0,
+                silenceEffect: 0,
+              },
             ],
             edges: [{ source: "A", target: "B", influence: 0.5, bias: 0 }],
           });

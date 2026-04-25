@@ -421,8 +421,7 @@ const en = {
     errorCustomAgentInvalid:
       "One or more agents have invalid values. Check belief, tolerance radius, and tolerance offset ranges.",
     errorCustomEdgeInvalid: "One or more edges have invalid values. Check influence range.",
-    errorCustomEdgeUnknownAgent:
-      "One or more edges reference an agent name that does not exist.",
+    errorCustomEdgeUnknownAgent: "One or more edges reference an agent name that does not exist.",
     errorCustomEdgeDuplicate:
       "Duplicate edge detected. Each directed pair (source → target) must be unique.",
   },

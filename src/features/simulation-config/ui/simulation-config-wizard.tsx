@@ -186,11 +186,7 @@ export function SimulationConfigWizard() {
                 <StepAgents values={values} maxAgents={maxAgents} onUpdate={updateValues} />
               ))}
             {step === "review" && (
-              <StepReview
-                values={values}
-                errors={errors}
-                usageLimitError={usageLimitError}
-              />
+              <StepReview values={values} errors={errors} usageLimitError={usageLimitError} />
             )}
           </CardContent>
         </Card>

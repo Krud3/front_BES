@@ -2,7 +2,11 @@ import { useTranslation } from "@/shared/i18n";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import type { CustomSimFormValues, SimConfigValidationErrors, SimFormValues } from "../types/simulation-config.types";
+import type {
+  CustomSimFormValues,
+  SimConfigValidationErrors,
+  SimFormValues,
+} from "../types/simulation-config.types";
 
 interface StepNetworkCustomProps {
   values: SimFormValues;
@@ -11,7 +15,12 @@ interface StepNetworkCustomProps {
   onUpdate: (patch: Partial<SimFormValues>) => void;
 }
 
-export function StepNetworkCustom({ values, maxIterations, errors, onUpdate }: StepNetworkCustomProps) {
+export function StepNetworkCustom({
+  values,
+  maxIterations,
+  errors,
+  onUpdate,
+}: StepNetworkCustomProps) {
   const { t } = useTranslation();
   const custom = values as CustomSimFormValues;
 
@@ -27,7 +36,9 @@ export function StepNetworkCustom({ values, maxIterations, errors, onUpdate }: S
           onChange={(e) => onUpdate({ networkName: e.target.value } as Partial<SimFormValues>)}
         />
         {errors.customNetworkNameEmpty && (
-          <p className="text-sm text-destructive">{t("simulationConfig.errorCustomNetworkNameEmpty")}</p>
+          <p className="text-sm text-destructive">
+            {t("simulationConfig.errorCustomNetworkNameEmpty")}
+          </p>
         )}
       </div>
 

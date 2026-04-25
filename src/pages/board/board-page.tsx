@@ -67,7 +67,17 @@ export function BoardPage() {
         onLoadMore={loadMore}
       />
     );
-  }, [activePanel, runs, loading, hasMore, selectedRunId, statusMap, selectRun, deleteRun, loadMore]);
+  }, [
+    activePanel,
+    runs,
+    loading,
+    hasMore,
+    selectedRunId,
+    statusMap,
+    selectRun,
+    deleteRun,
+    loadMore,
+  ]);
 
   useEffect(() => {
     setSidebarContent(sidebarContent);
