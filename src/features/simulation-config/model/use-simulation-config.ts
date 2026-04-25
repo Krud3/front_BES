@@ -12,15 +12,54 @@ import {
   estimateJsonSize,
 } from "@/shared/lib/custom-simulation-encoder";
 import { logger } from "@/shared/lib/logger";
-import { CONSENSUS_PURSUIT_TEMPLATE } from "../lib/templates";
-import { generatedSimSchema } from "../lib/validation";
+import { customSimSchema, generatedSimSchema } from "../lib/validation";
 import type {
   CustomSimFormValues,
   GeneratedSimFormValues,
   SimConfigValidationErrors,
-  SimFormValues,
   WizardStep,
 } from "../types/simulation-config.types";
+import { useSimulationConfigStore } from "./simulation-config.store";
+
+function validateCustomForm(values: CustomSimFormValues): SimConfigValidationErrors {
+  const errors: SimConfigValidationErrors = {};
+  const result = customSimSchema.safeParse(values);
+
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const msg = issue.message;
+      const path = issue.path[0];
+
+      if (msg === "duplicateEdge") {
+        errors.customEdgeDuplicate = true;
+      } else if (msg === "edgeUnknownAgent") {
+        errors.customEdgeUnknownAgent = true;
+      } else if (path === "networkName") {
+        errors.customNetworkNameEmpty = true;
+      } else if (path === "stopThreshold") {
+        errors.stopThresholdOutOfRange = true;
+      } else if (path === "agents") {
+        // min(1) fires at the "agents" root path
+        errors.customNoAgents = true;
+      } else if (path === "edges") {
+        // min(1) fires at the "edges" root path
+        errors.customNoEdges = true;
+      } else if (typeof path === "string") {
+        errors.countsInvalid = true;
+      } else {
+        // Nested path: agents[i].* or edges[i].*
+        const parentKey = issue.path[0];
+        if (parentKey === "agents") {
+          errors.customAgentInvalid = true;
+        } else {
+          errors.customEdgeInvalid = true;
+        }
+      }
+    }
+  }
+
+  return errors;
+}
 
 function validateGeneratedForm(
   values: GeneratedSimFormValues,
@@ -68,8 +107,6 @@ function hasErrors(errors: SimConfigValidationErrors): boolean {
   return Object.values(errors).some(Boolean);
 }
 
-const DEFAULT_FORM: GeneratedSimFormValues = { ...CONSENSUS_PURSUIT_TEMPLATE };
-
 export function useSimulationConfig() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -80,42 +117,84 @@ export function useSimulationConfig() {
   const maxAgents = user?.usageLimits?.maxAgents;
   const maxIterations = user?.usageLimits?.maxIterations;
 
-  const [step, setStep] = useState<WizardStep>("network");
-  const [values, setValues] = useState<SimFormValues>(DEFAULT_FORM);
+  // Persistent wizard state from store
+  const networkType = useSimulationConfigStore((s) => s.networkType);
+  const step = useSimulationConfigStore((s) => s.step);
+  const generatedValues = useSimulationConfigStore((s) => s.generatedValues);
+  const customValues = useSimulationConfigStore((s) => s.customValues);
+  const activeTemplate = useSimulationConfigStore((s) => s.activeTemplate);
+  const storeSetNetworkType = useSimulationConfigStore((s) => s.setNetworkType);
+  const setStep = useSimulationConfigStore((s) => s.setStep);
+  const storeUpdateGeneratedValues = useSimulationConfigStore((s) => s.updateGeneratedValues);
+  const storeUpdateCustomValues = useSimulationConfigStore((s) => s.updateCustomValues);
+  const storeSetActiveTemplate = useSimulationConfigStore((s) => s.setActiveTemplate);
+  const storeReset = useSimulationConfigStore((s) => s.reset);
+
+  // Non-persistent local state
   const [errors, setErrors] = useState<SimConfigValidationErrors>({});
   const [loading, setLoading] = useState(false);
   const [usageLimitError, setUsageLimitError] = useState<{
     limit: number;
     requested: number;
   } | null>(null);
-  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
 
-  const updateValues = (patch: Partial<SimFormValues>) => {
-    setValues((prev) => ({ ...prev, ...patch }) as SimFormValues);
+  // Derived: the active values slot for the current networkType
+  const values = networkType === "generated" ? generatedValues : customValues;
+
+  const updateValues = (patch: Partial<GeneratedSimFormValues> | Partial<CustomSimFormValues>) => {
+    if (networkType === "generated") {
+      storeUpdateGeneratedValues(patch as Partial<GeneratedSimFormValues>);
+    } else {
+      storeUpdateCustomValues(patch as Partial<CustomSimFormValues>);
+    }
+  };
+
+  const setNetworkType = (type: "generated" | "custom") => {
+    storeSetNetworkType(type);
+    setErrors({});
+    setUsageLimitError(null);
   };
 
   const goToStep = (target: WizardStep) => setStep(target);
 
   const validateAndAdvance = (): boolean => {
-    if (values.networkType === "generated") {
+    if (networkType === "generated") {
       const errs = validateGeneratedForm(
-        values,
+        generatedValues,
         maxAgents ?? undefined,
         maxIterations ?? undefined,
       );
       setErrors(errs);
       return !hasErrors(errs);
     }
-    return true;
+    // custom: step "network" only checks the 4 header fields
+    if (step === "network") {
+      const errs: SimConfigValidationErrors = {};
+      if (!customValues.networkName.trim()) errs.customNetworkNameEmpty = true;
+      if (customValues.stopThreshold <= 0 || customValues.stopThreshold >= 1)
+        errs.stopThresholdOutOfRange = true;
+      if (maxIterations != null && customValues.iterationLimit > maxIterations)
+        errs.iterationLimitExceeded = true;
+      setErrors(errs);
+      return !hasErrors(errs);
+    }
+    // custom: step "agents" — full validation
+    const errs = validateCustomForm(customValues);
+    setErrors(errs);
+    return !hasErrors(errs);
   };
 
   const submit = async () => {
-    if (values.networkType === "generated") {
+    if (networkType === "generated") {
       const errs = validateGeneratedForm(
-        values,
+        generatedValues,
         maxAgents ?? undefined,
         maxIterations ?? undefined,
       );
+      setErrors(errs);
+      if (hasErrors(errs)) return;
+    } else {
+      const errs = validateCustomForm(customValues);
       setErrors(errs);
       if (hasErrors(errs)) return;
     }
@@ -125,27 +204,26 @@ export function useSimulationConfig() {
     try {
       let result: Awaited<ReturnType<typeof simulationsApi.startGenerated>>;
 
-      if (values.networkType === "generated") {
+      if (networkType === "generated") {
         const body = {
-          numberOfNetworks: values.numberOfNetworks,
-          density: values.density,
-          iterationLimit: values.iterationLimit,
-          stopThreshold: values.stopThreshold,
-          seed: values.seed ?? undefined,
-          saveMode: values.saveMode,
-          agentTypes: values.agentTypes.map((row) => ({
+          numberOfNetworks: generatedValues.numberOfNetworks,
+          density: generatedValues.density,
+          iterationLimit: generatedValues.iterationLimit,
+          stopThreshold: generatedValues.stopThreshold,
+          seed: generatedValues.seed ?? undefined,
+          saveMode: generatedValues.saveMode,
+          agentTypes: generatedValues.agentTypes.map((row) => ({
             silenceStrategy: row.silenceStrategy as 0 | 1 | 2,
             silenceEffect: row.silenceEffect as 0 | 1,
             count: row.count,
           })),
-          biasTypes: values.biasTypes.map((row) => ({
+          biasTypes: generatedValues.biasTypes.map((row) => ({
             biasType: row.cognitiveBias as 0 | 1 | 2 | 3,
             count: row.count,
           })),
         };
         result = await simulationsApi.startGenerated(body);
       } else {
-        const customValues = values as CustomSimFormValues;
         const shouldUseBinary =
           estimateJsonSize(customValues.agents, customValues.edges) > BINARY_THRESHOLD_BYTES;
 
@@ -186,6 +264,7 @@ export function useSimulationConfig() {
       setRunId(result.runId);
       setStatus("running");
       navigate(`/board/simulation/${result.runId}`);
+      storeReset();
     } catch (error) {
       logger.error("useSimulationConfig", error);
       if (isErrorCode(error, "usage_limit_exceeded")) {
@@ -205,14 +284,15 @@ export function useSimulationConfig() {
   };
 
   const applyTemplate = (key: string, template: GeneratedSimFormValues) => {
-    setValues(template);
-    setActiveTemplate(key);
+    storeUpdateGeneratedValues(template);
+    storeSetActiveTemplate(key);
     setErrors({});
     setUsageLimitError(null);
   };
 
   return {
     step,
+    networkType,
     values,
     errors,
     loading,
@@ -222,6 +302,7 @@ export function useSimulationConfig() {
     maxIterations: maxIterations ?? null,
     userRole: user?.roles?.[0] ?? null,
     updateValues,
+    setNetworkType,
     goToStep,
     validateAndAdvance,
     submit,

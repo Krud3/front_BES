@@ -50,12 +50,21 @@ export interface CustomSimFormValues {
 export type SimFormValues = GeneratedSimFormValues | CustomSimFormValues;
 
 export interface SimConfigValidationErrors {
+  // Generated path
   agentCountMismatch?: boolean;
   biasCountMismatch?: boolean;
   stopThresholdOutOfRange?: boolean;
   iterationLimitExceeded?: boolean;
   agentLimitExceeded?: boolean;
   countsInvalid?: boolean;
+  // Custom path
+  customNetworkNameEmpty?: boolean;
+  customNoAgents?: boolean;
+  customNoEdges?: boolean;
+  customAgentInvalid?: boolean;
+  customEdgeInvalid?: boolean;
+  customEdgeUnknownAgent?: boolean;
+  customEdgeDuplicate?: boolean;
 }
 
 export const WIZARD_STEPS = ["network", "agents", "review"] as const;

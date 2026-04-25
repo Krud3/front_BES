@@ -3,16 +3,27 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import type { GeneratedSimFormValues, SimFormValues } from "../types/simulation-config.types";
+import type {
+  GeneratedSimFormValues,
+  SimConfigValidationErrors,
+  SimFormValues,
+} from "../types/simulation-config.types";
 
 interface StepNetworkProps {
   values: SimFormValues;
   maxAgents: number | null;
   maxIterations: number | null;
+  errors?: SimConfigValidationErrors;
   onUpdate: (patch: Partial<SimFormValues>) => void;
 }
 
-export function StepNetwork({ values, maxAgents, maxIterations, onUpdate }: StepNetworkProps) {
+export function StepNetwork({
+  values,
+  maxAgents,
+  maxIterations,
+  errors,
+  onUpdate,
+}: StepNetworkProps) {
   const { t } = useTranslation();
   const gen = values.networkType === "generated" ? (values as GeneratedSimFormValues) : null;
 
@@ -97,6 +108,9 @@ export function StepNetwork({ values, maxAgents, maxIterations, onUpdate }: Step
             onUpdate({ iterationLimit: Number(e.target.value) } as Partial<SimFormValues>)
           }
         />
+        {errors?.iterationLimitExceeded && (
+          <p className="text-xs text-destructive">{t("simulationConfig.errorIterationLimit")}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -112,6 +126,9 @@ export function StepNetwork({ values, maxAgents, maxIterations, onUpdate }: Step
             onUpdate({ stopThreshold: Number(e.target.value) } as Partial<SimFormValues>)
           }
         />
+        {errors?.stopThresholdOutOfRange && (
+          <p className="text-xs text-destructive">{t("simulationConfig.errorStopThreshold")}</p>
+        )}
       </div>
 
       <div className="space-y-2">

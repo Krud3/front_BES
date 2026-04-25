@@ -9,7 +9,9 @@ import { CONSENSUS_PURSUIT_TEMPLATE, POLARIZATION_TEMPLATE } from "../lib/templa
 import { useSimulationConfig } from "../model/use-simulation-config";
 import type { WizardStep } from "../types/simulation-config.types";
 import { StepAgents } from "./step-agents";
+import { StepAgentsCustom } from "./step-agents-custom";
 import { StepNetwork } from "./step-network";
+import { StepNetworkCustom } from "./step-network-custom";
 import { StepReview } from "./step-review";
 
 const STEP_ORDER: WizardStep[] = ["network", "agents", "review"];
@@ -24,6 +26,7 @@ export function SimulationConfigWizard() {
   const { t } = useTranslation();
   const {
     step,
+    networkType,
     values,
     errors,
     loading,
@@ -32,6 +35,7 @@ export function SimulationConfigWizard() {
     maxAgents,
     maxIterations,
     updateValues,
+    setNetworkType,
     goToStep,
     validateAndAdvance,
     submit,
@@ -51,12 +55,18 @@ export function SimulationConfigWizard() {
     if (prev) goToStep(prev);
   };
 
+  const hasErrors = Object.values(errors).some(Boolean);
+
   const footer = (
     <div className="flex justify-between">
       <Button type="button" variant="outline" disabled={currentIndex === 0} onClick={handleBack}>
         {t("simulationConfig.back")}
       </Button>
-      {step !== "review" && (
+      {step === "review" ? (
+        <Button type="button" disabled={loading || hasErrors} onClick={submit}>
+          {loading ? t("simulationConfig.submitting") : t("simulationConfig.submit")}
+        </Button>
+      ) : (
         <Button type="button" onClick={handleNext}>
           {t("simulationConfig.next")}
         </Button>
@@ -71,8 +81,8 @@ export function SimulationConfigWizard() {
           <p className="text-sm text-muted-foreground">{t("simulationConfig.subtitle")}</p>
 
           <Tabs
-            value={values.networkType}
-            onValueChange={(v) => updateValues({ networkType: v as "generated" | "custom" })}
+            value={networkType}
+            onValueChange={(v) => setNetworkType(v as "generated" | "custom")}
           >
             <TabsList className="w-full">
               <TabsTrigger value="generated" className="flex-1">
@@ -152,24 +162,34 @@ export function SimulationConfigWizard() {
 
         <Card>
           <CardContent>
-            {step === "network" && (
-              <StepNetwork
-                values={values}
-                maxAgents={maxAgents}
-                maxIterations={maxIterations}
-                onUpdate={updateValues}
-              />
-            )}
-            {step === "agents" && (
-              <StepAgents values={values} maxAgents={maxAgents} onUpdate={updateValues} />
-            )}
+            {step === "network" &&
+              (networkType === "custom" ? (
+                <StepNetworkCustom
+                  values={values}
+                  maxIterations={maxIterations}
+                  errors={errors}
+                  onUpdate={updateValues}
+                />
+              ) : (
+                <StepNetwork
+                  values={values}
+                  maxAgents={maxAgents}
+                  maxIterations={maxIterations}
+                  errors={errors}
+                  onUpdate={updateValues}
+                />
+              ))}
+            {step === "agents" &&
+              (networkType === "custom" ? (
+                <StepAgentsCustom values={values} errors={errors} onUpdate={updateValues} />
+              ) : (
+                <StepAgents values={values} maxAgents={maxAgents} onUpdate={updateValues} />
+              ))}
             {step === "review" && (
               <StepReview
                 values={values}
                 errors={errors}
-                loading={loading}
                 usageLimitError={usageLimitError}
-                onSubmit={submit}
               />
             )}
           </CardContent>

@@ -15,6 +15,7 @@ import {
 } from "@/shared/lib/custom-simulation-encoder";
 import { logger } from "@/shared/lib/logger";
 import type { GeneratedSimFormValues } from "../types/simulation-config.types";
+import { useSimulationConfigStore } from "./simulation-config.store";
 import { useSimulationConfig } from "./use-simulation-config";
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
@@ -151,6 +152,7 @@ function setupMocks(opts: { maxAgents?: number | null; maxIterations?: number | 
 describe("useSimulationConfig", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSimulationConfigStore.getState().reset();
     setupMocks();
   });
 
@@ -294,8 +296,10 @@ describe("useSimulationConfig", () => {
         const { result } = renderHook(() => useSimulationConfig());
 
         act(() => {
+          result.current.setNetworkType("custom");
+        });
+        act(() => {
           result.current.updateValues({
-            networkType: "custom",
             networkName: "My Net",
             iterationLimit: 100,
             stopThreshold: 0.01,
@@ -408,14 +412,19 @@ describe("useSimulationConfig", () => {
         const { result } = renderHook(() => useSimulationConfig());
 
         act(() => {
+          result.current.setNetworkType("custom");
+        });
+        act(() => {
           result.current.updateValues({
-            networkType: "custom",
             networkName: "Small Net",
             iterationLimit: 100,
             stopThreshold: 0.01,
             saveMode: 1,
-            agents: [],
-            edges: [],
+            agents: [
+              { name: "A", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
+              { name: "B", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
+            ],
+            edges: [{ source: "A", target: "B", influence: 0.5, bias: 0 }],
           });
         });
 
@@ -436,14 +445,19 @@ describe("useSimulationConfig", () => {
         const { result } = renderHook(() => useSimulationConfig());
 
         act(() => {
+          result.current.setNetworkType("custom");
+        });
+        act(() => {
           result.current.updateValues({
-            networkType: "custom",
             networkName: "Large Net",
             iterationLimit: 200,
             stopThreshold: 0.001,
             saveMode: 1,
-            agents: [],
-            edges: [],
+            agents: [
+              { name: "A", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
+              { name: "B", belief: 0.5, toleranceRadius: 0.3, toleranceOffset: 0, silenceStrategy: 0, silenceEffect: 0 },
+            ],
+            edges: [{ source: "A", target: "B", influence: 0.5, bias: 0 }],
           });
         });
 

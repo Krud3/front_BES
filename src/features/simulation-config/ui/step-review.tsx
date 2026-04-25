@@ -1,8 +1,8 @@
 import { useTranslation } from "@/shared/i18n";
-import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { computeMaxEdges } from "../lib/validation";
 import type {
+  CustomSimFormValues,
   GeneratedSimFormValues,
   SimConfigValidationErrors,
   SimFormValues,
@@ -32,22 +32,15 @@ const BIAS_KEYS: Record<0 | 1 | 2 | 3 | 4, string> = {
 interface StepReviewProps {
   values: SimFormValues;
   errors: SimConfigValidationErrors;
-  loading: boolean;
   usageLimitError: { limit: number; requested: number } | null;
-  onSubmit: () => void;
 }
 
-export function StepReview({
-  values,
-  errors,
-  loading,
-  usageLimitError,
-  onSubmit,
-}: StepReviewProps) {
+export function StepReview({ values, errors, usageLimitError }: StepReviewProps) {
   const { t } = useTranslation();
   const hasErrors = Object.values(errors).some(Boolean);
   const isGenerated = values.networkType === "generated";
   const gen = isGenerated ? (values as GeneratedSimFormValues) : null;
+  const custom = isGenerated ? null : (values as CustomSimFormValues);
   const maxEdges = gen ? computeMaxEdges(gen.density, gen.numberOfAgents) : 0;
 
   return (
@@ -65,6 +58,33 @@ export function StepReview({
                 : t("simulationConfig.networkTypeCustom")}
             </span>
           </div>
+
+          {custom !== null && (
+            <>
+              <div className="flex justify-between px-4 py-2">
+                <span className="text-muted-foreground">{t("simulationConfig.customNetworkName")}</span>
+                <span className="font-medium">{custom.networkName}</span>
+              </div>
+              <div className="flex justify-between px-4 py-2">
+                <span className="text-muted-foreground">{t("simulationConfig.iterationLimit")}</span>
+                <span>{custom.iterationLimit}</span>
+              </div>
+              <div className="flex justify-between px-4 py-2">
+                <span className="text-muted-foreground">{t("simulationConfig.stopThreshold")}</span>
+                <span>{custom.stopThreshold}</span>
+              </div>
+              <div className="flex justify-between px-4 py-2">
+                <span className="text-muted-foreground">{t("simulationConfig.saveMode")}</span>
+                <span>
+                  {custom.saveMode === 0
+                    ? t("simulationConfig.saveModeFull")
+                    : custom.saveMode === 1
+                      ? t("simulationConfig.saveModeStandard")
+                      : t("simulationConfig.saveModeDebug")}
+                </span>
+              </div>
+            </>
+          )}
 
           {gen !== null && (
             <>
@@ -205,6 +225,78 @@ export function StepReview({
         </div>
       )}
 
+      {/* Custom agents table */}
+      {custom !== null && custom.agents.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("simulationConfig.customAgentsTableTitle")}
+            <span className="ml-1 text-muted-foreground/60">({custom.agents.length})</span>
+          </p>
+          <Card className="gap-0 py-0">
+            <CardContent className="max-h-48 overflow-y-auto px-0 py-0">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-card">
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    <th className="px-4 py-1.5 text-left font-normal">{t("simulationConfig.customAgentName")}</th>
+                    <th className="px-2 py-1.5 text-left font-normal">{t("simulationConfig.customAgentStrategy")}</th>
+                    <th className="px-2 py-1.5 text-left font-normal">{t("simulationConfig.customAgentEffect")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {custom.agents.map((agent) => (
+                    <tr key={agent.name}>
+                      <td className="px-4 py-1.5 font-medium">{agent.name}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">
+                        {t(STRATEGY_KEYS[agent.silenceStrategy as 0 | 1 | 2 | 3] as Parameters<typeof t>[0])}
+                      </td>
+                      <td className="px-2 py-1.5 text-muted-foreground">
+                        {t(EFFECT_KEYS[agent.silenceEffect as 0 | 1 | 2] as Parameters<typeof t>[0])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Custom edges table */}
+      {custom !== null && custom.edges.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("simulationConfig.customEdgesTableTitle")}
+            <span className="ml-1 text-muted-foreground/60">({custom.edges.length})</span>
+          </p>
+          <Card className="gap-0 py-0">
+            <CardContent className="max-h-48 overflow-y-auto px-0 py-0">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-card">
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    <th className="px-4 py-1.5 text-left font-normal">{t("simulationConfig.customEdgeSource")}</th>
+                    <th className="px-2 py-1.5 text-left font-normal">{t("simulationConfig.customEdgeTarget")}</th>
+                    <th className="px-2 py-1.5 text-right font-normal">{t("simulationConfig.customEdgeInfluence")}</th>
+                    <th className="px-2 py-1.5 text-left font-normal">{t("simulationConfig.customEdgeBias")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {custom.edges.map((edge) => (
+                    <tr key={`${edge.source}→${edge.target}`}>
+                      <td className="px-4 py-1.5 font-medium">{edge.source}</td>
+                      <td className="px-2 py-1.5">{edge.target}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">{edge.influence}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">
+                        {t(BIAS_KEYS[edge.bias as 0 | 1 | 2 | 3 | 4] as Parameters<typeof t>[0])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Validation errors */}
       {hasErrors && (
         <div className="space-y-1 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3">
@@ -217,11 +309,42 @@ export function StepReview({
           {errors.agentLimitExceeded && (
             <p className="text-sm text-destructive">{t("simulationConfig.errorAgentLimit")}</p>
           )}
+          {errors.agentCountMismatch && (
+            <p className="text-sm text-destructive">
+              {t("simulationConfig.errorAgentCountMismatch", {
+                expected: String((values as GeneratedSimFormValues).numberOfAgents),
+                actual: String(
+                  (values as GeneratedSimFormValues).agentTypes?.reduce(
+                    (s, r) => s + r.count,
+                    0,
+                  ) ?? 0,
+                ),
+              })}
+            </p>
+          )}
           {errors.biasCountMismatch && (
             <p className="text-sm text-destructive">{t("simulationConfig.errorBiasMismatch")}</p>
           )}
           {errors.countsInvalid && (
             <p className="text-sm text-destructive">{t("simulationConfig.errorCountsInvalid")}</p>
+          )}
+          {errors.customNetworkNameEmpty && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorCustomNetworkNameEmpty")}</p>
+          )}
+          {errors.customNoAgents && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorCustomNoAgents")}</p>
+          )}
+          {errors.customNoEdges && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorCustomNoEdges")}</p>
+          )}
+          {errors.customAgentInvalid && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorCustomAgentInvalid")}</p>
+          )}
+          {errors.customEdgeInvalid && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorCustomEdgeInvalid")}</p>
+          )}
+          {errors.customEdgeUnknownAgent && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorCustomEdgeUnknownAgent")}</p>
           )}
         </div>
       )}
@@ -238,10 +361,6 @@ export function StepReview({
         </div>
       )}
 
-      {/* Submit */}
-      <Button type="button" className="w-full" disabled={loading || hasErrors} onClick={onSubmit}>
-        {loading ? t("simulationConfig.submitting") : t("simulationConfig.submit")}
-      </Button>
     </div>
   );
 }
