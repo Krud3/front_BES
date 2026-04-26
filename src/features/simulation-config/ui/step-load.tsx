@@ -29,7 +29,8 @@ export function StepLoad({ onLoad, loading }: StepLoadProps) {
         silenceEffect: "0=DeGroot  1=Memory  2=Memoryless",
         cognitiveBias: "0=None  1=Confirmation  2=Backfire  3=Authority  4=Insular",
         seed: "null = random seed each run  |  integer = fixed reproducible seed",
-        stopThreshold: "convergence criterion — simulation stops when belief change < this value (0 < x < 1)",
+        stopThreshold:
+          "convergence criterion — simulation stops when belief change < this value (0 < x < 1)",
         density: "approximate number of neighbors per agent in the generated network",
       },
       createdAt: new Date().toISOString(),
@@ -111,8 +112,7 @@ export function StepLoad({ onLoad, loading }: StepLoadProps) {
           state === "dragover" && "border-primary bg-primary/5",
           state === "accepted" && "border-primary/60 bg-primary/5",
           state === "error" && "border-destructive/60 bg-destructive/5",
-          state === "idle" &&
-            "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50",
+          state === "idle" && "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50",
           loading && "pointer-events-none opacity-50",
         )}
       >
@@ -137,7 +137,9 @@ export function StepLoad({ onLoad, loading }: StepLoadProps) {
         {state === "idle" && (
           <>
             <p className="text-sm font-medium">{t("simulationConfig.loadDropzoneTitle")}</p>
-            <p className="text-xs text-muted-foreground">{t("simulationConfig.loadDropzoneHint")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("simulationConfig.loadDropzoneHint")}
+            </p>
             <Button
               type="button"
               variant="outline"
@@ -154,9 +156,7 @@ export function StepLoad({ onLoad, loading }: StepLoadProps) {
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        {t("simulationConfig.loadNoCsv")}
-      </p>
+      <p className="text-xs text-muted-foreground">{t("simulationConfig.loadNoCsv")}</p>
 
       <input
         ref={fileInputRef}

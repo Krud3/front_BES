@@ -457,8 +457,10 @@ const es = {
     loadSuccessToast: "Configuración cargada exitosamente.",
     errorLoadNotReady: "Carga un archivo de configuración antes de lanzar.",
     loadErrorNotJson: "Solo se aceptan archivos .json.",
-    loadErrorParseFailed: "No se pudo leer el archivo. Asegúrate de que sea un JSON de simulación válido.",
-    loadNoCsv: "La importación CSV no está soportada. Exporta tu simulación como JSON desde el paso de Revisión.",
+    loadErrorParseFailed:
+      "No se pudo leer el archivo. Asegúrate de que sea un JSON de simulación válido.",
+    loadNoCsv:
+      "La importación CSV no está soportada. Exporta tu simulación como JSON desde el paso de Revisión.",
     loadDownloadExample: "Descargar ejemplo",
   },
   simulationHistory: {

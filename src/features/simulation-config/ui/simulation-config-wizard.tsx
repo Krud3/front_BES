@@ -174,9 +174,7 @@ export function SimulationConfigWizard() {
 
         <Card>
           <CardContent>
-            {step === "load" && (
-              <StepLoad onLoad={loadFileAndAdvance} loading={loading} />
-            )}
+            {step === "load" && <StepLoad onLoad={loadFileAndAdvance} loading={loading} />}
             {step === "network" &&
               (networkType === "custom" ? (
                 <StepNetworkCustom
