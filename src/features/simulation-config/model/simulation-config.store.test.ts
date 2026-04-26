@@ -53,10 +53,27 @@ describe("useSimulationConfigStore", () => {
       expect(useSimulationConfigStore.getState().networkType).toBe("generated");
     });
 
-    it("resets step to 'network' when called", () => {
+    it("sets networkType to 'load'", () => {
+      useSimulationConfigStore.getState().setNetworkType("load");
+      expect(useSimulationConfigStore.getState().networkType).toBe("load");
+    });
+
+    it("resets step to 'network' for non-load types", () => {
       useSimulationConfigStore.setState({ step: "agents" });
       useSimulationConfigStore.getState().setNetworkType("custom");
       expect(useSimulationConfigStore.getState().step).toBe("network");
+    });
+
+    it("resets step to 'network' when switching from 'load' to 'generated'", () => {
+      useSimulationConfigStore.setState({ networkType: "load", step: "load" });
+      useSimulationConfigStore.getState().setNetworkType("generated");
+      expect(useSimulationConfigStore.getState().step).toBe("network");
+    });
+
+    it("sets step to 'load' when networkType is 'load'", () => {
+      useSimulationConfigStore.setState({ step: "agents" });
+      useSimulationConfigStore.getState().setNetworkType("load");
+      expect(useSimulationConfigStore.getState().step).toBe("load");
     });
 
     it("preserves generatedValues and customValues after call", () => {
