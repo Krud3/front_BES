@@ -14,7 +14,14 @@ import {
   estimateJsonSize,
 } from "@/shared/lib/custom-simulation-encoder";
 import { logger } from "@/shared/lib/logger";
-import type { GeneratedSimFormValues } from "../types/simulation-config.types";
+import type { SimConfigEnvelope } from "@/shared/lib/simulation-export";
+import {
+  buildEnvelope,
+  downloadEnvelopeJson,
+  parseEnvelope,
+  readJsonFile,
+} from "@/shared/lib/simulation-export";
+import type { CustomSimFormValues, GeneratedSimFormValues } from "../types/simulation-config.types";
 import { useSimulationConfigStore } from "./simulation-config.store";
 import { useSimulationConfig } from "./use-simulation-config";
 
@@ -60,6 +67,13 @@ vi.mock("@/shared/lib/custom-simulation-encoder", () => ({
 
 vi.mock("@/shared/lib/logger", () => ({
   logger: { error: vi.fn() },
+}));
+
+vi.mock("@/shared/lib/simulation-export", () => ({
+  buildEnvelope: vi.fn(),
+  downloadEnvelopeJson: vi.fn(),
+  readJsonFile: vi.fn(),
+  parseEnvelope: vi.fn(),
 }));
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -121,6 +135,34 @@ const alternativeTemplate: GeneratedSimFormValues = {
   saveMode: 0,
   agentTypes: [{ id: "t0", count: 5, silenceStrategy: 1, silenceEffect: 1 }],
   biasTypes: [{ id: "tb0", count: 10, cognitiveBias: 1 }],
+};
+
+/** A minimal valid custom form. */
+const validCustomValues: CustomSimFormValues = {
+  networkType: "custom",
+  networkName: "Test Net",
+  iterationLimit: 100,
+  stopThreshold: 0.01,
+  saveMode: 1,
+  agents: [
+    {
+      name: "A",
+      belief: 0.5,
+      toleranceRadius: 0.3,
+      toleranceOffset: 0,
+      silenceStrategy: 0,
+      silenceEffect: 0,
+    },
+    {
+      name: "B",
+      belief: 0.6,
+      toleranceRadius: 0.3,
+      toleranceOffset: 0,
+      silenceStrategy: 0,
+      silenceEffect: 0,
+    },
+  ],
+  edges: [{ source: "A", target: "B", influence: 0.5, bias: 0 }],
 };
 
 function setupMocks(opts: { maxAgents?: number | null; maxIterations?: number | null } = {}) {
@@ -291,7 +333,7 @@ describe("useSimulationConfig", () => {
       });
     });
 
-    describe("custom networkType", () => {
+    describe("custom networkType — step 'network'", () => {
       it("returns true without running schema validation", () => {
         const { result } = renderHook(() => useSimulationConfig());
 
@@ -316,6 +358,237 @@ describe("useSimulationConfig", () => {
 
         expect(valid).toBe(true);
         expect(result.current.errors).toEqual({});
+      });
+
+      it("sets customNetworkNameEmpty when networkName is empty", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+        });
+        act(() => {
+          result.current.updateValues({
+            networkName: "  ",
+            iterationLimit: 100,
+            stopThreshold: 0.01,
+            saveMode: 1,
+            agents: [],
+            edges: [],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.customNetworkNameEmpty).toBe(true);
+      });
+
+      it("sets stopThresholdOutOfRange when stopThreshold is 0", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+        });
+        act(() => {
+          result.current.updateValues({
+            networkName: "Valid Name",
+            iterationLimit: 100,
+            stopThreshold: 0,
+            saveMode: 1,
+            agents: [],
+            edges: [],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.stopThresholdOutOfRange).toBe(true);
+      });
+
+      it("sets iterationLimitExceeded when limit is exceeded on network step", () => {
+        setupMocks({ maxIterations: 50 });
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+        });
+        act(() => {
+          result.current.updateValues({
+            networkName: "Valid Name",
+            iterationLimit: 9999,
+            stopThreshold: 0.01,
+            saveMode: 1,
+            agents: [],
+            edges: [],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.iterationLimitExceeded).toBe(true);
+      });
+    });
+
+    describe("custom networkType — step 'agents' (full validation)", () => {
+      it("returns true when the custom form is valid", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+          result.current.goToStep("agents");
+        });
+        act(() => {
+          result.current.updateValues(validCustomValues);
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(true);
+        expect(result.current.errors).toEqual({});
+      });
+
+      it("sets customNoAgents when agents array is empty", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+          result.current.goToStep("agents");
+        });
+        act(() => {
+          result.current.updateValues({
+            ...validCustomValues,
+            agents: [],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.customNoAgents).toBe(true);
+      });
+
+      it("sets customNoEdges when edges array is empty", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+          result.current.goToStep("agents");
+        });
+        act(() => {
+          result.current.updateValues({
+            ...validCustomValues,
+            edges: [],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.customNoEdges).toBe(true);
+      });
+
+      it("sets customNoAgents when an agent has an empty name (zod path 'agents' catches nested failures)", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+          result.current.goToStep("agents");
+        });
+        act(() => {
+          result.current.updateValues({
+            ...validCustomValues,
+            agents: [
+              {
+                name: "",
+                belief: 0.5,
+                toleranceRadius: 0.3,
+                toleranceOffset: 0,
+                silenceStrategy: 0,
+                silenceEffect: 0,
+              },
+              validCustomValues.agents[1]!,
+            ],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        // Zod reports path[0] === 'agents' for nested agent field failures,
+        // so validateCustomForm maps this to customNoAgents.
+        expect(result.current.errors.customNoAgents).toBe(true);
+      });
+
+      it("sets customEdgeUnknownAgent when edge references an unknown agent", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+          result.current.goToStep("agents");
+        });
+        act(() => {
+          result.current.updateValues({
+            ...validCustomValues,
+            edges: [{ source: "A", target: "GHOST", influence: 0.5, bias: 0 }],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.customEdgeUnknownAgent).toBe(true);
+      });
+
+      it("sets customEdgeDuplicate when the same directed edge appears twice", () => {
+        const { result } = renderHook(() => useSimulationConfig());
+
+        act(() => {
+          result.current.setNetworkType("custom");
+          result.current.goToStep("agents");
+        });
+        act(() => {
+          result.current.updateValues({
+            ...validCustomValues,
+            edges: [
+              { source: "A", target: "B", influence: 0.5, bias: 0 },
+              { source: "A", target: "B", influence: 0.3, bias: 0 },
+            ],
+          });
+        });
+
+        let valid = false;
+        act(() => {
+          valid = result.current.validateAndAdvance();
+        });
+
+        expect(valid).toBe(false);
+        expect(result.current.errors.customEdgeDuplicate).toBe(true);
       });
     });
   });
@@ -675,6 +948,269 @@ describe("useSimulationConfig", () => {
       });
 
       expect(result.current.usageLimitError).toBeNull();
+    });
+  });
+
+  // ── exportConfig ──────────────────────────────────────────────────────────
+
+  describe("exportConfig", () => {
+    it("calls buildEnvelope with the current form values", () => {
+      const mockEnvelope: SimConfigEnvelope = {
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: { networkType: "generated" },
+      };
+      vi.mocked(buildEnvelope).mockReturnValue(mockEnvelope);
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      act(() => {
+        result.current.updateValues(validGeneratedValues);
+      });
+
+      act(() => {
+        result.current.exportConfig();
+      });
+
+      expect(buildEnvelope).toHaveBeenCalledOnce();
+    });
+
+    it("calls downloadEnvelopeJson with the envelope and networkType", () => {
+      const mockEnvelope: SimConfigEnvelope = {
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: { networkType: "generated" },
+      };
+      vi.mocked(buildEnvelope).mockReturnValue(mockEnvelope);
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      act(() => {
+        result.current.updateValues(validGeneratedValues);
+      });
+
+      act(() => {
+        result.current.exportConfig();
+      });
+
+      expect(downloadEnvelopeJson).toHaveBeenCalledWith(mockEnvelope, "generated");
+    });
+
+    it("passes networkType='custom' when in custom mode", () => {
+      const mockEnvelope: SimConfigEnvelope = {
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: { networkType: "custom" },
+      };
+      vi.mocked(buildEnvelope).mockReturnValue(mockEnvelope);
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      act(() => {
+        result.current.setNetworkType("custom");
+        result.current.updateValues(validCustomValues);
+      });
+
+      act(() => {
+        result.current.exportConfig();
+      });
+
+      expect(downloadEnvelopeJson).toHaveBeenCalledWith(mockEnvelope, "custom");
+    });
+  });
+
+  // ── handleImportFile ──────────────────────────────────────────────────────
+
+  describe("handleImportFile", () => {
+    const dummyFile = new File(["{}"], "config.json", { type: "application/json" });
+
+    it("shows errorImportInvalid toast when readJsonFile rejects", async () => {
+      vi.mocked(readJsonFile).mockRejectedValue(new SyntaxError("bad json"));
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "useSimulationConfig.handleImportFile",
+        expect.any(SyntaxError),
+      );
+      expect(toast.error).toHaveBeenCalledWith("simulationConfig.errorImportInvalid");
+    });
+
+    it("sets importInvalid error and toasts when parseEnvelope returns null", async () => {
+      vi.mocked(readJsonFile).mockResolvedValue({ someUnknown: true });
+      vi.mocked(parseEnvelope).mockReturnValue(null);
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(result.current.errors.importInvalid).toBe(true);
+      expect(toast.error).toHaveBeenCalledWith("simulationConfig.errorImportInvalid");
+    });
+
+    it("sets importInvalid error when networkType is unknown", async () => {
+      vi.mocked(readJsonFile).mockResolvedValue({ networkType: "unknown-type" });
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: { networkType: "unknown-type" },
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(result.current.errors.importInvalid).toBe(true);
+      expect(toast.error).toHaveBeenCalledWith("simulationConfig.errorImportInvalid");
+    });
+
+    it("loads a valid generated envelope into the store and clears errors", async () => {
+      vi.mocked(readJsonFile).mockResolvedValue(validGeneratedValues);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: validGeneratedValues as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(result.current.networkType).toBe("generated");
+      expect(result.current.errors).toEqual({});
+      expect(result.current.usageLimitError).toBeNull();
+      expect((result.current.values as GeneratedSimFormValues).numberOfAgents).toBe(
+        validGeneratedValues.numberOfAgents,
+      );
+    });
+
+    it("loads a valid custom envelope into the store", async () => {
+      vi.mocked(readJsonFile).mockResolvedValue(validCustomValues);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: validCustomValues as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(result.current.networkType).toBe("custom");
+      expect(result.current.errors).toEqual({});
+      expect((result.current.values as CustomSimFormValues).networkName).toBe(
+        validCustomValues.networkName,
+      );
+    });
+
+    it("surfaces agentLimitExceeded after importing generated values that exceed user limit", async () => {
+      setupMocks({ maxAgents: 5 });
+
+      vi.mocked(readJsonFile).mockResolvedValue(validGeneratedValues);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: validGeneratedValues as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      // validGeneratedValues has numberOfAgents=10, limit is 5
+      expect(result.current.errors.agentLimitExceeded).toBe(true);
+    });
+
+    it("surfaces iterationLimitExceeded after importing generated values that exceed iteration limit", async () => {
+      setupMocks({ maxIterations: 50 });
+
+      vi.mocked(readJsonFile).mockResolvedValue(validGeneratedValues);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: validGeneratedValues as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      // validGeneratedValues has iterationLimit=100, limit is 50
+      expect(result.current.errors.iterationLimitExceeded).toBe(true);
+    });
+
+    it("surfaces iterationLimitExceeded after importing custom values that exceed iteration limit", async () => {
+      setupMocks({ maxIterations: 50 });
+
+      vi.mocked(readJsonFile).mockResolvedValue(validCustomValues);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: validCustomValues as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      // validCustomValues has iterationLimit=100, limit is 50
+      expect(result.current.errors.iterationLimitExceeded).toBe(true);
+    });
+
+    it("sets importInvalid and toasts when imported generated payload fails schema", async () => {
+      const badGeneratedPayload = { networkType: "generated", numberOfAgents: "not-a-number" };
+      vi.mocked(readJsonFile).mockResolvedValue(badGeneratedPayload);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: badGeneratedPayload as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(result.current.errors.importInvalid).toBe(true);
+      expect(toast.error).toHaveBeenCalledWith("simulationConfig.importError");
+    });
+
+    it("sets importInvalid and toasts when imported custom payload fails schema", async () => {
+      const badCustomPayload = { networkType: "custom", networkName: "" };
+      vi.mocked(readJsonFile).mockResolvedValue(badCustomPayload);
+      vi.mocked(parseEnvelope).mockReturnValue({
+        createdAt: "2024-01-01T00:00:00.000Z",
+        appVersion: "1.0.0",
+        payload: badCustomPayload as unknown as Record<string, unknown>,
+      });
+
+      const { result } = renderHook(() => useSimulationConfig());
+
+      await act(async () => {
+        await result.current.handleImportFile(dummyFile);
+      });
+
+      expect(result.current.errors.importInvalid).toBe(true);
+      expect(toast.error).toHaveBeenCalledWith("simulationConfig.importError");
     });
   });
 });

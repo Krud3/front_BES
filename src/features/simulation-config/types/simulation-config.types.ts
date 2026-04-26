@@ -65,7 +65,11 @@ export interface SimConfigValidationErrors {
   customEdgeInvalid?: boolean;
   customEdgeUnknownAgent?: boolean;
   customEdgeDuplicate?: boolean;
+  // Import path
+  importInvalid?: boolean;
 }
 
+export type NetworkType = "generated" | "custom" | "load";
+
 export const WIZARD_STEPS = ["network", "agents", "review"] as const;
-export type WizardStep = (typeof WIZARD_STEPS)[number];
+export type WizardStep = (typeof WIZARD_STEPS)[number] | "load";

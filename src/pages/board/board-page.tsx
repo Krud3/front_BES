@@ -57,7 +57,11 @@ export function BoardPage() {
     if (isRunView && !loadedForRunView.current) {
       loadedForRunView.current = true;
       loadInitial();
-    } else if (!isRunView && activePanel === "my-experiments" && prevPanel.current !== "my-experiments") {
+    } else if (
+      !isRunView &&
+      activePanel === "my-experiments" &&
+      prevPanel.current !== "my-experiments"
+    ) {
       loadInitial();
     }
     prevPanel.current = activePanel;

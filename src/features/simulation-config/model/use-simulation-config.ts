@@ -12,10 +12,17 @@ import {
   estimateJsonSize,
 } from "@/shared/lib/custom-simulation-encoder";
 import { logger } from "@/shared/lib/logger";
+import {
+  buildEnvelope,
+  downloadEnvelopeJson,
+  parseEnvelope,
+  readJsonFile,
+} from "@/shared/lib/simulation-export";
 import { customSimSchema, generatedSimSchema } from "../lib/validation";
 import type {
   CustomSimFormValues,
   GeneratedSimFormValues,
+  NetworkType,
   SimConfigValidationErrors,
   WizardStep,
 } from "../types/simulation-config.types";
@@ -149,7 +156,7 @@ export function useSimulationConfig() {
     }
   };
 
-  const setNetworkType = (type: "generated" | "custom") => {
+  const setNetworkType = (type: NetworkType) => {
     storeSetNetworkType(type);
     setErrors({});
     setUsageLimitError(null);
@@ -158,6 +165,10 @@ export function useSimulationConfig() {
   const goToStep = (target: WizardStep) => setStep(target);
 
   const validateAndAdvance = (): boolean => {
+    // "load" path: file was already parsed and loaded into generatedValues /
+    // customValues by loadFileAndAdvance. Nothing left to validate here.
+    if (networkType === "load") return true;
+
     if (networkType === "generated") {
       const errs = validateGeneratedForm(
         generatedValues,
@@ -185,6 +196,13 @@ export function useSimulationConfig() {
   };
 
   const submit = async () => {
+    // "load" step should never reach submit directly; the wizard redirects to
+    // "review" after a successful file load. Guard defensively.
+    if (networkType === "load") {
+      toast.error(t("simulationConfig.errorLoadNotReady"));
+      return;
+    }
+
     if (networkType === "generated") {
       const errs = validateGeneratedForm(
         generatedValues,
@@ -290,6 +308,95 @@ export function useSimulationConfig() {
     setUsageLimitError(null);
   };
 
+  // ─── Import / Export JSON ─────────────────────────────────────────────────
+
+  const exportConfig = () => {
+    const envelope = buildEnvelope(values as unknown as Record<string, unknown>);
+    downloadEnvelopeJson(envelope, values.networkType);
+  };
+
+  const handleImportFile = async (file: File) => {
+    let raw: unknown;
+    try {
+      raw = await readJsonFile(file);
+    } catch (error) {
+      logger.error("useSimulationConfig.handleImportFile", error);
+      toast.error(t("simulationConfig.errorImportInvalid"));
+      return;
+    }
+
+    const envelope = parseEnvelope(raw);
+    if (envelope === null) {
+      setErrors({ importInvalid: true });
+      toast.error(t("simulationConfig.errorImportInvalid"));
+      return;
+    }
+
+    const payload = envelope.payload;
+
+    if (payload.networkType === "generated") {
+      const result = generatedSimSchema.safeParse(payload);
+      if (!result.success) {
+        setErrors({ importInvalid: true });
+        toast.error(t("simulationConfig.importError"));
+        return;
+      }
+      const imported = result.data as GeneratedSimFormValues;
+      storeSetNetworkType("generated");
+      storeUpdateGeneratedValues(imported);
+      storeSetActiveTemplate(null);
+
+      // Re-validate usage limits against the imported values — load the values
+      // regardless so the user can see and adjust them, but surface the errors.
+      const limitErrors: SimConfigValidationErrors = {};
+      if (maxAgents != null && imported.numberOfAgents > maxAgents) {
+        limitErrors.agentLimitExceeded = true;
+      }
+      if (maxIterations != null && imported.iterationLimit > maxIterations) {
+        limitErrors.iterationLimitExceeded = true;
+      }
+      setErrors(limitErrors);
+      setUsageLimitError(null);
+    } else if (payload.networkType === "custom") {
+      const result = customSimSchema.safeParse(payload);
+      if (!result.success) {
+        setErrors({ importInvalid: true });
+        toast.error(t("simulationConfig.importError"));
+        return;
+      }
+      const imported = result.data as CustomSimFormValues;
+      storeSetNetworkType("custom");
+      storeUpdateCustomValues(imported);
+
+      // Re-validate usage limits for custom path
+      const limitErrors: SimConfigValidationErrors = {};
+      if (maxIterations != null && imported.iterationLimit > maxIterations) {
+        limitErrors.iterationLimitExceeded = true;
+      }
+      setErrors(limitErrors);
+      setUsageLimitError(null);
+    } else {
+      setErrors({ importInvalid: true });
+      toast.error(t("simulationConfig.errorImportInvalid"));
+    }
+  };
+
+  // ─── Load path ───────────────────────────────────────────────────────────────
+  // Parses a dropped/selected file, loads its values into the store, then
+  // advances the wizard to "review" so the user can inspect and submit.
+  const loadFileAndAdvance = async (file: File) => {
+    await handleImportFile(file);
+    // handleImportFile sets errors.importInvalid on failure — check for that.
+    // We read the fresh store state via a snapshot rather than stale closure.
+    const freshErrors = useSimulationConfigStore.getState();
+    // If networkType is still "load" after the import call, the parse failed
+    // (handleImportFile switches networkType to "generated" or "custom" on
+    // success). Only advance when the type changed.
+    if (freshErrors.networkType !== "load") {
+      setStep("agents");
+    }
+  };
+
   return {
     step,
     networkType,
@@ -307,5 +414,8 @@ export function useSimulationConfig() {
     validateAndAdvance,
     submit,
     applyTemplate,
+    exportConfig,
+    handleImportFile,
+    loadFileAndAdvance,
   };
 }

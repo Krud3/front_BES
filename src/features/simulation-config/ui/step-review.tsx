@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { useTranslation } from "@/shared/i18n";
+import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { computeMaxEdges } from "../lib/validation";
 import type {
@@ -33,10 +35,19 @@ interface StepReviewProps {
   values: SimFormValues;
   errors: SimConfigValidationErrors;
   usageLimitError: { limit: number; requested: number } | null;
+  onExport: () => void;
+  onImport: (file: File) => void;
 }
 
-export function StepReview({ values, errors, usageLimitError }: StepReviewProps) {
+export function StepReview({
+  values,
+  errors,
+  usageLimitError,
+  onExport,
+  onImport,
+}: StepReviewProps) {
   const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasErrors = Object.values(errors).some(Boolean);
   const isGenerated = values.networkType === "generated";
   const gen = isGenerated ? (values as GeneratedSimFormValues) : null;
@@ -321,6 +332,27 @@ export function StepReview({ values, errors, usageLimitError }: StepReviewProps)
         </div>
       )}
 
+      {/* Export / Import */}
+      <div className="flex gap-2 flex-wrap">
+        <Button variant="outline" size="sm" onClick={onExport}>
+          {t("simulationConfig.exportJson")}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+          {t("simulationConfig.importJson")}
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="sr-only"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onImport(file);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
       {/* Validation errors */}
       {hasErrors && (
         <div className="space-y-1 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3">
@@ -375,6 +407,9 @@ export function StepReview({ values, errors, usageLimitError }: StepReviewProps)
             <p className="text-sm text-destructive">
               {t("simulationConfig.errorCustomEdgeUnknownAgent")}
             </p>
+          )}
+          {errors.importInvalid && (
+            <p className="text-sm text-destructive">{t("simulationConfig.errorImportInvalid")}</p>
           )}
         </div>
       )}

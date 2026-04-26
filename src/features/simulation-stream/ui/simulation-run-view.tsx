@@ -36,9 +36,7 @@ export function SimulationRunView({ runId }: SimulationRunViewProps) {
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span
-            className={cn("h-2 w-2 rounded-full shrink-0", STATUS_DOT[status])}
-          />
+          <span className={cn("h-2 w-2 rounded-full shrink-0", STATUS_DOT[status])} />
           <span className="font-sans text-sm font-medium text-foreground">
             {t(STATUS_KEYS[status] as Parameters<typeof t>[0])}
           </span>

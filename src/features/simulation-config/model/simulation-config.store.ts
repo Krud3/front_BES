@@ -4,6 +4,7 @@ import { CONSENSUS_PURSUIT_TEMPLATE } from "../lib/templates";
 import type {
   CustomSimFormValues,
   GeneratedSimFormValues,
+  NetworkType,
   WizardStep,
 } from "../types/simulation-config.types";
 
@@ -20,7 +21,7 @@ export const DEFAULT_CUSTOM_FORM: CustomSimFormValues = {
 };
 
 interface SimulationConfigState {
-  networkType: "generated" | "custom";
+  networkType: NetworkType;
   step: WizardStep;
   generatedValues: GeneratedSimFormValues;
   customValues: CustomSimFormValues;
@@ -28,7 +29,7 @@ interface SimulationConfigState {
 }
 
 interface SimulationConfigActions {
-  setNetworkType: (type: "generated" | "custom") => void;
+  setNetworkType: (type: NetworkType) => void;
   setStep: (step: WizardStep) => void;
   updateGeneratedValues: (patch: Partial<GeneratedSimFormValues>) => void;
   updateCustomValues: (patch: Partial<CustomSimFormValues>) => void;
@@ -52,7 +53,7 @@ export const useSimulationConfigStore = create<SimulationConfigState & Simulatio
       setNetworkType: (type) =>
         set({
           networkType: type,
-          step: "network",
+          step: type === "load" ? "load" : "network",
         }),
 
       setStep: (step) => set({ step }),

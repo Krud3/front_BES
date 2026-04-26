@@ -8,7 +8,7 @@ import {
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock("zustand/middleware", () => ({
-  persist: (fn: Parameters<typeof fn>[0]) => fn,
+  persist: <T>(fn: T) => fn,
 }));
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

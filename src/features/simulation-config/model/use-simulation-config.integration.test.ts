@@ -1,6 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSimulationStore } from "@/entities/simulation";
 import { useAuthStore } from "@/entities/user";
@@ -9,7 +8,6 @@ import type { SimCreated } from "@/shared/api/backend/types/backend.types";
 import { useTranslation } from "@/shared/i18n";
 import { isErrorCode } from "@/shared/lib/backend-error";
 import { BINARY_THRESHOLD_BYTES } from "@/shared/lib/custom-simulation-encoder";
-import { logger } from "@/shared/lib/logger";
 import { useSimulationConfigStore } from "./simulation-config.store";
 import { useSimulationConfig } from "./use-simulation-config";
 
@@ -55,9 +53,7 @@ const LARGE_AGENTS = Array.from({ length: 5120 }, (_, i) => ({
   silenceEffect: 0 as const,
 }));
 
-const LARGE_EDGES = [
-  { source: "Agent0", target: "Agent1", influence: 0.5, bias: 0 as const },
-];
+const LARGE_EDGES = [{ source: "Agent0", target: "Agent1", influence: 0.5, bias: 0 as const }];
 
 // 2 × 100 + 1 × 50 = 250 — well below threshold
 const SMALL_AGENTS = [
@@ -79,9 +75,7 @@ const SMALL_AGENTS = [
   },
 ];
 
-const SMALL_EDGES = [
-  { source: "A", target: "B", influence: 0.5, bias: 0 as const },
-];
+const SMALL_EDGES = [{ source: "A", target: "B", influence: 0.5, bias: 0 as const }];
 
 function setupMocks() {
   vi.mocked(useNavigate).mockReturnValue(mockNavigate);
@@ -160,7 +154,7 @@ describe("useSimulationConfig — encoder integration (real estimateJsonSize + e
         await result.current.submit();
       });
 
-      const [buffer] = vi.mocked(simulationsApi.startCustomBinary).mock.calls[0];
+      const [buffer] = vi.mocked(simulationsApi.startCustomBinary).mock.calls[0]!;
       expect(buffer).toBeInstanceOf(ArrayBuffer);
       expect((buffer as ArrayBuffer).byteLength).toBeGreaterThan(0);
     });

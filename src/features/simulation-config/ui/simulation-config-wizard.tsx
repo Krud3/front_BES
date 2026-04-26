@@ -10,16 +10,19 @@ import { useSimulationConfig } from "../model/use-simulation-config";
 import type { WizardStep } from "../types/simulation-config.types";
 import { StepAgents } from "./step-agents";
 import { StepAgentsCustom } from "./step-agents-custom";
+import { StepLoad } from "./step-load";
 import { StepNetwork } from "./step-network";
 import { StepNetworkCustom } from "./step-network-custom";
 import { StepReview } from "./step-review";
 
 const STEP_ORDER: WizardStep[] = ["network", "agents", "review"];
+const LOAD_STEP_ORDER: WizardStep[] = ["load", "agents", "review"];
 
 const STEP_LABEL_KEYS: Record<WizardStep, string> = {
   network: "simulationConfig.stepNetwork",
   agents: "simulationConfig.stepAgents",
   review: "simulationConfig.stepReview",
+  load: "simulationConfig.stepLoad",
 };
 
 export function SimulationConfigWizard() {
@@ -40,18 +43,22 @@ export function SimulationConfigWizard() {
     validateAndAdvance,
     submit,
     applyTemplate,
+    exportConfig,
+    handleImportFile,
+    loadFileAndAdvance,
   } = useSimulationConfig();
 
-  const currentIndex = STEP_ORDER.indexOf(step);
+  const activeStepOrder = networkType === "load" ? LOAD_STEP_ORDER : STEP_ORDER;
+  const currentIndex = activeStepOrder.indexOf(step);
 
   const handleNext = () => {
     if (!validateAndAdvance()) return;
-    const next = STEP_ORDER[currentIndex + 1];
+    const next = activeStepOrder[currentIndex + 1];
     if (next) goToStep(next);
   };
 
   const handleBack = () => {
-    const prev = STEP_ORDER[currentIndex - 1];
+    const prev = activeStepOrder[currentIndex - 1];
     if (prev) goToStep(prev);
   };
 
@@ -82,7 +89,7 @@ export function SimulationConfigWizard() {
 
           <Tabs
             value={networkType}
-            onValueChange={(v) => setNetworkType(v as "generated" | "custom")}
+            onValueChange={(v) => setNetworkType(v as "generated" | "custom" | "load")}
           >
             <TabsList className="w-full">
               <TabsTrigger value="generated" className="flex-1">
@@ -91,49 +98,54 @@ export function SimulationConfigWizard() {
               <TabsTrigger value="custom" className="flex-1">
                 {t("simulationConfig.networkTypeCustom")}
               </TabsTrigger>
+              <TabsTrigger value="load" className="flex-1">
+                {t("simulationConfig.networkTypeLoad")}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        <TooltipProvider>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {t("simulationConfig.quickStart")}
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant={activeTemplate === "consensus-pursuit" ? "default" : "outline"}
-                  size="xs"
-                  className="rounded-full"
-                  onClick={() => applyTemplate("consensus-pursuit", CONSENSUS_PURSUIT_TEMPLATE)}
-                >
-                  {t("simulationConfig.templateConsensusPursuit")}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t("simulationConfig.templateConsensusPursuitTooltip")}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant={activeTemplate === "polarization" ? "default" : "outline"}
-                  size="xs"
-                  className="rounded-full"
-                  onClick={() => applyTemplate("polarization", POLARIZATION_TEMPLATE)}
-                >
-                  {t("simulationConfig.templatePolarization")}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t("simulationConfig.templatePolarizationTooltip")}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+        {networkType !== "load" && (
+          <TooltipProvider>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {t("simulationConfig.quickStart")}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={activeTemplate === "consensus-pursuit" ? "default" : "outline"}
+                    size="xs"
+                    className="rounded-full"
+                    onClick={() => applyTemplate("consensus-pursuit", CONSENSUS_PURSUIT_TEMPLATE)}
+                  >
+                    {t("simulationConfig.templateConsensusPursuit")}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t("simulationConfig.templateConsensusPursuitTooltip")}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={activeTemplate === "polarization" ? "default" : "outline"}
+                    size="xs"
+                    className="rounded-full"
+                    onClick={() => applyTemplate("polarization", POLARIZATION_TEMPLATE)}
+                  >
+                    {t("simulationConfig.templatePolarization")}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t("simulationConfig.templatePolarizationTooltip")}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        )}
 
         <div>
           <div className="flex items-baseline justify-between">
@@ -143,12 +155,12 @@ export function SimulationConfigWizard() {
             <span className="text-xs text-muted-foreground">
               {t("simulationConfig.stepProgress", {
                 current: String(currentIndex + 1),
-                total: String(STEP_ORDER.length),
+                total: String(activeStepOrder.length),
               })}
             </span>
           </div>
           <div className="flex gap-1">
-            {STEP_ORDER.map((s, i) => (
+            {activeStepOrder.map((s, i) => (
               <div
                 key={s}
                 className={cn(
@@ -162,6 +174,9 @@ export function SimulationConfigWizard() {
 
         <Card>
           <CardContent>
+            {step === "load" && (
+              <StepLoad onLoad={loadFileAndAdvance} loading={loading} />
+            )}
             {step === "network" &&
               (networkType === "custom" ? (
                 <StepNetworkCustom
@@ -186,7 +201,13 @@ export function SimulationConfigWizard() {
                 <StepAgents values={values} maxAgents={maxAgents} onUpdate={updateValues} />
               ))}
             {step === "review" && (
-              <StepReview values={values} errors={errors} usageLimitError={usageLimitError} />
+              <StepReview
+                values={values}
+                errors={errors}
+                usageLimitError={usageLimitError}
+                onExport={exportConfig}
+                onImport={handleImportFile}
+              />
             )}
           </CardContent>
         </Card>
