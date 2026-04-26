@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 
@@ -11,15 +12,21 @@ interface DashboardSidebarProps {
   activePanel: SidebarPanel;
   /** Callback to toggle collapsed state */
   onToggle: () => void;
+  /**
+   * Content to render inside the panel body.
+   * Provided by the page layer (BoardPage) via DashboardLayout.
+   * When undefined the sidebar renders the placeholder text.
+   */
+  panelContent?: ReactNode;
 }
 
 /**
- * DashboardSidebar — structural shell only.
+ * DashboardSidebar — structural shell for the dashboard.
  *
  * Contains:
  *  - A collapse/expand toggle button (keyboard accessible, aria-expanded).
- *  - Two named placeholder panel areas driven by `activePanel`.
- *  - No business logic, no data fetching — this is the layout shell for issue #63.
+ *  - Two named panel areas driven by `activePanel`.
+ *  - A `panelContent` slot: when provided, replaces the placeholder with real UI.
  *
  * Placement: app/layouts/dashboard — layout component that uses no widgets
  * and is consumed only by DashboardLayout at the app layer.
@@ -27,7 +34,12 @@ interface DashboardSidebarProps {
  * Motion rule (design-system.md): sidebar toggle uses transition-width only,
  * no layout animation with motion/react.
  */
-export function DashboardSidebar({ collapsed, activePanel, onToggle }: DashboardSidebarProps) {
+export function DashboardSidebar({
+  collapsed,
+  activePanel,
+  onToggle,
+  panelContent,
+}: DashboardSidebarProps) {
   const { t } = useTranslation();
 
   return (
@@ -39,7 +51,7 @@ export function DashboardSidebar({ collapsed, activePanel, onToggle }: Dashboard
       data-collapsed={collapsed}
       className={cn(
         "relative flex h-full flex-col border-r border-border bg-sidebar transition-[width] duration-200 ease-in-out",
-        collapsed ? "w-14" : "w-64",
+        collapsed ? "w-14" : "w-xl",
       )}
     >
       {/* ── Toggle button ─────────────────────────────────────── */}
@@ -76,7 +88,7 @@ export function DashboardSidebar({ collapsed, activePanel, onToggle }: Dashboard
       </button>
 
       {/* ── Panel content area ────────────────────────────────── */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col">
         {/* Section label — hidden when collapsed */}
         {!collapsed && (
           <div className="flex items-center gap-2 px-4 py-3">
@@ -88,12 +100,8 @@ export function DashboardSidebar({ collapsed, activePanel, onToggle }: Dashboard
           </div>
         )}
 
-        {/* Placeholder panel body */}
         <div
-          className={cn(
-            "flex-1 px-4 py-2",
-            collapsed && "flex items-start justify-center px-0 py-3",
-          )}
+          className={cn("min-h-0 flex-1", collapsed && "flex items-start justify-center px-0 py-3")}
         >
           {collapsed ? (
             /* Icon placeholder in collapsed state */
@@ -135,9 +143,11 @@ export function DashboardSidebar({ collapsed, activePanel, onToggle }: Dashboard
                 </svg>
               )}
             </span>
+          ) : panelContent != null ? (
+            panelContent
           ) : (
-            /* Placeholder text — replace with real panel components in M3/M4 */
-            <p className="font-sans text-sm text-muted-foreground">
+            /* Fallback placeholder when no content injected */
+            <p className="px-4 py-2 font-sans text-sm text-muted-foreground">
               {t("dashboard.sidebarPlaceholder")}
             </p>
           )}

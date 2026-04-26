@@ -1,9 +1,16 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { cn } from "@/shared/lib/utils";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar, type SidebarPanel } from "./dashboard-sidebar";
+
+/** Shape passed to child pages via React Router OutletContext */
+export interface DashboardOutletContext {
+  activePanel: SidebarPanel;
+  /** Page calls this to inject content into the sidebar panel slot */
+  setSidebarContent: (content: ReactNode) => void;
+}
 
 /**
  * DashboardLayout — three-region shell: Sidebar (left) + Header (top) + MainContent.
@@ -12,22 +19,27 @@ import { DashboardSidebar, type SidebarPanel } from "./dashboard-sidebar";
  *  - sidebarCollapsed: whether the sidebar is in icon-only mode
  *  - activePanel:      which panel the sidebar renders ("new-simulation" | "my-experiments")
  *  - fullscreen:       whether the sidebar is completely hidden for visualization focus
+ *  - sidebarContent:  ReactNode injected by the page via OutletContext.setSidebarContent
  *
  * No business logic lives here — only structural toggle mechanics.
- * When features need to read these values (e.g., Cosmograph fullscreen in M4),
- * promote this state to a small Zustand slice at that time.
  */
 export function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activePanel, setActivePanel] = useState<SidebarPanel>("new-simulation");
   const [fullscreen, setFullscreen] = useState(false);
+  const [sidebarContent, setSidebarContent] = useState<ReactNode>(null);
 
   const handleSidebarToggle = () => setSidebarCollapsed((prev) => !prev);
   const handleFullscreenToggle = () => setFullscreen((prev) => !prev);
 
+  const outletContext: DashboardOutletContext = {
+    activePanel,
+    setSidebarContent,
+  };
+
   return (
     <motion.div
-      className="flex min-h-screen flex-col bg-background"
+      className="flex h-screen flex-col bg-background"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
@@ -57,6 +69,7 @@ export function DashboardLayout() {
                 collapsed={sidebarCollapsed}
                 activePanel={activePanel}
                 onToggle={handleSidebarToggle}
+                panelContent={sidebarContent}
               />
             </motion.div>
           )}
@@ -79,7 +92,7 @@ export function DashboardLayout() {
               animate={{ opacity: 1, transition: { duration: 0.25, ease: "easeOut", delay: 0.2 } }}
               exit={{ opacity: 0, transition: { duration: 0.05 } }}
             >
-              <Outlet />
+              <Outlet context={outletContext} />
             </motion.div>
           </AnimatePresence>
         </main>

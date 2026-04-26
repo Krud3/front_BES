@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
@@ -65,16 +66,18 @@ export function DashboardHeader({
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((segment, index) => (
-              <BreadcrumbItem key={segment.to ?? `current-${index}`}>
+              <React.Fragment key={segment.to ?? `current-${index}`}>
                 {index > 0 && <BreadcrumbSeparator />}
-                {segment.to ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={segment.to}>{segment.label}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>{segment.label}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
+                <BreadcrumbItem>
+                  {segment.to ? (
+                    <BreadcrumbLink asChild>
+                      <Link to={segment.to}>{segment.label}</Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage>{segment.label}</BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
             ))}
           </BreadcrumbList>
         </Breadcrumb>

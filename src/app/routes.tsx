@@ -28,6 +28,7 @@ export function AppRoutes() {
           }
         >
           <Route path="/board" element={<BoardPage />} />
+          <Route path="/board/simulation/:runId" element={<BoardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
