@@ -41,7 +41,6 @@ type MockStoreState = {
   status: string;
   topology: null;
   currentRound: number;
-  agents: never[];
   error: null;
   reset: ReturnType<typeof vi.fn>;
 };
@@ -54,7 +53,6 @@ const mockStoreState: MockStoreState = {
   status: "idle",
   topology: null,
   currentRound: 0,
-  agents: [],
   error: null,
   reset: mockReset,
 };
@@ -111,7 +109,7 @@ describe("useSimulationStream", () => {
       expect(mockClient.connect).toHaveBeenCalledOnce();
     });
 
-    it("returns status, topology, currentRound, agents, error, and isConnecting", async () => {
+    it("returns status, topology, currentRound, error, and isConnecting", async () => {
       const { result } = renderHook(() => useSimulationStream("run-123"));
 
       await act(async () => {});
@@ -120,7 +118,6 @@ describe("useSimulationStream", () => {
         status: "idle",
         topology: null,
         currentRound: 0,
-        agents: [],
         error: null,
         isConnecting: expect.any(Boolean),
       });

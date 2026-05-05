@@ -302,8 +302,8 @@ const es = {
     statusIdle: "Inactivo",
     statusConnecting: "Conectando...",
     statusRunning: "Ejecutando",
-    statusConverged: "Convergido",
     statusCompleted: "Completado",
+    statusCancelled: "Cancelado",
     statusError: "Error",
     roundLabel: "Ronda {{round}}",
     agentCount: "{{count}} agentes",
@@ -501,6 +501,31 @@ const es = {
     errorCreate: "Error al crear el perfil de usuario.",
     errorUpdate: "Error al actualizar los datos del usuario.",
     errorDelete: "Error al eliminar el usuario.",
+  },
+  enums: {
+    silenceStrategy: {
+      degroot: "DeGroot",
+      majority: "Mayoría",
+      threshold: "Umbral",
+      confidence: "Confianza",
+    },
+    silenceEffect: {
+      degroot: "DeGroot",
+      memory: "Memoria",
+      memoryless: "Sin memoria",
+    },
+    cognitiveBias: {
+      degroot: "Ninguno",
+      confirmation: "Confirmación",
+      backfire: "Efecto rebote",
+      authority: "Autoridad",
+      insular: "Insular",
+    },
+    saveMode: {
+      full: "Completo",
+      standard: "Estándar",
+      debug: "Depuración",
+    },
   },
 } as const;
 

@@ -1,12 +1,11 @@
 import type { TopologyResponse } from "@/shared/api/backend";
-import type { SimulationFrame } from "@/shared/lib/simulation-frame";
 
 export type SimulationStatus =
   | "idle"
   | "connecting"
   | "running"
-  | "converged"
   | "completed"
+  | "cancelled"
   | "error";
 
 export type WsControlEvent =
@@ -21,6 +20,5 @@ export interface SimulationState {
   runId: string | null;
   topology: TopologyResponse | null;
   currentRound: number;
-  agents: SimulationFrame["agents"];
   error: string | null;
 }

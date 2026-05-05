@@ -14,7 +14,6 @@ export function useSimulationStream(runId: string) {
   const status = useSimulationStore((s) => s.status);
   const topology = useSimulationStore((s) => s.topology);
   const currentRound = useSimulationStore((s) => s.currentRound);
-  const agents = useSimulationStore((s) => s.agents);
   const error = useSimulationStore((s) => s.error);
   const reset = useSimulationStore((s) => s.reset);
 
@@ -48,5 +47,5 @@ export function useSimulationStream(runId: string) {
     };
   }, [runId, reset, t]);
 
-  return { status, topology, currentRound, agents, error, isConnecting };
+  return { status, topology, currentRound, error, isConnecting };
 }

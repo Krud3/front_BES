@@ -1,5 +1,5 @@
 import { simulationsApi } from "@/shared/api/backend";
-import { parseSimulationFrame } from "@/shared/lib/simulation-frame";
+import type { MergedFrame } from "@/shared/workers/simulation-frame-merger";
 import { useSimulationStore } from "../model/simulation.store";
 import type { WsControlEvent } from "../types/simulation.types";
 
@@ -15,6 +15,8 @@ export interface SimulationWsClient {
 
 export function createSimulationWsClient(runId: string): SimulationWsClient {
   let ws: WebSocket | null = null;
+  let worker: Worker | null = null;
+  let topologyReady = false;
   let reconnectAttempts = 0;
   let destroyed = false;
 
@@ -24,7 +26,6 @@ export function createSimulationWsClient(runId: string): SimulationWsClient {
     const { wsTicket } = await simulationsApi.getWsTicket(runId);
 
     const baseUrl = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:9000";
-    // Convert http(s) scheme to ws(s) for the WS endpoint
     const wsBase = baseUrl.replace(/^http/, "ws");
     const url = `${wsBase}/simulations/${runId}/stream?ticket=${wsTicket}`;
 
@@ -41,12 +42,13 @@ export function createSimulationWsClient(runId: string): SimulationWsClient {
         return;
       }
 
-      // Binary frame: Blob or ArrayBuffer
+      // Drop binary frames until topology is loaded (worker is not initialized yet)
+      if (!topologyReady) return;
+
       const buffer: ArrayBuffer =
         event.data instanceof Blob ? await event.data.arrayBuffer() : (event.data as ArrayBuffer);
 
-      const frame = parseSimulationFrame(buffer);
-      store().updateFrame(frame);
+      worker?.postMessage({ type: "frame", buffer }, [buffer]);
     };
 
     ws.onerror = () => {
@@ -74,14 +76,18 @@ export function createSimulationWsClient(runId: string): SimulationWsClient {
       case "topology_ready": {
         store().setStatus("running");
         const topology = await simulationsApi.getTopology(msg.runId, msg.networkId);
-        if (topology) store().setTopology(topology);
+        if (topology) {
+          store().setTopology(topology);
+          worker?.postMessage({ type: "init", agentCount: topology.agentCount });
+          topologyReady = true;
+        }
         break;
       }
       case "network_started":
         store().setStatus("running");
         break;
       case "network_converged":
-        store().setStatus("converged");
+        // per-network event; run-level status stays 'running' until run_completed
         break;
       case "run_completed":
         store().setStatus("completed");
@@ -95,6 +101,15 @@ export function createSimulationWsClient(runId: string): SimulationWsClient {
   return {
     connect: async () => {
       destroyed = false;
+      topologyReady = false;
+
+      worker = new Worker(
+        new URL("../../../shared/workers/simulation-frame.worker.ts", import.meta.url),
+      );
+      worker.onmessage = (event: MessageEvent<MergedFrame>) => {
+        store().updateFrame(event.data);
+      };
+
       store().setRunId(runId);
       store().setStatus("connecting");
       await openConnection();
@@ -104,6 +119,9 @@ export function createSimulationWsClient(runId: string): SimulationWsClient {
       destroyed = true;
       ws?.close(1000);
       ws = null;
+      worker?.terminate();
+      worker = null;
+      topologyReady = false;
     },
   };
 }

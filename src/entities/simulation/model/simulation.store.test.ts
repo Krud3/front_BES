@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { TopologyResponse } from "@/shared/api/backend";
-import type { SimulationFrame } from "@/shared/lib/simulation-frame";
+import type { MergedFrame } from "@/shared/workers/simulation-frame-merger";
 import type { SimulationState } from "../types/simulation.types";
 import { useSimulationStore } from "./simulation.store";
 
@@ -19,14 +19,13 @@ const mockTopology: TopologyResponse = {
   edges: [],
 };
 
-const mockFrame: SimulationFrame = {
-  runId: "run-abc-123",
-  networkId: "net-abc-123",
+const mockFrame: MergedFrame = {
+  runId: "72057594037927936",
+  networkId: "01020304-0506-0708-090a-0b0c0d0e0f10",
   round: 5,
-  agents: [
-    { agentId: 1, belief: 0.4, speaking: true },
-    { agentId: 2, belief: 0.7, speaking: false },
-  ],
+  publicBelief: new Float32Array([0.4, 0.7]),
+  privateBelief: new Float32Array([0.6, 0.3]),
+  speaking: new Uint8Array([1, 0]),
 };
 
 const initialState: SimulationState = {
@@ -34,7 +33,6 @@ const initialState: SimulationState = {
   runId: null,
   topology: null,
   currentRound: 0,
-  agents: [],
   error: null,
 };
 
@@ -62,10 +60,6 @@ describe("useSimulationStore", () => {
       expect(useSimulationStore.getState().currentRound).toBe(0);
     });
 
-    it("has agents as empty array", () => {
-      expect(useSimulationStore.getState().agents).toEqual([]);
-    });
-
     it("has error null", () => {
       expect(useSimulationStore.getState().error).toBeNull();
     });
@@ -84,9 +78,9 @@ describe("useSimulationStore", () => {
       expect(useSimulationStore.getState().status).toBe("running");
     });
 
-    it("updates status to converged", () => {
-      useSimulationStore.getState().setStatus("converged");
-      expect(useSimulationStore.getState().status).toBe("converged");
+    it("updates status to cancelled", () => {
+      useSimulationStore.getState().setStatus("cancelled");
+      expect(useSimulationStore.getState().status).toBe("cancelled");
     });
   });
 
@@ -98,12 +92,7 @@ describe("useSimulationStore", () => {
   });
 
   describe("updateFrame", () => {
-    it("updates agents from the provided frame", () => {
-      useSimulationStore.getState().updateFrame(mockFrame);
-      expect(useSimulationStore.getState().agents).toEqual(mockFrame.agents);
-    });
-
-    it("updates currentRound from the provided frame", () => {
+    it("updates currentRound from the provided partition", () => {
       useSimulationStore.getState().updateFrame(mockFrame);
       expect(useSimulationStore.getState().currentRound).toBe(mockFrame.round);
     });
@@ -144,12 +133,6 @@ describe("useSimulationStore", () => {
       useSimulationStore.setState({ currentRound: 42 });
       useSimulationStore.getState().reset();
       expect(useSimulationStore.getState().currentRound).toBe(0);
-    });
-
-    it("restores agents to empty array", () => {
-      useSimulationStore.setState({ agents: mockFrame.agents });
-      useSimulationStore.getState().reset();
-      expect(useSimulationStore.getState().agents).toEqual([]);
     });
 
     it("restores error to null", () => {

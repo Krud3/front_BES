@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { simulationsApi } from "@/shared/api/backend";
-import { parseSimulationFrame } from "@/shared/lib/simulation-frame";
 import { useSimulationStore } from "../model/simulation.store";
 import { createSimulationWsClient } from "./simulation.ws";
 
@@ -17,10 +16,6 @@ vi.mock("../model/simulation.store", () => ({
   useSimulationStore: {
     getState: vi.fn(),
   },
-}));
-
-vi.mock("@/shared/lib/simulation-frame", () => ({
-  parseSimulationFrame: vi.fn(),
 }));
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -42,15 +37,35 @@ type MockWebSocket = {
   lastUrl: string;
 };
 
+type MockWorker = {
+  onmessage: ((event: MessageEvent) => void) | null;
+  postMessage: ReturnType<typeof vi.fn>;
+  terminate: ReturnType<typeof vi.fn>;
+};
+
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
 const RUN_ID = "run-abc-123";
+
+const MOCK_TOPOLOGY = {
+  runId: RUN_ID,
+  networkId: "net-1",
+  agentCount: 2,
+  edgeCount: 1,
+  agentOffset: 0,
+  agentLimit: 100,
+  edgeOffset: 0,
+  edgeLimit: 100,
+  agents: [],
+  edges: [],
+};
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("createSimulationWsClient", () => {
   let mockStore: MockStoreActions;
   let mockWs: MockWebSocket;
+  let mockWorker: MockWorker;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -76,10 +91,7 @@ describe("createSimulationWsClient", () => {
       lastUrl: "",
     };
 
-    // WebSocket must be a constructor — use a class-based stub that proxies
-    // handler assignments back to the shared `mockWs` object so tests can
-    // read them back after `connect()` completes.
-    const captured = mockWs;
+    const capturedWs = mockWs;
     vi.stubGlobal(
       "WebSocket",
       class MockWebSocketConstructor {
@@ -87,42 +99,67 @@ describe("createSimulationWsClient", () => {
         onmessage: ((event: MessageEvent) => void | Promise<void>) | null = null;
         onerror: (() => void) | null = null;
         onclose: ((event: CloseEvent) => void) | null = null;
-        close = captured.close;
+        close = capturedWs.close;
         constructor(url: string) {
-          captured.lastUrl = url;
+          capturedWs.lastUrl = url;
           Object.defineProperties(this, {
             onopen: {
-              get: () => captured.onopen,
+              get: () => capturedWs.onopen,
               set: (v: (() => void) | null) => {
-                captured.onopen = v;
+                capturedWs.onopen = v;
               },
               enumerable: true,
               configurable: true,
             },
             onmessage: {
-              get: () => captured.onmessage,
+              get: () => capturedWs.onmessage,
               set: (v: ((event: MessageEvent) => void | Promise<void>) | null) => {
-                captured.onmessage = v;
+                capturedWs.onmessage = v;
               },
               enumerable: true,
               configurable: true,
             },
             onerror: {
-              get: () => captured.onerror,
+              get: () => capturedWs.onerror,
               set: (v: (() => void) | null) => {
-                captured.onerror = v;
+                capturedWs.onerror = v;
               },
               enumerable: true,
               configurable: true,
             },
             onclose: {
-              get: () => captured.onclose,
+              get: () => capturedWs.onclose,
               set: (v: ((event: CloseEvent) => void) | null) => {
-                captured.onclose = v;
+                capturedWs.onclose = v;
               },
               enumerable: true,
               configurable: true,
             },
+          });
+        }
+      },
+    );
+
+    mockWorker = {
+      onmessage: null,
+      postMessage: vi.fn(),
+      terminate: vi.fn(),
+    };
+
+    const capturedWorker = mockWorker;
+    vi.stubGlobal(
+      "Worker",
+      class MockWorkerConstructor {
+        postMessage = capturedWorker.postMessage;
+        terminate = capturedWorker.terminate;
+        constructor() {
+          Object.defineProperty(this, "onmessage", {
+            get: () => capturedWorker.onmessage,
+            set: (v: ((event: MessageEvent) => void) | null) => {
+              capturedWorker.onmessage = v;
+            },
+            enumerable: true,
+            configurable: true,
           });
         }
       },
@@ -169,6 +206,13 @@ describe("createSimulationWsClient", () => {
       expect(mockStore.setStatus).toHaveBeenCalledWith("connecting");
     });
 
+    it("creates a Worker on connect", async () => {
+      const client = createSimulationWsClient(RUN_ID);
+      await client.connect();
+      // Worker.onmessage should be wired up
+      expect(mockWorker.onmessage).toBeTypeOf("function");
+    });
+
     describe("ws.onopen", () => {
       it("sets status to running when the connection opens", async () => {
         const client = createSimulationWsClient(RUN_ID);
@@ -187,26 +231,27 @@ describe("createSimulationWsClient", () => {
       }
 
       it("calls getTopology and setTopology on topology_ready", async () => {
-        const mockTopology = {
-          runId: RUN_ID,
-          networkId: "net-1",
-          agentCount: 2,
-          edgeCount: 1,
-          agentOffset: 0,
-          agentLimit: 100,
-          edgeOffset: 0,
-          edgeLimit: 100,
-          agents: [],
-          edges: [],
-        };
-        vi.mocked(simulationsApi.getTopology).mockResolvedValue(mockTopology);
+        vi.mocked(simulationsApi.getTopology).mockResolvedValue(MOCK_TOPOLOGY);
 
         await triggerMessage(
           JSON.stringify({ event: "topology_ready", runId: RUN_ID, networkId: "net-1" }),
         );
 
         expect(simulationsApi.getTopology).toHaveBeenCalledWith(RUN_ID, "net-1");
-        expect(mockStore.setTopology).toHaveBeenCalledWith(mockTopology);
+        expect(mockStore.setTopology).toHaveBeenCalledWith(MOCK_TOPOLOGY);
+      });
+
+      it("sends init message to worker with agentCount on topology_ready", async () => {
+        vi.mocked(simulationsApi.getTopology).mockResolvedValue(MOCK_TOPOLOGY);
+
+        await triggerMessage(
+          JSON.stringify({ event: "topology_ready", runId: RUN_ID, networkId: "net-1" }),
+        );
+
+        expect(mockWorker.postMessage).toHaveBeenCalledWith({
+          type: "init",
+          agentCount: MOCK_TOPOLOGY.agentCount,
+        });
       });
 
       it("sets status to running on network_started", async () => {
@@ -216,11 +261,14 @@ describe("createSimulationWsClient", () => {
         expect(mockStore.setStatus).toHaveBeenCalledWith("running");
       });
 
-      it("sets status to converged on network_converged", async () => {
+      it("does not change run status on network_converged (per-network event)", async () => {
         await triggerMessage(
           JSON.stringify({ event: "network_converged", runId: RUN_ID, networkId: "net-1" }),
         );
-        expect(mockStore.setStatus).toHaveBeenCalledWith("converged");
+        const calls = mockStore.setStatus.mock.calls.map(([s]) => s);
+        expect(calls).not.toContain("converged");
+        expect(calls).not.toContain("completed");
+        expect(calls).not.toContain("cancelled");
       });
 
       it("sets status to completed on run_completed", async () => {
@@ -235,24 +283,51 @@ describe("createSimulationWsClient", () => {
     });
 
     describe("ws.onmessage — binary frame", () => {
-      it("parses the ArrayBuffer and calls updateFrame", async () => {
-        const mockFrame = {
-          runId: RUN_ID,
-          networkId: "net-1",
-          round: 5,
-          agents: [],
-        };
-        vi.mocked(parseSimulationFrame).mockReturnValue(mockFrame);
+      async function connectAndLoadTopology() {
+        vi.mocked(simulationsApi.getTopology).mockResolvedValue(MOCK_TOPOLOGY);
+        const client = createSimulationWsClient(RUN_ID);
+        await client.connect();
+        await mockWs.onmessage?.({
+          data: JSON.stringify({ event: "topology_ready", runId: RUN_ID, networkId: "net-1" }),
+        } as MessageEvent);
+        return client;
+      }
 
+      it("drops binary frames received before topology_ready", async () => {
         const client = createSimulationWsClient(RUN_ID);
         await client.connect();
 
         const buffer = new ArrayBuffer(8);
-        const event = { data: buffer } as MessageEvent;
-        await mockWs.onmessage?.(event);
+        await mockWs.onmessage?.({ data: buffer } as MessageEvent);
 
-        expect(parseSimulationFrame).toHaveBeenCalledWith(buffer);
-        expect(mockStore.updateFrame).toHaveBeenCalledWith(mockFrame);
+        expect(mockWorker.postMessage).not.toHaveBeenCalledWith(
+          expect.objectContaining({ type: "frame" }),
+        );
+      });
+
+      it("forwards ArrayBuffer to worker as transferable after topology is ready", async () => {
+        await connectAndLoadTopology();
+
+        const buffer = new ArrayBuffer(8);
+        await mockWs.onmessage?.({ data: buffer } as MessageEvent);
+
+        expect(mockWorker.postMessage).toHaveBeenCalledWith({ type: "frame", buffer }, [buffer]);
+      });
+
+      it("calls store.updateFrame when the worker emits a merged frame", async () => {
+        await connectAndLoadTopology();
+
+        const mergedFrame = {
+          runId: RUN_ID,
+          networkId: "net-1",
+          round: 5,
+          publicBelief: new Float32Array(2),
+          privateBelief: new Float32Array(2),
+          speaking: new Uint8Array(2),
+        };
+        mockWorker.onmessage?.({ data: mergedFrame } as MessageEvent);
+
+        expect(mockStore.updateFrame).toHaveBeenCalledWith(mergedFrame);
       });
     });
 
@@ -261,7 +336,6 @@ describe("createSimulationWsClient", () => {
         const client = createSimulationWsClient(RUN_ID);
         await client.connect();
 
-        // Reset call counts — we only care about side-effects after close
         vi.clearAllMocks();
 
         const closeEvent = { code: 1000 } as CloseEvent;
@@ -288,13 +362,11 @@ describe("createSimulationWsClient", () => {
         vi.mocked(simulationsApi.getWsTicket).mockResolvedValueOnce({ wsTicket: "ticket-1" });
         await client.connect();
 
-        // Subsequent calls reject to simulate a failed reconnect
         vi.mocked(simulationsApi.getWsTicket).mockRejectedValue(new Error("network error"));
 
         const closeEvent = { code: 1006 } as CloseEvent;
         mockWs.onclose?.(closeEvent);
 
-        // Wait for the async reconnect promise to reject
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(mockStore.setError).toHaveBeenCalledWith(
@@ -312,6 +384,13 @@ describe("createSimulationWsClient", () => {
       expect(mockWs.close).toHaveBeenCalledWith(1000);
     });
 
+    it("terminates the Worker on disconnect", async () => {
+      const client = createSimulationWsClient(RUN_ID);
+      await client.connect();
+      client.disconnect();
+      expect(mockWorker.terminate).toHaveBeenCalled();
+    });
+
     it("does not reconnect after disconnect even when onclose fires", async () => {
       const client = createSimulationWsClient(RUN_ID);
       await client.connect();
@@ -319,7 +398,6 @@ describe("createSimulationWsClient", () => {
 
       vi.clearAllMocks();
 
-      // onclose fires after close() in real browsers — should be a no-op
       const closeEvent = { code: 1006 } as CloseEvent;
       mockWs.onclose?.(closeEvent);
 

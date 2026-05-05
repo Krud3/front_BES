@@ -3,9 +3,9 @@
 export type UserRole = "Administrator" | "Researcher" | "BaseUser" | "Guest";
 
 export type SaveMode = 0 | 1 | 2;
-export type SilenceStrategy = 0 | 1 | 2;
-export type SilenceEffect = 0 | 1;
-export type CognitiveBias = 0 | 1 | 2 | 3;
+export type SilenceStrategy = 0 | 1 | 2 | 3;
+export type SilenceEffect = 0 | 1 | 2;
+export type CognitiveBias = 0 | 1 | 2 | 3 | 4;
 
 // ─── Common ───────────────────────────────────────────────────────────────────
 
@@ -116,6 +116,7 @@ export interface RunSummary {
   id: string;
   type: "generated" | "custom";
   name: string | null;
+  status: "running" | "completed" | "cancelled" | "error";
   networkCount: number;
   iterationLimit: number;
   stopThreshold: number;

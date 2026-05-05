@@ -17,8 +17,8 @@ const STATUS_DOT: Record<SimulationStatus, string> = {
   idle: "bg-muted-foreground",
   connecting: "bg-yellow-500 animate-pulse",
   running: "bg-primary animate-pulse",
-  converged: "bg-green-500",
   completed: "bg-green-500",
+  cancelled: "bg-muted-foreground",
   error: "bg-destructive",
 };
 
@@ -26,8 +26,8 @@ const STATUS_KEYS: Record<SimulationStatus, string> = {
   idle: "simulation.statusIdle",
   connecting: "simulation.statusConnecting",
   running: "simulation.statusRunning",
-  converged: "simulation.statusConverged",
   completed: "simulation.statusCompleted",
+  cancelled: "simulation.statusCancelled",
   error: "simulation.statusError",
 };
 
@@ -58,7 +58,7 @@ export function SimulationRunView({ runId }: SimulationRunViewProps) {
   const [cancelling, setCancelling] = useState(false);
 
   const agentCount = topology?.agentCount ?? null;
-  const cancellable = status === "connecting" || status === "running" || status === "converged";
+  const cancellable = status === "connecting" || status === "running";
 
   const handleMaximize = useCallback(
     (target: "a" | "b" | "c") => {

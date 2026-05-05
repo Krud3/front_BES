@@ -27,8 +27,19 @@ export function SimulationCanvas({ status }: SimulationCanvasProps) {
         </div>
       )}
 
-      {(status === "running" || status === "converged") && (
+      {status === "running" && (
         <p className="font-sans text-sm text-muted-foreground">{t("simulation.panelCosmograph")}</p>
+      )}
+
+      {status === "cancelled" && (
+        <div className="flex flex-col items-center gap-3">
+          <p className="font-sans text-sm text-muted-foreground">
+            {t("simulation.statusCancelled")}
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/board">{t("simulation.backToBoard")}</Link>
+          </Button>
+        </div>
       )}
 
       {status === "completed" && (
