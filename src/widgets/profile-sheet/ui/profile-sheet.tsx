@@ -92,7 +92,7 @@ export function ProfileSheet() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{t("profile.agentsUsed")}</span>
                   <span className="text-sm font-mono font-medium">
-                    {isUnlimited(limits.maxAgents) ? t("profile.unlimited") : limits.maxAgents}
+                    {isUnlimited(limits.maxAgents) ? t("common.unlimited") : limits.maxAgents}
                   </span>
                 </div>
                 <Progress value={isUnlimited(limits.maxAgents) ? 100 : agentPercent} />
@@ -106,7 +106,7 @@ export function ProfileSheet() {
                   </span>
                   <span className="text-sm font-mono font-medium">
                     {isUnlimited(limits.maxIterations)
-                      ? t("profile.unlimited")
+                      ? t("common.unlimited")
                       : limits.maxIterations}
                   </span>
                 </div>

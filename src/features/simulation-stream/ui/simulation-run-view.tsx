@@ -93,7 +93,7 @@ export function SimulationRunView({ runId }: SimulationRunViewProps) {
   const handleCancel = useCallback(() => {
     toast.warning(t("simulation.cancelConfirm"), {
       action: {
-        label: t("simulation.cancel"),
+        label: t("common.cancel"),
         onClick: async () => {
           setCancelling(true);
           try {
@@ -142,7 +142,7 @@ export function SimulationRunView({ runId }: SimulationRunViewProps) {
               disabled={cancelling}
               onClick={handleCancel}
             >
-              {t("simulation.cancel")}
+              {t("common.cancel")}
             </Button>
           )}
         </div>
