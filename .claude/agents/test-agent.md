@@ -28,7 +28,7 @@ You delegate work to sub-agents with different models to optimize cost and quali
 Run the scan script directly — this is a bash operation, no LLM needed:
 
 ```bash
-bash .agents/skills/scanning-changes/scripts/scan.sh --branch
+bash .agents/skills/scanning-changes/scripts/scan.sh
 ```
 
 If the output is empty, report "No testable files changed" and stop.

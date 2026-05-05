@@ -151,7 +151,7 @@ export function WikiPage() {
               <CardContent className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
                   <h4 className="text-lg font-semibold text-foreground">
-                    {t("wiki.som.somMinus.coreIdeaTitle")}
+                    {t("wiki.som.coreIdeaTitle")}
                   </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somMinus.coreIdea_1")}{" "}
@@ -197,7 +197,7 @@ export function WikiPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <h4 className="text-lg font-semibold text-foreground">
-                    {t("wiki.som.somMinus.takeawayTitle")}
+                    {t("wiki.som.takeawayTitle")}
                   </h4>
                   <p className="text-muted-foreground">{t("wiki.som.somMinus.takeaway")}</p>
                 </div>
@@ -220,7 +220,7 @@ export function WikiPage() {
               <CardContent className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
                   <h4 className="text-lg font-semibold text-foreground">
-                    {t("wiki.som.somPlus.coreIdeaTitle")}
+                    {t("wiki.som.coreIdeaTitle")}
                   </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somPlus.coreIdea_1")} <em>{t("wiki.som.somPlus.coreIdea_all")}</em>{" "}
@@ -266,7 +266,7 @@ export function WikiPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <h4 className="text-lg font-semibold text-foreground">
-                    {t("wiki.som.somPlus.takeawayTitle")}
+                    {t("wiki.som.takeawayTitle")}
                   </h4>
                   <p className="text-muted-foreground">
                     {t("wiki.som.somPlus.takeaway_1")}{" "}

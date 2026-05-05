@@ -92,7 +92,7 @@ export function SettingsDropdown() {
         {/* Language selector */}
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-xs font-medium text-muted-foreground px-2 py-1">
-            {t("dashboard.language")}
+            {t("nav.language")}
           </DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={currentLang}
@@ -135,7 +135,7 @@ export function SettingsDropdown() {
               onClick={logout}
             >
               <LogOut className="h-4 w-4" />
-              <span>{t("dashboard.signOut")}</span>
+              <span>{t("auth.signOut")}</span>
             </DropdownMenuItem>
           </>
         )}

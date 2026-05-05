@@ -33,8 +33,10 @@ export function useDashboardBreadcrumb(): BreadcrumbSegment[] {
   return parts.map((segment, index) => {
     const to = "/" + parts.slice(0, index + 1).join("/");
     const isLast = index === parts.length - 1;
+    const mapped = segmentKeyMap[segment];
+    const label = mapped ?? (segment.length > 12 ? segment.slice(0, 8) : segment);
     return {
-      label: segmentKeyMap[segment] ?? segment,
+      label,
       to: isLast ? undefined : to,
     };
   });
